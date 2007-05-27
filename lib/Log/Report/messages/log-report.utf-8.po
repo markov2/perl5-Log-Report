@@ -1,0 +1,374 @@
+#. Header generated with Log::Report::Lexicon::POT 0.0
+msgid ""
+msgstr ""
+"Project-Id-Version: log-report 0.01\n"
+"Report-Msgid-Bugs-To:\n"
+"POT-Creation-Date: 2007-05-14 17:14+0200\n"
+"PO-Revision-Date: 2007-05-28 00:48+0200\n"
+"Last-Translator:\n"
+"Language-Team:\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n!=1);\n"
+
+#: lib/Log/Report/Util.pm:14
+#, fuzzy
+msgid "ALERT"
+msgstr ""
+
+#: lib/Log/Report/Util.pm:14
+#, fuzzy
+msgid "ASSERT"
+msgstr ""
+
+#: lib/Log/Report/Util.pm:14
+#, fuzzy
+msgid "ERROR"
+msgstr ""
+
+#: lib/Log/Report/Util.pm:14
+#, fuzzy
+msgid "FAILURE"
+msgstr ""
+
+#: lib/Log/Report/Util.pm:14
+#, fuzzy
+msgid "FAULT"
+msgstr ""
+
+#: lib/Log/Report/Util.pm:14
+#, fuzzy
+msgid "INFO"
+msgstr ""
+
+#: lib/Log/Report/Dispatcher/LogDispatch.pm:105
+#, fuzzy
+msgid "Log::Dispatch level '{level}' not understood"
+msgid_plural "level"
+msgstr[0] ""
+msgstr[1] ""
+
+#: lib/Log/Report/Dispatcher/Log4perl.pm:100
+#, fuzzy
+msgid "Log::Log4perl back-end {name} requires a 'config' parameter"
+msgstr ""
+
+#, fuzzy
+#~ msgid "Log::Log4perl back-end {name} requires a config argument"
+#~ msgstr ""
+
+#: lib/Log/Report/Dispatcher/Log4perl.pm:111
+#, fuzzy
+msgid "Log::Log4perl level '{level}' must be in 0-5"
+msgstr ""
+
+#: lib/Log/Report/Util.pm:14
+#, fuzzy
+msgid "MISTAKE"
+msgstr ""
+
+#: lib/Log/Report/Util.pm:14
+#, fuzzy
+msgid "NOTICE"
+msgstr ""
+
+#: lib/Log/Report/Dispatcher/Log4perl.pm:27
+#: lib/Log/Report/Dispatcher/LogDispatch.pm:27
+#: lib/Log/Report/Dispatcher/Syslog.pm:28
+#, fuzzy
+msgid "Not all reasons have a default translation"
+msgstr ""
+
+#: lib/Log/Report/Util.pm:14
+#, fuzzy
+msgid "PANIC"
+msgstr ""
+
+#: lib/Log/Report/Extract/PerlPPI.pm:112
+#, fuzzy
+msgid "PPI only supports iso-8859-1 (latin-1) on the moment"
+msgstr ""
+
+#: lib/Log/Report/Extract/PerlPPI.pm:67
+#, fuzzy
+msgid "PerlPPI requires explicit lexicon directory"
+msgstr ""
+
+#: lib/Log/Report/Util.pm:14
+#, fuzzy
+msgid "TRACE"
+msgstr ""
+
+#: lib/Log/Report.pm:200
+#, fuzzy
+msgid "Token '{token}' not recognized as reason"
+msgstr ""
+
+#: lib/Log/Report/Util.pm:14
+#, fuzzy
+msgid "WARNING"
+msgstr ""
+
+#: lib/Log/Report/Dispatcher.pm:244 lib/Log/Report/Dispatcher.pm:255
+#, fuzzy
+msgid "at {filename} line {line}"
+msgstr ""
+
+#: lib/Log/Report/Extract/PerlPPI.pm:70
+#, fuzzy
+msgid "cannot create lexicon directory {dir}"
+msgstr ""
+
+#: lib/Log/Report/Dispatcher/Log4perl.pm:121
+#, fuzzy
+msgid "cannot find logger '{name}' in configuration {config}"
+msgstr ""
+
+#: lib/Log/Report/Extract/PerlPPI.pm:115
+#, fuzzy
+msgid "cannot read from file {filename}"
+msgstr ""
+
+#: lib/Log/Report/Lexicon/POT.pm:147 lib/Log/Report/Lexicon/POTcompact.pm:69
+#, fuzzy
+msgid "cannot read in {cs} from file {fn}"
+msgstr ""
+
+#: lib/Log/Report/Dispatcher/File.pm:85
+#, fuzzy
+msgid "cannot write log into {file} with {binmode}"
+msgstr ""
+
+#: lib/Log/Report/Lexicon/POT.pm:197
+#, fuzzy
+msgid "cannot write to file {fn} in {layers}"
+msgstr ""
+
+#: lib/Log/Report/Lexicon/POT.pm:108 lib/Log/Report/Lexicon/POT.pm:144
+#, fuzzy
+msgid "charset parameter is required for {fn}"
+msgstr ""
+
+#: lib/Log/Report/Lexicon/POTcompact.pm:66
+#, fuzzy
+msgid "charset parameter required for {fn}"
+msgstr ""
+
+#: lib/Log/Report/Dispatcher/File.pm:72
+#, fuzzy
+msgid "dispatcher {name} needs parameter 'to'"
+msgstr ""
+
+#: lib/Log/Report/Lexicon/PO.pm:348
+#, fuzzy
+msgid "do not understand command '{cmd}' at {where}"
+msgstr ""
+
+#: lib/Log/Report/Lexicon/PO.pm:365
+#, fuzzy
+msgid "do not understand line at {where}:\\n  {line}"
+msgstr ""
+
+#: lib/Log/Report/Lexicon/POT.pm:164 lib/Log/Report/Lexicon/POTcompact.pm:106
+#, fuzzy
+msgid "failed reading from file {fn}"
+msgstr ""
+
+#: lib/Log/Report/Extract/PerlPPI.pm:294
+#, fuzzy
+msgid "found one pot file for domain {domain}"
+msgid_plural "found {_count} pot files for domain {domain}"
+msgstr[0] ""
+msgstr[1] ""
+
+#: lib/Log/Report.pm:350
+#, fuzzy
+msgid "in SCALAR context, only one dispatcher name accepted"
+msgstr ""
+
+#: lib/Log/Report/Lexicon/POTcompact.pm:183
+#, fuzzy
+msgid "invalid plural-form algorithm '{alg}'"
+msgstr ""
+
+#: lib/Log/Report/Lexicon/POT.pm:188
+#, fuzzy
+msgid "no filename or file-handle specified for PO"
+msgstr ""
+
+#: lib/Log/Report/Lexicon/POT.pm:323
+#, fuzzy
+msgid "no header defined in POT for file {fn}"
+msgstr ""
+
+#: lib/Log/Report/Lexicon/PO.pm:370
+#, fuzzy
+msgid "no msgid in block {where}"
+msgstr ""
+
+#: lib/Log/Report/Lexicon/PO.pm:445
+#, fuzzy
+msgid "no plurals for '{msgid}'"
+msgstr ""
+
+#, fuzzy
+#~ msgid "no reason found in report parameters"
+#~ msgstr ""
+
+#: lib/Log/Report/Extract/PerlPPI.pm:155
+#, fuzzy
+msgid "no textdomain for translatable at {fn} line {line}"
+msgstr ""
+
+#, fuzzy
+#~ msgid "not a CODE reference: {param}"
+#~ msgstr ""
+
+#: lib/Log/Report/Extract/PerlPPI.pm:109
+#, fuzzy
+msgid "processing file {fn} in {charset}"
+msgstr ""
+
+#: lib/Log/Report/Lexicon/PO.pm:360
+#, fuzzy
+msgid "quoted line is not a continuation at {where}"
+msgstr ""
+
+#: lib/Log/Report/Translator/POT.pm:65
+#, fuzzy
+msgid "read pot-file {filename} for {domain} in {locale}"
+msgstr ""
+
+#: lib/Log/Report/Util.pm:83
+#, fuzzy
+msgid "reason '{begin}' more serious than '{end}' in '{reasons}"
+msgstr ""
+
+#: lib/Log/Report/Extract/PerlPPI.pm:302
+#, fuzzy
+msgid "starting new textdomain {domain}, template in {filename}"
+msgstr ""
+
+#: lib/Log/Report/Lexicon/POTcompact.pm:195
+#, fuzzy
+msgid "string '{text}' not between quotes at {location}"
+msgstr ""
+
+#, fuzzy
+#~ msgid "sub-command 'mode' expects name and setting"
+#~ msgstr ""
+
+#: lib/Log/Report/Dispatcher.pm:166
+#, fuzzy
+msgid "switching to run mode {mode}"
+msgstr ""
+
+#, fuzzy
+#~ msgid "syslog level '$level' not understood"
+#~ msgstr ""
+
+#: lib/Log/Report/Dispatcher/Syslog.pm:105
+#, fuzzy
+msgid "syslog level '{level}' not understood"
+msgstr ""
+
+#: lib/Log/Report.pm:732
+#, fuzzy
+msgid "textdomain '{domain}' configured twice. First: {fn} line {nr}"
+msgstr ""
+
+#: lib/Log/Report.pm:725
+#, fuzzy
+msgid "textdomain for translator not defined"
+msgstr ""
+
+#: lib/Log/Report/Lexicon/POT.pm:113
+#, fuzzy
+msgid "textdomain parameter is required"
+msgstr ""
+
+#: lib/Log/Report.pm:341
+#, fuzzy
+msgid "the 'filter' sub-command needs a CODE reference"
+msgstr ""
+
+#: lib/Log/Report.pm:328
+#, fuzzy
+msgid "the 'list' sub-command doesn't expect additional parameters"
+msgstr ""
+
+#, fuzzy
+#~ msgid "the 'needs' sub-command parameter '{reason} is not a reason"
+#~ msgstr ""
+
+#: lib/Log/Report.pm:334
+#, fuzzy
+msgid "the 'needs' sub-command parameter '{reason}' is not a reason"
+msgstr ""
+
+#: lib/Log/Report/Lexicon/POT.pm:283
+#, fuzzy
+msgid "the only acceptable parameter is 'ACTIVE', not '{p}'"
+msgstr ""
+
+#: lib/Log/Report/Lexicon/PO.pm:434
+#, fuzzy
+msgid "too many plurals for '{msgid}'"
+msgstr ""
+
+#: lib/Log/Report/Lexicon/POT.pm:266
+#, fuzzy
+msgid "translation already exists for '{msgid}'"
+msgstr ""
+
+#: lib/Log/Report.pm:737
+#, fuzzy
+msgid "translator must be a Log::Report::Translator object"
+msgstr ""
+
+#: lib/Log/Report/Lexicon/PO.pm:326
+#, fuzzy
+msgid "unknown comment type '{cmd}' at {where}"
+msgstr ""
+
+#, fuzzy
+#~ msgid "unknown dispatcher {type}"
+#~ msgstr ""
+
+#: lib/Log/Report/Lexicon/PO.pm:294
+#, fuzzy
+msgid "unknown flag {flag} ignored"
+msgstr ""
+
+#: lib/Log/Report/Util.pm:80 lib/Log/Report/Util.pm:95
+#, fuzzy
+msgid "unknown reason {which} in '{reasons}'"
+msgstr ""
+
+#: lib/Log/Report/Dispatcher.pm:164
+#, fuzzy
+msgid "unknown run mode '{mode}'"
+msgstr ""
+
+#: lib/Log/Report/Lexicon/POT.pm:109
+#, fuzzy
+msgid "unnamed file"
+msgstr ""
+
+#: lib/Log/Report/Lexicon/POT.pm:209
+#, fuzzy
+msgid "write errors for file {fn}"
+msgstr ""
+
+#: lib/Log/Report/Extract/PerlPPI.pm:242
+#, fuzzy
+msgid "{domain}: one file with {ids} msgids, {f} fuzzy and {i} inactive translations"
+msgid_plural "{domain}: {_count} files each {ids} msgids, {f} fuzzy and {i} inactive translations in total"
+msgstr[0] ""
+msgstr[1] ""
+
+#: lib/Log/Report/Extract/PerlPPI.pm:233
+#, fuzzy
+msgid "{domain}: {fuzzy%3d} fuzzy, {inact%3d} inactive in {filename}"
+msgstr ""

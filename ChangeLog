@@ -1,0 +1,24 @@
+
+==== version history of Log::Report
+
+version 0.02: Mon May 28 00:49:52 CEST 2007
+	- added HTML documentation to http://perl.overmeer.net/log-report/
+	- added README and Changelog to MANIFEST
+	- filters are not defined on the dispatcher object, but under
+	  control of Log::Report::report().
+	- Log::Report::Message new methods append(), msgid(), and prepend()
+	- added Log::Report::Exception and Log::Report::Dispatcher::Try
+	- added isValidReason() and isFatal() to Log::Report
+	- added Log::Report::Message::untranslated();
+	- Log::Report::report() will convert untranslated strings into
+	  Log::Report::Message objects internally too.
+
+	- by David Cantrell via cpan-testers:
+	  . require at least perl 5.8.2, for POSIX :local_h and because
+	    unique was broken before that release.
+	  . t/00use.t cannot test LogDispatch and Gettext, because they
+	    depend on optional module
+	  . t/50file.t failed because no -t STDERR
+
+version 0.01: Fri May 25 12:13:13 CEST 2007
+	- initial
