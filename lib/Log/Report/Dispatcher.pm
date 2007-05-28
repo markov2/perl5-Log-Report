@@ -87,17 +87,22 @@ which shows everything.  See section L<Log::Report/Run modes>.
 You are adviced to use the symbolic mode names when the mode is
 changed within your program: the numerical values are available
 for smooth M<Getopt::Long> integration.
+
+=option  format_reason 'UPPERCASE'|'LOWERCASE'|'UCFIRST'|'IGNORE'|CODE
+=default format_reason 'LOWERCASE'
+How to show the reason text which is printed before the message. When
+a CODE is specified, it will be called with a translated text and the
+returned text is used.
+
 =cut
 
 sub new(@)
 {   my ($class, $type, $name, %args) = @_;
 
     my $backend
-      = $predef_dispatchers{$type} ? $predef_dispatchers{$type}
-      : $type->isa('Log::Dispatch::Output')
-      ? __PACKAGE__.'::LogDispatch'          # wrapper initializer
-      : $type->isa('Log::Log4perl')
-      ? __PACKAGE__.'::Log4perl'             # wrapper initializer
+      = $predef_dispatchers{$type}          ? $predef_dispatchers{$type}
+      : $type->isa('Log::Dispatch::Output') ? __PACKAGE__.'::LogDispatch'
+      : $type->isa('Log::Log4perl')         ? __PACKAGE__.'::Log4perl'
       : $type;
 
     eval "require $backend";
@@ -107,6 +112,13 @@ sub new(@)
        ->init(\%args);
 }
 
+my %format_reason = 
+  ( LOWERCASE => sub { (lc $_[0]) . ': ' }
+  , UPPERCASE => sub { (uc $_[0]) . ': ' }
+  , UCFIRST   => sub { (ucfirst lc $_[0]) . ': '}
+  , IGNORE    => sub { '' }
+  );
+  
 sub init($)
 {   my ($self, $args) = @_;
     my $mode = $self->_set_mode(delete $args->{mode} || 'NORMAL');
@@ -115,6 +127,12 @@ sub init($)
 
     my $accept = delete $args->{accept} || $default_accept[$mode];
     $self->{needs}  = [ expand_reasons $accept ];
+
+    my $f = delete $args->{format_reason} || 'LOWERCASE';
+    $self->{format_reason} = ref $f eq 'CODE' ? $f : $format_reason{$f}
+        or error __x"illegal format_reason '{format}' for dispatcher",
+             format => $f;
+
     $self;
 }
 
@@ -225,12 +243,13 @@ sub translate($$$)
 
     my $text;
     if($translate)
-    {   $text  = (__$reason)->toString. ': '. $message->toString;
+    {   $text  = $self->{format_reason}->((__$reason)->toString)
+              .  $message->toString;
         $text .= ': ' . strerror($opts->{errno}) if $opts->{errno};
         $text .= "\n";
     }
     else
-    {   $text   = $reason . ': ' . $message->untranslated;
+    {   $text   = $self->{format_reason}->($reason) . $message->untranslated;
         $text  .= ': '. strerror($opts->{errno}) if $opts->{errno};
         $text  .= "\n";
     }

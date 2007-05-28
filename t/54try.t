@@ -10,6 +10,8 @@ use Test::More tests => 23;
 
 use Log::Report undef, syntax => 'SHORT';
 
+use POSIX ':locale_h';  # avoid user's environment
+
 # start a new logger
 my $text = '';
 open my($fh), '>', \$text;
@@ -65,8 +67,8 @@ $caught->reportAll;  # pass on errors
 my $text_l3 = length $text;
 cmp_ok($text_l3, '>', $text_l2, 'passed on loggings');
 is(substr($text, $text_l2), <<__EXTRA);
-INFO: nothing wrong
-TRACE: trace more
+info: nothing wrong
+trace: trace more
 __EXTRA
 
 eval {
@@ -75,4 +77,4 @@ eval {
        };
    $@->reportAll;
 };
-is($@, "FAILURE: oops! no network\n");
+is($@, "try-block stopped with FAILURE");

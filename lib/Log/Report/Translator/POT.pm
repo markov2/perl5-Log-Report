@@ -6,8 +6,9 @@ use base 'Log::Report::Translator';
 
 use Log::Report 'log-report', syntax => 'SHORT';
 use Log::Report::Lexicon::Index;
+use Log::Report::Lexicon::POTcompact;
 
-use POSIX qw/locale_h/;
+use POSIX qw/:locale_h/;
 
 my %indices;
 
@@ -42,7 +43,9 @@ sub translate($)
 {   my ($self, $msg) = @_;
 
     my $domain = $msg->{_domain};
-    my $locale = setlocale(LC_MESSAGES, '');
+    my $locale = setlocale(LC_MESSAGES)
+        or return $self->SUPER::translate($msg);
+
     my $pot    = exists $self->{pots}{$locale} ? $self->{pots}{$locale}
       : $self->load($domain, $locale);
 

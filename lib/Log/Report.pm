@@ -8,8 +8,6 @@ use base 'Exporter';
 # domain 'log-report' via work-arounds:
 #     Log::Report cannot do "use Log::Report"
 
-use POSIX qw/setlocale LC_ALL/;
-
 my @make_msg   = qw/__ __x __n __nx __xn N__ N__n N__w/;
 my @functions  = qw/report dispatcher try/;
 my @reason_functions = qw/trace assert info notice warning
@@ -89,8 +87,12 @@ Log::Report - report a problem, pluggable handlers and language support
 
  print __xn("found one file", "found {_count} files", @files), "\n";
 
- try { error };
- if($@) {...}
+ try { error };    # catch errors with hidden eval/die
+ if($@) {...}      # $@ isa Log::Report::Dispatcher::Try
+
+ use POSIX ':locale_h';
+ setlocale(LC_ALL, 'nl_NL');
+ info __"Hello World!";  # in Dutch, if translation table found
 
 =chapter DESCRIPTION 
 Handling messages to users can be a hassle, certainly when the same
@@ -121,6 +123,10 @@ used directly (M<Log::Report::Lexicon::POTcompact>).
 Multiple dispatchers in parallel can be active. M<Log::Report::Dispatcher>
 takes care that the back-end gets the messages of the severity it needs,
 translated and in the right character-set.
+
+=item . Exception handling
+A simple exception system is implemented via M<try()> and
+M<Log::Report::Dispatcher::Try>.
 
 =back
 
@@ -962,6 +968,93 @@ to indicate the reason for the message to be produced.
  croak    7,emergency,emerg  fatal    failure
  confess  7,emergency,emerg  fatal    panic
 
+=subsection Run modes
+The run-mode change which messages are passed to a dispatcher, but
+from a different angle than the dispatch filters; the mode changes
+behavioral aspects of the messages, which are described in detail in
+L<Log::Report::Dispatcher/Processing the message>.  However, it should
+behave as you expect: the DEBUG mode shows more than the VERBOSe mode,
+and both show more than the NORMAL mode.
+
+=example extract run mode from Getopt::Long
+The C<GetOptions()> function will count the number of C<v> options
+on the command-line when a C<+> is after the option name.
+
+ use Log::Report syntax => 'SHORT';
+ use Getopt::Long qw(:config no_ignore_case bundling);
+
+ my $mode;    # defaults to NORMAL
+ GetOptions 'v+'        => \$mode
+          , 'verbose=i' => \$mode
+          , 'mode=s'    => \$mode
+     or exit 1;
+
+ dispatcher FILE => 'stderr', to => \*STDERR, mode => $mode;
+
+Now, C<-vv> will set C<$mode> to C<2>, as will C<--verbose 2> and
+C<--verbose=2> and C<--mode=ASSERT>.  Of course, you do not need to
+provide all these options to the user: make a choice.
+
+=example the mode of a dispatcher
+ my $mode = dispatcher(find => 'myname')->mode;
+
+=example run-time change mode of a dispatcher
+To change the running mode of the dispatcher, you can do
+  dispatcher mode => DEBUG => 'myname';
+
+However, be warned that this does not change the types of messages
+accepted by the dispatcher!  So: probably you will not receive
+the trace, assert, and info messages after all.  So, probably you
+need to replace the dispatcher with a new one with the same name:
+  dispatcher FILE => 'myname', to => ..., mode => 'DEBUG';
+
+This may reopen connections (depends on the actual dispatcher), which
+might be not what you wish to happend.  In that case, you must take
+the following approach:
+
+  # at the start of your program
+  dispatcher FILE => 'myname', to => ...
+     , accept => 'ALL';    # overrule the default 'NOTICE-' !!
+
+  # now it works
+  dispatcher mode => DEBUG => 'myname';    # debugging on
+  ...
+  dispatcher mode => NORMAL => 'myname';   # debugging off
+
+Of course, this comes with a small overall performance penalty.
+
+=subsection Exceptions
+
+The simple view on live says: you 're dead when you die.  However,
+complexer situations try to revive the dead.  Typically, the "die"
+is considered a terminating exception, but not terminating the whole
+program, but only some logical block.  Of course, a wrapper round
+that block must decide what to do with these emerging problems.
+
+Java-like languages do not "die" but throw exceptions which contain the
+information about what went wrong.  Perl modules like M<Exception::Class>
+simulate this.  It's a hassle to create exception class objects for each
+emerging problem, and the same amount of work to walk through all the
+options.
+
+Log::Report follows a simpler scheme.  Fatal messages will "die", which is
+caught with "eval", just the Perl way (used invisible to you).  However,
+the wrapper get's its hands on the message as the user has specified it:
+untranslated, with all unprocessed parameters still at hand.
+
+ try { fault __x "cannot open file {file}", file => $fn };
+ if($@)                         # is Log::Report::Dispatcher::Try
+ {   my $cause = $@->wasFatal;  # is Log::Report::Exception
+     $cause->throw if $cause->message->msgid =~ m/ open /;
+     # all other problems ignored
+ }
+
+See M<Log::Report::Dispatcher::Try> and M<Log::Report::Exception>.
+
+=section Comparison
+
+=subsection die/warn/Carp
+
 A typical perl5 program can look like this
 
  my $dir = '/etc';
@@ -1052,90 +1145,9 @@ express very explicitly that the user made an error by passing the name
 of a directory in which a file is not readible.  In the common case,
 the user is not to blame and we can use C<fault>.
 
-=subsection Run modes
-The run-mode change which messages are passed to a dispatcher, but
-from a different angle than the dispatch filters; the mode changes
-behavioral aspects of the messages, which are described in detail in
-L<Log::Report::Dispatcher/Processing the message>.  However, it should
-behave as you expect: the DEBUG mode shows more than the VERBOSe mode,
-and both show more than the NORMAL mode.
-
-=example extract run mode from Getopt::Long
-The C<GetOptions()> function will count the number of C<v> options
-on the command-line when a C<+> is after the option name.
-
- use Log::Report syntax => 'SHORT';
- use Getopt::Long qw(:config no_ignore_case bundling);
-
- my $mode;    # defaults to NORMAL
- GetOptions 'v+'        => \$mode
-          , 'verbose=i' => \$mode
-          , 'mode=s'    => \$mode
-     or exit 1;
-
- dispatcher FILE => 'stderr', to => \*STDERR, mode => $mode;
-
-Now, C<-vv> will set C<$mode> to C<2>, as will C<--verbose 2> and
-C<--verbose=2> and C<--mode=ASSERT>.  Of course, you do not need to
-provide all these options to the user: make a choice.
-
-=example the mode of a dispatcher
- my $mode = dispatcher(find => 'myname')->mode;
-
-=example run-time change mode of a dispatcher
-To change the running mode of the dispatcher, you can do
-  dispatcher mode => DEBUG => 'myname';
-
-However, be warned that this does not change the types of messages
-accepted by the dispatcher!  So: probably you will not receive
-the trace, assert, and info messages after all.  So, probably you
-need to replace the dispatcher with a new one with the same name:
-  dispatcher FILE => 'myname', to => ..., mode => 'DEBUG';
-
-This may reopen connections (depends on the actual dispatcher), which
-might be not what you wish to happend.  In that case, you must take
-the following approach:
-
-  # at the start of your program
-  dispatcher FILE => 'myname', to => ...
-     , accept => 'ALL';    # overrule the default 'NOTICE-' !!
-
-  # now it works
-  dispatcher mode => DEBUG => 'myname';    # debugging on
-  ...
-  dispatcher mode => NORMAL => 'myname';   # debugging off
-
-Of course, this comes with a small overall performance penalty.
-
-=subsection Exceptions
-
-The simple view on live says: you 're dead when you die.  However,
-complexer situations try to revive the dead.  Typically, the "die"
-is considered a terminating exception, but not terminating the whole
-program, but only some logical block.  Of course, a wrapper round
-that block must decide what to do with these emerging problems.
-
-Java-like languages do not "die" but throw exceptions which contain the
-information about what went wrong.  Perl modules like M<Exception::Class>
-simulate this.  It's a hassle to create exception class objects for each
-emerging problem, and the same amount of work to walk through all the
-options.
-
-Log::Report follows a simpler scheme.  Fatal messages will "die", which is
-caught with "eval", just the Perl way (used invisible to you).  However,
-the wrapper get's its hands on the message as the user has specified it:
-untranslated, with all unprocessed parameters still at hand.
-
- try { fault __x "cannot open file {file}", file => $fn };
- if($@)                         # is Log::Report::Dispatcher::Try
- {   my $cause = $@->wasFatal;  # is Log::Report::Exception
-     $cause->throw if $cause->message->msgid =~ m/ open /;
-     # all other problems ignored
- }
-
-See M<Log::Report::Dispatcher::Try> and M<Log::Report::Exception>.
-
-=section Comparison
+A module like M<Log::Message> is an object oriented version of the
+standard Perl functions, and as such not really contributing tp
+abstaction.
 
 =subsection Log::Dispatch and Log::Log4perl
 The two major logging frameworks for Perl are M<Log::Dispatch> and

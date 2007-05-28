@@ -5,7 +5,6 @@ package Log::Report::Translator::Gettext;
 use base 'Log::Report::Translator';
 
 use Locale::gettext;
-use POSIX qw/setlocale/;
 
 use Log::Report 'log-report';
 

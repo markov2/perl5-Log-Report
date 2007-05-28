@@ -4,7 +4,7 @@ msgstr ""
 "Project-Id-Version: log-report 0.01\n"
 "Report-Msgid-Bugs-To:\n"
 "POT-Creation-Date: 2007-05-14 17:14+0200\n"
-"PO-Revision-Date: 2007-05-28 00:48+0200\n"
+"PO-Revision-Date: 2007-05-28 11:38+0200\n"
 "Last-Translator:\n"
 "Language-Team:\n"
 "MIME-Version: 1.0\n"
@@ -53,10 +53,6 @@ msgstr[1] ""
 #, fuzzy
 msgid "Log::Log4perl back-end {name} requires a 'config' parameter"
 msgstr ""
-
-#, fuzzy
-#~ msgid "Log::Log4perl back-end {name} requires a config argument"
-#~ msgstr ""
 
 #: lib/Log/Report/Dispatcher/Log4perl.pm:111
 #, fuzzy
@@ -110,7 +106,7 @@ msgstr ""
 msgid "WARNING"
 msgstr ""
 
-#: lib/Log/Report/Dispatcher.pm:244 lib/Log/Report/Dispatcher.pm:255
+#: lib/Log/Report/Dispatcher.pm:242 lib/Log/Report/Dispatcher.pm:253
 #, fuzzy
 msgid "at {filename} line {line}"
 msgstr ""
@@ -197,7 +193,7 @@ msgstr ""
 msgid "no filename or file-handle specified for PO"
 msgstr ""
 
-#: lib/Log/Report/Lexicon/POT.pm:323
+#: lib/Log/Report/Lexicon/POT.pm:327
 #, fuzzy
 msgid "no header defined in POT for file {fn}"
 msgstr ""
@@ -207,23 +203,15 @@ msgstr ""
 msgid "no msgid in block {where}"
 msgstr ""
 
-#: lib/Log/Report/Lexicon/PO.pm:445
+#: lib/Log/Report/Lexicon/PO.pm:446
 #, fuzzy
 msgid "no plurals for '{msgid}'"
 msgstr ""
-
-#, fuzzy
-#~ msgid "no reason found in report parameters"
-#~ msgstr ""
 
 #: lib/Log/Report/Extract/PerlPPI.pm:155
 #, fuzzy
 msgid "no textdomain for translatable at {fn} line {line}"
 msgstr ""
-
-#, fuzzy
-#~ msgid "not a CODE reference: {param}"
-#~ msgstr ""
 
 #: lib/Log/Report/Extract/PerlPPI.pm:109
 #, fuzzy
@@ -255,18 +243,10 @@ msgstr ""
 msgid "string '{text}' not between quotes at {location}"
 msgstr ""
 
-#, fuzzy
-#~ msgid "sub-command 'mode' expects name and setting"
-#~ msgstr ""
-
-#: lib/Log/Report/Dispatcher.pm:166
+#: lib/Log/Report/Dispatcher.pm:164
 #, fuzzy
 msgid "switching to run mode {mode}"
 msgstr ""
-
-#, fuzzy
-#~ msgid "syslog level '$level' not understood"
-#~ msgstr ""
 
 #: lib/Log/Report/Dispatcher/Syslog.pm:105
 #, fuzzy
@@ -298,26 +278,22 @@ msgstr ""
 msgid "the 'list' sub-command doesn't expect additional parameters"
 msgstr ""
 
-#, fuzzy
-#~ msgid "the 'needs' sub-command parameter '{reason} is not a reason"
-#~ msgstr ""
-
 #: lib/Log/Report.pm:334
 #, fuzzy
 msgid "the 'needs' sub-command parameter '{reason}' is not a reason"
 msgstr ""
 
-#: lib/Log/Report/Lexicon/POT.pm:283
+#: lib/Log/Report/Lexicon/POT.pm:287
 #, fuzzy
 msgid "the only acceptable parameter is 'ACTIVE', not '{p}'"
 msgstr ""
 
-#: lib/Log/Report/Lexicon/PO.pm:434
+#: lib/Log/Report/Lexicon/PO.pm:435
 #, fuzzy
 msgid "too many plurals for '{msgid}'"
 msgstr ""
 
-#: lib/Log/Report/Lexicon/POT.pm:266
+#: lib/Log/Report/Lexicon/POT.pm:270
 #, fuzzy
 msgid "translation already exists for '{msgid}'"
 msgstr ""
@@ -327,14 +303,15 @@ msgstr ""
 msgid "translator must be a Log::Report::Translator object"
 msgstr ""
 
+#: lib/Log/Report/Dispatcher/Try.pm:193
+#, fuzzy
+msgid "try-block stopped with {reason}"
+msgstr ""
+
 #: lib/Log/Report/Lexicon/PO.pm:326
 #, fuzzy
 msgid "unknown comment type '{cmd}' at {where}"
 msgstr ""
-
-#, fuzzy
-#~ msgid "unknown dispatcher {type}"
-#~ msgstr ""
 
 #: lib/Log/Report/Lexicon/PO.pm:294
 #, fuzzy
@@ -346,7 +323,7 @@ msgstr ""
 msgid "unknown reason {which} in '{reasons}'"
 msgstr ""
 
-#: lib/Log/Report/Dispatcher.pm:164
+#: lib/Log/Report/Dispatcher.pm:162
 #, fuzzy
 msgid "unknown run mode '{mode}'"
 msgstr ""
@@ -356,7 +333,7 @@ msgstr ""
 msgid "unnamed file"
 msgstr ""
 
-#: lib/Log/Report/Lexicon/POT.pm:209
+#: lib/Log/Report/Lexicon/POT.pm:213
 #, fuzzy
 msgid "write errors for file {fn}"
 msgstr ""

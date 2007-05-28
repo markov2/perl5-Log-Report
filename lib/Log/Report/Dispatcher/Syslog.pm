@@ -31,11 +31,13 @@ my %default_reasonToPrio =
 Log::Report::Dispatcher::Syslog - send messages to syslog
 
 =chapter SYNOPSIS
+ # add syslog dispatcher
  dispatcher SYSLOG => 'syslog', accept => 'NOTICE-'
+   , format_reason => 'IGNORE'
    , to_prio => [ 'ALERT-' => 'err' ];
 
  # disable default dispatcher
- dispatcher close => 'syslog';
+ dispatcher close => 'stderr';
 
 =chapter DESCRIPTION
 This dispatchers produces output to syslog, based on the M<Sys::Syslog>
@@ -65,6 +67,10 @@ using M<new(to_prio)>.  See example in SYNOPSIS.
 =section Constructors
 
 =c_method new TYPE, NAME, OPTIONS
+With syslog, people tend not to include the REASON of the message
+in the logs, because that is already used to determine the destination
+of the message.  Use M<new(format_reason)> with C<IGNORE> to achieve
+that.
 
 =option  identity STRING
 =default identity <basename $0>

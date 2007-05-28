@@ -4,7 +4,7 @@ use 5.8.2;
 
 WriteMakefile
   ( NAME      => 'Log::Report'
-  , VERSION   => '0.02'
+  , VERSION   => '0.03'
   , PREREQ_PM => { Test::More => 0.47 }
   , AUTHOR    => 'Mark Overmeer'
   , ABSTRACT  => 'report a problem, pluggable handlers and language support'

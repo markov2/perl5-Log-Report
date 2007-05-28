@@ -29,6 +29,9 @@ Log::Report::Util - helpful routines to Log::Report
  my @take = expand_reasons 'INFO-ERROR,PANIC';
 
 =chapter DESCRIPTION
+This module collects a few functions and definitions which are
+shared between different components in the M<Log::Report>
+infrastructure.
 
 =chapter FUNCTIONS
 
@@ -77,12 +80,12 @@ sub expand_reasons($)
         {   my $begin = $reason_code{$1 || 'TRACE'};
             my $end   = $reason_code{$2 || 'PANIC'};
             $begin && $end
-                or error __x"unknown reason {which} in '{reasons}'"
-                       , which => ($begin ? $2 : $1), reasons => $reasons;
+                or error __x "unknown reason {which} in '{reasons}'"
+                     , which => ($begin ? $2 : $1), reasons => $reasons;
 
             error __x"reason '{begin}' more serious than '{end}' in '{reasons}"
-                , begin => $1, end => $2, reasons => $reasons
-                if $begin >= $end;
+              , begin => $1, end => $2, reasons => $reasons
+                 if $begin >= $end;
 
             $r{$_}++ for $begin..$end;
         }
@@ -100,10 +103,12 @@ sub expand_reasons($)
 }
 
 =function escape_chars STRING
-Replace all escape characters into their readible counterpart.
+Replace all escape characters into their readible counterpart.  For
+instance, a new-line is replaced by backslash-n.
 
 =function unescape_chars STRING
-Replace all C<\.> by their escape character.
+Replace all backslash-something escapes by their escape character.
+For instance, backslash-t is replaced by a tab character.
 =cut
 
 my %unescape
@@ -125,3 +130,4 @@ sub unescape_chars($)
     $str;
 }
 
+1;

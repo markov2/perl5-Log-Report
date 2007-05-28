@@ -375,6 +375,7 @@ sub fromText($$)
 
 =method toString OPTIONS
 Format the object into a multi-lined string.
+
 =option  nr_plurals INTEGER
 =default nr_plurals C<undef>
 If the number of plurals is specified, then the plural translation
@@ -451,6 +452,15 @@ sub toString(@)
     }
 
     join '', @text;
+}
+
+=method unused
+The message-id has no references anymore and no translations.
+=cut
+
+sub unused()
+{   my $self = shift;
+    ! $self->references && ! $self->msgstr(0);
 }
 
 1;

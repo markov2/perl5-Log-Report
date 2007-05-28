@@ -4,7 +4,7 @@ msgstr ""
 "Project-Id-Version: log-report 0.01\n"
 "Report-Msgid-Bugs-To:\n"
 "POT-Creation-Date: 2007-05-14 17:14+0200\n"
-"PO-Revision-Date: 2007-05-28 00:48+0200\n"
+"PO-Revision-Date: 2007-05-28 11:38+0200\n"
 "Last-Translator: Mark Overmeer <mark@overmeer.net>\n"
 "Language-Team:\n"
 "MIME-Version: 1.0\n"
@@ -86,7 +86,7 @@ msgstr "'{token}' is niet herkend als rapportage reden"
 msgid "WARNING"
 msgstr "WAARSCHUWING"
 
-#: lib/Log/Report/Dispatcher.pm:244 lib/Log/Report/Dispatcher.pm:255
+#: lib/Log/Report/Dispatcher.pm:242 lib/Log/Report/Dispatcher.pm:253
 msgid "at {filename} line {line}"
 msgstr "in {filename} regel {line}"
 
@@ -156,7 +156,7 @@ msgstr "incorrect meervoudsvorm algoritme '{alg}'"
 msgid "no filename or file-handle specified for PO"
 msgstr "geen bestandsnaam of -handle meegegeven voor PO"
 
-#: lib/Log/Report/Lexicon/POT.pm:323
+#: lib/Log/Report/Lexicon/POT.pm:327
 msgid "no header defined in POT for file {fn}"
 msgstr "geen kop opgegeven in POT in bestand {fn}"
 
@@ -164,7 +164,7 @@ msgstr "geen kop opgegeven in POT in bestand {fn}"
 msgid "no msgid in block {where}"
 msgstr "geen msgid in blok {where}"
 
-#: lib/Log/Report/Lexicon/PO.pm:445
+#: lib/Log/Report/Lexicon/PO.pm:446
 msgid "no plurals for '{msgid}'"
 msgstr "geen meervoudsvormen voor '{msgid}'"
 
@@ -196,7 +196,7 @@ msgstr "begin van nieuw textdomain {domain}, sjabloon in {filename}"
 msgid "string '{text}' not between quotes at {location}"
 msgstr "tekst '{text}' niet tussen quotes in {location}"
 
-#: lib/Log/Report/Dispatcher.pm:166
+#: lib/Log/Report/Dispatcher.pm:164
 msgid "switching to run mode {mode}"
 msgstr "overschakeling naar verwerkingsmode {mode}"
 
@@ -228,21 +228,25 @@ msgstr "het 'list' sub-commando verwacht geen aanvullende argumenten"
 msgid "the 'needs' sub-command parameter '{reason}' is not a reason"
 msgstr "het 'needs' sub-commando argument '{reason}' is geen reden"
 
-#: lib/Log/Report/Lexicon/POT.pm:283
+#: lib/Log/Report/Lexicon/POT.pm:287
 msgid "the only acceptable parameter is 'ACTIVE', not '{p}'"
 msgstr "het enige geaccepteerde argument is 'ACTIVE', niet '{p}'"
 
-#: lib/Log/Report/Lexicon/PO.pm:434
+#: lib/Log/Report/Lexicon/PO.pm:435
 msgid "too many plurals for '{msgid}'"
 msgstr "te veel meervouden voor '{msgid}'"
 
-#: lib/Log/Report/Lexicon/POT.pm:266
+#: lib/Log/Report/Lexicon/POT.pm:270
 msgid "translation already exists for '{msgid}'"
 msgstr "er bestaat al een vertaling voor '{msgid}'"
 
 #: lib/Log/Report.pm:737
 msgid "translator must be a Log::Report::Translator object"
 msgstr "vertaler moet een Log::Report::Translator object zijn"
+
+#: lib/Log/Report/Dispatcher/Try.pm:193
+msgid "try-block stopped with {reason}"
+msgstr "try-blok gestopt met {reason}"
 
 #: lib/Log/Report/Lexicon/PO.pm:326
 msgid "unknown comment type '{cmd}' at {where}"
@@ -256,7 +260,7 @@ msgstr "onbekende vlag {flag} wordt genegeerd"
 msgid "unknown reason {which} in '{reasons}'"
 msgstr "onbekende reden {which} is '{reasons}'"
 
-#: lib/Log/Report/Dispatcher.pm:164
+#: lib/Log/Report/Dispatcher.pm:162
 msgid "unknown run mode '{mode}'"
 msgstr "onbekende verwerkingsmode '{mode}'"
 
@@ -264,7 +268,7 @@ msgstr "onbekende verwerkingsmode '{mode}'"
 msgid "unnamed file"
 msgstr ""
 
-#: lib/Log/Report/Lexicon/POT.pm:209
+#: lib/Log/Report/Lexicon/POT.pm:213
 msgid "write errors for file {fn}"
 msgstr "schrijfproblemen bij bestand {fn}"
 

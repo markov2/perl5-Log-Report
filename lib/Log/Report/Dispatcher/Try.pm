@@ -11,10 +11,43 @@ use Log::Report::Exception;
 Log::Report::Dispatcher::Try - capture all reports as exceptions
 
 =chapter SYNOPSIS
- try { ... }
- print ref $@;  # Log::Report::Dispatcher::Try
+ try { ... };       # mind the ';' !!
+ if($@) {           # signals something went wrong
+
+ if(try {...}) {    # block ended normally
+
+ try { ... }        # no comma!!
+    mode => 'DEBUG', accept => 'ERROR-';
+
+ try sub { ... },   # with comma
+    mode => 'DEBUG', accept => 'ALL';
+
+ try \&myhandler, accept => 'ERROR-';
+
+ print ref $@;      # Log::Report::Dispatcher::Try
+
+ $@->reportFatal;   # redispatch result of try block
+ $@->reportAll;     # ... also warnings etc
+ if($@) {...}       # if errors
+ if($@->failed) {   # same       # }
+ if($@->success) {  # no errors  # }
+
+ try { report {to => 'stderr'}, FAILURE => 'no network' };
+ $@->reportFatal(to => 'syslog');  # overrule destination
 
 =chapter DESCRIPTION
+The M<Log::Report::try()> catches errors in the block (CODE
+reference) which is just following the function name.  All
+dispatchers are temporarily disabled by C<try>, and messages
+which are reported are collected within a temporary dispatcher
+named C<try>.  When the CODE has run, that C<try> dispatcher
+is returned in C<$@>, and all original dispatchers reinstated.
+
+Then, after the C<try> has finished, the routine which used
+the "try" should decide what to do with the collected reports.
+These reports are collected as M<Log::Report::Exception> objects.
+They can be ignored, or thrown to a higher level try... causing
+an exit of the program if there is none.
 
 =chapter OVERLOADING
 
@@ -31,7 +64,7 @@ or nothing.
 
 use overload
     bool => 'failed'
-  , '""' => 'printError';
+  , '""' => 'showStatus';
 
 =chapter METHODS
 
@@ -113,19 +146,23 @@ sub log($$$)
     $self;
 }
 
-=method reportAll
+=method reportAll OPTIONS
 Re-cast the messages in all collect exceptions into the defined
-dispatchers, which were disabled during the try block.
+dispatchers, which were disabled during the try block.  The OPTIONS
+will end-up as HASH-of-OPTIONS to M<Log::Report::report()>; see
+M<Log::Report::Exception::throw()> which does the job.
 =cut
 
-sub reportAll() { $_->throw for shift->exceptions }
+sub reportAll(@) { $_->throw(@_) for shift->exceptions }
 
 =method reportFatal
 Re-cast only the fatal message to the defined dispatchers.  If the
-block was left without problems, then nothing will be done.
+block was left without problems, then nothing will be done.  The OPTIONS
+will end-up as HASH-of-OPTIONS to M<Log::Report::report()>; see
+M<Log::Report::Exception::throw()> which does the job.
 =cut
 
-sub reportFatal() { $_->throw for shift->wasFatal }
+sub reportFatal(@) { $_->throw(@_) for shift->wasFatal }
 
 =section Status
 
@@ -149,15 +186,18 @@ sub wasFatal()
     $self->{died} ? $self->{exceptions}[-1] : ();
 }
 
-=method printError
+=method showStatus
 If this object is kept in C<$@>, and someone uses this as string, we
 want to show the fatal error message.
+
+The message is not very informative for the good cause: we do not want
+people to simply print the C<$@>, but wish for a re-cast of the message
+using M<reportAll()> or M<reportFatal()>.
 =cut
 
-sub printError()
+sub showStatus()
 {   my $fatal = shift->wasFatal or return '';
-    # don't use '.', because it is overloaded for message
-    join('', $fatal->reason, ': ', $fatal->message, "\n");
+    __x"try-block stopped with {reason}", reason => $fatal->reason;
 }
 
 1;

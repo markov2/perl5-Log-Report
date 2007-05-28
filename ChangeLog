@@ -1,6 +1,21 @@
 
 ==== version history of Log::Report
 
+version 0.03: Mon May 28 20:16:26 CEST 2007
+	- Log::Report::Message without msgid forgot _append.
+	- Log::Report::Message must clone at concatenation.
+	- remove translations from POT when not referenced anymore, and
+	  not translated either.
+	- $@ after try will not show the message, because we want people
+	  to use reportAll() or reportFatal().
+	- dispatchers now have a format_reason, defaulting to LOWERCASE
+	  which looks nicer than uppercase.
+	- added docs to ::Try
+	- reorganized some docs.
+	- Log::Report::Util lacked the trailing "1;"
+	- fall-back to no translation in case of unknown locale in ::POT
+	- test functionality of setlocale, and hopefully fixed things
+
 version 0.02: Mon May 28 00:49:52 CEST 2007
 	- added HTML documentation to http://perl.overmeer.net/log-report/
 	- added README and Changelog to MANIFEST
@@ -21,4 +36,4 @@ version 0.02: Mon May 28 00:49:52 CEST 2007
 	  . t/50file.t failed because no -t STDERR
 
 version 0.01: Fri May 25 12:13:13 CEST 2007
-	- initial
+	- initial (quite complete) implementation.

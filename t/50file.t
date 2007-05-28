@@ -20,8 +20,7 @@ isa_ok($disp[0], 'Log::Report::Dispatcher');
 
 my $file1 = '';
 open my($fh1), ">", \$file1 or die $!;
-my $d = dispatcher FILE => 'file1'
-  , to => $fh1;
+my $d = dispatcher FILE => 'file1', to => $fh1;
 
 @disp = dispatcher 'list';
 cmp_ok(scalar(@disp), '==', 1 + $disp_stderr);
@@ -43,6 +42,7 @@ is($needs[-1], 'PANIC');
 my $file2 = '';
 open my($fh2), ">", \$file2 or die $!;
 my $e = dispatcher FILE => 'file2'
+  , format_reason => 'UPPERCASE'
   , to => $fh2, accept => '-INFO';
 ok(defined $e, 'created second disp');
 isa_ok($e, 'Log::Report::Dispatcher::File');
@@ -91,14 +91,14 @@ is(substr($file2, $t2), "INFO: just to inform you\n");
 notice "note this!";
 my $s = length $file1;
 cmp_ok($s, '>', 0, 'disp1 take notice');
-is($file1, "NOTICE: note this!\n");
+is($file1, "notice: note this!\n");  # format_reason LOWERCASE
 my $t4 = length $file2;
 cmp_ok($t4, '==', $t3, 'disp2 ignores notice');
 
 warning "oops, be warned!";
 my $s2 = length $file1;
 cmp_ok($s2, '>', $s, 'disp1 take warning');
-like(substr($file1, $s), qr/^WARNING: oops, be warned!/);
+like(substr($file1, $s), qr/^warning: oops, be warned!/);
 my $t5 = length $file2;
 cmp_ok($t5, '==', $t4, 'disp2 ignores warnings');
 

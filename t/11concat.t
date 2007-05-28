@@ -16,7 +16,7 @@ my $a = __"Hello";
 isa_ok($a, 'Log::Report::Message');
 my $b = $a . " World!\n";
 isa_ok($b, 'Log::Report::Message');
-cmp_ok(refaddr $a, '==', refaddr $b);
+cmp_ok(refaddr $a, '!=', refaddr $b);  # must clone
 is("$b", "Hello World!\n");
 
 my $c = 'a' . 'b' . __("c") . __("d") . "e" . __("f");

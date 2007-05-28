@@ -60,13 +60,21 @@ sub message()     {shift->{message}}
 Insert the message contained in the exception into the currently
 defined dispatchers.  The C<throw> name is commonly known
 exception related terminology for C<report>.
+
+The OPTIONS overrule the captured options to M<Log::Report::report()>.
+This can be used to overrule a destination.
+
+=example overrule defaults to report
+ try { print {to => 'stderr'}, ERROR => 'oops!' };
+ $@->reportFatal(to => 'syslog');
 =cut
 
 # if we would used "report" here, we get a naming conflict with
 # function Log::Report::report.
 sub throw(@)
 {   my $self = shift;
-    report $self->{report_opts}, $self->reason, $self->message;
+    my $opts = @_ ? { %{$self->{report_opts}}, @_ } : $self->{report_opts};
+    report $opts, $self->reason, $self->message;
 }
 
 1;
