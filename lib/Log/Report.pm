@@ -955,18 +955,18 @@ information (for a limited sub-set of dispatchers)
 Various frameworks used with perl programs define different labels
 to indicate the reason for the message to be produced.
 
- Perlish  Log::Dispatch      Log4Perl Log::Report
- print    0,debug            debug    trace
- print    0,debug            debug    assert
- print    1,info             info     info
- warn\n   2,notice           info     notice
- warn     3,warning          warn     mistake
- carp     3,warning          warn     warning
- die\n    4,error,err        error    error
- die      5,critical,crit    fatal    fault
- croak    6,alert            fatal    alert  
- croak    7,emergency,emerg  fatal    failure
- confess  7,emergency,emerg  fatal    panic
+ Perl5 Log::Dispatch Syslog Log4Perl Log::Report
+ print   0,debug     debug  debug    trace
+ print   0,debug     debug  debug    assert
+ print   1,info      info   info     info
+ warn\n  2,notice    notice info     notice
+ warn    3,warning   warn   warn     mistake
+ carp    3,warning   warn   warn     warning
+ die\n   4,error     err    error    error
+ die     5,critical  crit   fatal    fault
+ croak   6,alert     alert  fatal    alert  
+ croak   7,emergency emerg  fatal    failure
+ confess 7,emergency emerg  fatal    panic
 
 =subsection Run modes
 The run-mode change which messages are passed to a dispatcher, but

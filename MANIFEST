@@ -2,6 +2,7 @@ ChangeLog
 MANIFEST
 Makefile.PL
 README
+bin/xgettext-perl
 lib/Log/Report.pm
 lib/Log/Report/Dispatcher.pm
 lib/Log/Report/Dispatcher/File.pm

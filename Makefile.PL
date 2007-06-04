@@ -4,8 +4,11 @@ use 5.8.2;
 
 WriteMakefile
   ( NAME      => 'Log::Report'
-  , VERSION   => '0.03'
+  , VERSION   => '0.04'
   , PREREQ_PM => { Test::More => 0.47 }
+
+  , EXE_FILES => [ 'bin/xgettext-perl' ]
+
   , AUTHOR    => 'Mark Overmeer'
   , ABSTRACT  => 'report a problem, pluggable handlers and language support'
   );

@@ -32,7 +32,7 @@ Log::Report::Dispatcher::LogDispatch - send messages to Log::Dispatch back-end
 =chapter SYNOPSIS
  use Log::Dispatch::File;
  dispatcher Log::Dispatch::File => 'logger', accept => 'NOTICE-'
-   , to_level => [ 'ALERT-' => 'err' ];
+   , filename => 'logfile', to_level => [ 'ALERT-' => 'err' ];
 
  # disable default dispatcher
  dispatcher close => 'logger';

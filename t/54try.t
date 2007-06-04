@@ -10,7 +10,10 @@ use Test::More tests => 23;
 
 use Log::Report undef, syntax => 'SHORT';
 
-use POSIX ':locale_h';  # avoid user's environment
+use POSIX ':locale_h', 'setlocale';  # avoid user's environment
+
+setlocale(LC_ALL)
+   or setlocal(LC_ALL, 'en_US');
 
 # start a new logger
 my $text = '';

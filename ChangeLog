@@ -1,6 +1,14 @@
 
 ==== version history of Log::Report
 
+version 0.04: Mon Jun  4 11:05:10 CEST 2007
+	- removed incorrect doc about "mode TRY", which does not exist.
+	- included syslog in "reason" comparison table
+	- have Makefile.PL install xgettext-perl
+	- t/50file.t needed more work-arounds to pass automated module
+	  tests (which go without -t STDERR)
+	- attempts to make test-scripts run on various platforms.
+
 version 0.03: Mon May 28 20:16:26 CEST 2007
 	- Log::Report::Message without msgid forgot _append.
 	- Log::Report::Message must clone at concatenation.

@@ -484,19 +484,19 @@ will get translated as well.  Otherwise, all will be in English.
 Exactly what will be added depends on the actual mode of the dispatcher
 (change it with M<mode()>, initiate it with M<new(mode)>).
 
-                        mode mode mode mode block
- REASON   SOURCE   TE!  NORM -v   -vv  -vvv TRY
- trace    program  ...                 S      
- assert   program  ...            SL   SL     
- info     program  T..       S    S    S 
- notice   program  T..  S    S    S    S    D
- mistake  user     T..  S    S    S    SL   D
- warning  program  T.!  SL   SL   SL   SL   DL
- error    user     TE.  S    S    SL   SC   B
- fault    system   TE!  S    S    SL   SC   B
- alert    system   T.!  S    S    SC   SC   S
- failure  system   TE!  S    S    SC   SC   S
- panic    program  .E.  SC   SC   SC   SC   SC
+                        mode mode mode mode
+ REASON   SOURCE   TE!  NORM -v   -vv  -vvv
+ trace    program  ...                 S
+ assert   program  ...            SL   SL
+ info     program  T..       S    S    S
+ notice   program  T..  S    S    S    S
+ mistake  user     T..  S    S    S    SL
+ warning  program  T.!  SL   SL   SL   SL
+ error    user     TE.  S    S    SL   SC
+ fault    system   TE!  S    S    SL   SC
+ alert    system   T.!  S    S    SC   SC
+ failure  system   TE!  S    S    SC   SC
+ panic    program  .E.  SC   SC   SC   SC
 
  -v = verbose, -vv = debug, -vvv = trace
  T - usually translated
