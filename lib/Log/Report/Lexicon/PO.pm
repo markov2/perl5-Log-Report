@@ -379,7 +379,7 @@ Format the object into a multi-lined string.
 =option  nr_plurals INTEGER
 =default nr_plurals C<undef>
 If the number of plurals is specified, then the plural translation
-list can be checked for the correct lenght.  Otherwise, no smart
+list can be checked for the correct length.  Otherwise, no smart
 behavior is attempted.
 =cut
 

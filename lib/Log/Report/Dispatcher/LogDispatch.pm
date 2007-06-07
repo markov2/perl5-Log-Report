@@ -47,7 +47,7 @@ approach.  The REASON of Log::Report limits the responsibility of the
 programmer to indicate the cause of the message: whether it was able to
 handle a certain situation.  The Log::Dispatch levels are there for the
 user's of the program.  However: the programmer does not known anything
-about the application (in the general case).  This is cause of miuch of
+about the application (in the general case).  This is cause of much of
 the trickery in Perl programs.
 
 The default translation table is list below.  You can change the mapping

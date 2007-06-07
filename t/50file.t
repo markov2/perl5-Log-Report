@@ -9,17 +9,9 @@ use Test::More tests => 38;
 
 use Log::Report undef, syntax => 'SHORT';
 
-my $disp_stderr = -t STDERR ? 1 : 0;
-
 my @disp = dispatcher 'list';
-
-if($disp_stderr)
-{   cmp_ok(scalar(@disp), '==', $disp_stderr);
-    isa_ok($disp[0], 'Log::Report::Dispatcher');
-}
-else
-{   ok(1); ok(1);
-}
+cmp_ok(scalar(@disp), '==', 1);
+isa_ok($disp[0], 'Log::Report::Dispatcher');
 
 # start new dispatcher to file
 
@@ -28,7 +20,7 @@ open my($fh1), ">", \$file1 or die $!;
 my $d = dispatcher FILE => 'file1', to => $fh1;
 
 @disp = dispatcher 'list';
-cmp_ok(scalar(@disp), '==', 1 + $disp_stderr);
+cmp_ok(scalar(@disp), '==', 2);
 
 ok(defined $d, 'created file dispatcher');
 isa_ok($d, 'Log::Report::Dispatcher::File');
@@ -53,7 +45,7 @@ ok(defined $e, 'created second disp');
 isa_ok($e, 'Log::Report::Dispatcher::File');
 
 @disp = dispatcher 'list';
-cmp_ok(scalar(@disp), '==', 2 + $disp_stderr);
+cmp_ok(scalar(@disp), '==', 3);
 
 @needs = $e->needs;
 cmp_ok(scalar(@needs), '>=', 3, 'needs');

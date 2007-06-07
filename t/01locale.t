@@ -1,19 +1,29 @@
 #!/usr/bin/perl
 # test locale
 
-use Test::More tests => 9;
+use Test::More;
+use POSIX;
 
+my $default;
 BEGIN  {
-   use_ok('POSIX', ':locale_h', 'setlocale');
+   eval "POSIX->import( qw/setlocale :locale_h/ )";
+   $@ and plan skip_all => "no translation support in Perl or OS";
+
+   $default = setlocale(LC_MESSAGES);
+   plan tests => 10;
 }
 
-my $default = setlocale(LC_MESSAGES) || 'none';
 ok(1, "default locale: $default");
+
+my $try = setlocale LC_MESSAGES, 'en_GB';
+ok(defined $try, 'defined return');
+is($try, 'en_GB');
 
 $! = 2;
 my $err_en = "$!";
 ok(defined $err_en, $err_en);  # platform dependent
-my $try = setlocale LC_MESSAGES, 'nl_NL';
+
+$try = setlocale LC_MESSAGES, 'nl_NL';
 ok(defined $try, 'defined return');
 is($try, 'nl_NL');
 

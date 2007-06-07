@@ -42,14 +42,16 @@ territory, character-set (codeset), and modifier.
 =cut
 
 sub parse_locale($)
-{  $_[0] =~
-     m/^ ([a-z]{2})              # ISO 631
-         (?: \_ ([a-zA-Z\d]+)    # ISO 3166
-             (?: \. ([\w-]+) )?  # codeset
-         )?
-         (?: \@ (\S+) )?         # modifier
-           $
-      /x;
+{   return ($1, $2, $3, $4) if $_[0] =~
+      m/^ ([a-z]{2})              # ISO 631
+          (?: \_ ([a-zA-Z\d]+)    # ISO 3166
+              (?: \. ([\w-]+) )?  # codeset
+          )?
+          (?: \@ (\S+) )?         # modifier
+            $
+       /x;
+
+    $_[0] =~ m/^(C|POSIX)$/ ? ($1) : ();
 }
 
 =function expand_reasons REASONS
@@ -103,7 +105,7 @@ sub expand_reasons($)
 }
 
 =function escape_chars STRING
-Replace all escape characters into their readible counterpart.  For
+Replace all escape characters into their readable counterpart.  For
 instance, a new-line is replaced by backslash-n.
 
 =function unescape_chars STRING

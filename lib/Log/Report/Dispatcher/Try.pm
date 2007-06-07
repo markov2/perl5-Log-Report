@@ -26,7 +26,7 @@ Log::Report::Dispatcher::Try - capture all reports as exceptions
 
  print ref $@;      # Log::Report::Dispatcher::Try
 
- $@->reportFatal;   # redispatch result of try block
+ $@->reportFatal;   # re-dispatch result of try block
  $@->reportAll;     # ... also warnings etc
  if($@) {...}       # if errors
  if($@->failed) {   # same       # }

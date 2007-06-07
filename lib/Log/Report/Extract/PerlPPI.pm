@@ -152,7 +152,7 @@ sub process($@)
 
                  my $line = $node->location->[0];
                  unless($domain)
-                 {   warning __x
+                 {   mistake __x
                          "no textdomain for translatable at {fn} line {line}"
                         , fn => $fn, line => $line;
                      return 0;
@@ -189,16 +189,34 @@ sub _get($$$$$)
     {   my $msgid;
         my $next  = $first->snext_sibling;
         my $sep   = $next && $next->isa('PPI::Token::Operator') ? $next : '';
+        my $line  = $first->location->[0];
 
         if($first->isa('PPI::Token::Quote'))
-        {   last if $sep !~ m/^ (?: | \, | \=\> | \; ) $/x;
+        {   last if $sep !~ m/^ (?: | \=\> | [,;:] ) $/x;
             $msgid = $first->string;
+
+            if(  $first->isa("PPI::Token::Quote::Double")
+              || $first->isa("PPI::Token::Quote::Interpolate"))
+            {   mistake __x
+                   "do not interpolate in msgid (found '{var}' in line {line})"
+                   , var => $1, line => $line
+                      if $first->string =~ m/(?<!\\)(\$\w+)/;
+
+                # content string is uninterpreted, warnings to screen
+                $msgid = eval "qq{$msgid}";
+
+                error __x "string is incorrect at line {line}: {error}"
+                   , line => $line, error => $@ if $@;
+            }
         }
         elsif($first->isa('PPI::Token::Word'))
         {   last if $sep ne '=>';
             $msgid = $first->content;
         }
         else {last}
+
+        mistake __x "new-line is added automatically (found in line {line})"
+          , line => $line if $msgid =~ s/(?<!\\)\n$//;
 
         push @msgids, $msgid;
         last if $msgids==@msgids || !$sep;
@@ -218,8 +236,6 @@ sub showStats(;$)
 {   dispatcher needs => 'INFO'
         or return;
 
-    my $trace = dispatcher needs => 'TRACE';
-
     my $self = shift;
     my @domains = @_ ? @_ : $self->domains;
 
@@ -229,21 +245,33 @@ sub showStats(;$)
 
         foreach my $pot (@$pots)
         {   my $stats = $pot->stats;
+            next unless $stats->{fuzzy} || $stats->{inactive};
+
             $msgids   = $stats->{msgids};
-            trace __x
+            next if $msgids == $stats->{fuzzy};   # ignore the template
+
+            notice __x
                 "{domain}: {fuzzy%3d} fuzzy, {inact%3d} inactive in {filename}"
               , domain => $domain, fuzzy => $stats->{fuzzy}
-              , inact => $stats->{inactive}, filename => $pot->filename
-                 if $trace;
+              , inact => $stats->{inactive}, filename => $pot->filename;
+
             $fuzzy    += $stats->{fuzzy};
             $inactive += $stats->{inactive};
         }
 
-        info __xn
-            "{domain}: one file with {ids} msgids, {f} fuzzy and {i} inactive translations"
-          , "{domain}: {_count} files each {ids} msgids, {f} fuzzy and {i} inactive translations in total"
-          , scalar(@$pots), domain => $domain
-          , f => $fuzzy, ids => $msgids, i => $inactive;
+        if($fuzzy || $inactive)
+        {   info __xn
+"{domain}: one file with {ids} msgids, {f} fuzzy and {i} inactive translations"
+, "{domain}: {_count} files each {ids} msgids, {f} fuzzy and {i} inactive translations in total"
+              , scalar(@$pots), domain => $domain
+              , f => $fuzzy, ids => $msgids, i => $inactive
+        }
+        else
+        {   info __xn
+                "{domain}: one file with {ids} msgids"
+              , "{domain}: {_count} files with each {ids} msgids"
+              , scalar(@$pots), domain => $domain, ids => $msgids;
+        }
     }
 }
 

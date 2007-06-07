@@ -32,17 +32,23 @@ sub __($); sub __x($@); sub __n($$$@); sub __nx($$$@); sub __xn($$$@);
 sub N__($); sub N__n($$); sub N__w(@);
 
 require Log::Report::Translator::POT;
-my %translator =
- ( 'log-report' => Log::Report::Translator::POT->new(charset => 'utf-8')
- , rescue       => Log::Report::Translator->new
- );
 
 my $reporter;
 my %domain_start;
+my %settings;
+
+#
+# Some initiations
+#
+
+__PACKAGE__->_setting('log-report', translator =>
+    Log::Report::Translator::POT->new(charset => 'utf-8'));
+
+__PACKAGE__->_setting('rescue', translator => Log::Report::Translator->new);
 
 dispatcher FILE => stderr =>
    to => \*STDERR, accept => 'NOTICE-'
-      if -t STDERR;
+      if STDERR->fileno;
 
 =chapter NAME
 Log::Report - report a problem, pluggable handlers and language support
@@ -191,7 +197,7 @@ Use this specific locale, in stead of the user's preference.
  warning  __x'Disk {percent%.2f}% full', percent => $p
      if $p > 97;
 
- # error message, overruled to be printed in Brazillian
+ # error message, overruled to be printed in Brazilian
  report {locale => 'pt_BR'}
      WARNING => __$!;
 
@@ -456,7 +462,7 @@ Short for C<< report ALERT => MESSAGE >>
 =method failure MESSAGE
 Short for C<< report FAILURE => MESSAGE >>
 =method panic MESSAGE
-Short for C<< report PANIc => MESSAGE >>
+Short for C<< report PANIC => MESSAGE >>
 =cut
 
 sub trace(@)   {report TRACE   => @_}
@@ -472,6 +478,37 @@ sub failure(@) {report FAILURE => @_}
 sub panic(@)   {report PANIC   => @_}
 
 =section Language Translations
+
+The language translations are initiate by limited set of functions
+which contain two under-score (E<_>) characters in their name.  Most
+of them return a M<Log::Report::Message> object.
+
+BE WARNED(1) that -in general- its considered very bad practice to
+combine multiple translations into one message; translating
+may also affect the order of the translated components. Besides,
+when the translator only sees smaller parts of the text, his or
+her job becomes more complex.  So:
+
+ print __"Hello" . ', ' . __"World!";  # very bad idea!
+ print __"Hello, World!";    # yes: complete sentence.
+
+The the former case, tricks with overloading used by the
+M<Log::Report::Message> objects will still make delayed translations
+work.
+
+In normal situations, it is not a problem to translate interpolated
+values:
+
+ print __"the color is {c}", c => __"red";
+
+BE WARNED(2) that using C<< __'Hello' >> will produce a syntax error like
+"String found where operator expected at .... Can't find string terminator
+"'" anywhere before EOF".  The first quote is the cause of the complaint,
+but the second generates the error.  In the early days of Perl, the single
+quote was used to separate package name from function name, a role which
+was later replaced by a double-colon.  So C<< __'Hello' >> gets interpreted
+as C<< __::Hello ' >>.  Then, there is a trailing single quote which has
+no counterpart.
 
 =function __ MSGID
 This function (name is two under-score characters) will cause the
@@ -663,6 +700,13 @@ with M<report()>.
 Without explicit translator, a dummy translator is used for the domain
 which will use the untranslated message-id .
 
+=option  native_language CODESET 
+=default native_language 'en_US'
+This is the language which you have used to write the translatable and
+the non-translatable messages in.  In case no translation is needed,
+you still wish the system error messages to be in the same language
+as the report.  Of course, each textdomain can define its own.
+
 =examples of import
  use Log::Report 'my-domain'    # in each package
   , syntax     => 'SHORT';
@@ -671,7 +715,8 @@ which will use the untranslated message-id .
   , translator => Log::Report::Translator::POT->new
      ( lexicon  => '/home/me/locale'  # bindtextdomain
      , charset  => 'UTF-8'            # codeset
-     );
+     )
+  , native_language => 'nl_NL'; # untranslated msgs are Dutch
 
 =cut
 
@@ -685,6 +730,16 @@ sub import(@)
 
     if(my $trans = delete $opts{translator})
     {   $class->translator($textdomain, $trans, $pkg, $fn, $linenr);
+    }
+
+    if(my $native = delete $opts{native_language})
+    {   my ($lang) = parse_locale $native;
+
+        error "the specified native_language '{locale}' is not a valid locale"
+          , locale => $native unless defined $lang;
+
+        $class->_setting($textdomain, native_language => $native
+          , $pkg, $fn, $linenr);
     }
 
     push @{$domain_start{$fn}}, [$linenr => $textdomain];
@@ -725,7 +780,8 @@ You can only specify one TRANSLATOR per TEXTDOMAIN.
 sub translator($;$$$$)
 {   my ($class, $domain) = (shift, shift);
 
-    @_ or return $translator{$domain || 'rescue'} || $translator{rescue};
+    @_ or return $class->_setting($domain => 'translator')
+              || $class->_setting(rescue  => 'translator');
 
     defined $domain
         or error __"textdomain for translator not defined";
@@ -734,20 +790,41 @@ sub translator($;$$$$)
     ($pkg, $fn, $line) = caller    # direct call, not via import
         unless defined $pkg;
 
-    if(my $t = $translator{$domain})
-    {   error __x"textdomain '{domain}' configured twice. First: {fn} line {nr}"
-            , domain => $domain, fn => $t->{filename}, nr => $t->{linenr};
-    }
-
     $translator->isa('Log::Report::Translator')
         or error __"translator must be a Log::Report::Translator object";
 
-    $translator{$domain} =
-      { translator => $translator
-      , package => $pkg, filename => $fn, linenr => $line
-      };
+    $class->_setting($domain, translator => $translator, $pkg, $fn, $line);
+}
 
-    $translator;
+# c_method setting TEXTDOMAIN, NAME, [VALUE]
+# When a VALUE is provided (of unknown structure) then it is stored for the
+# NAME related to TEXTDOMAIN.  Otherwise, the value related to the NAME is
+# returned.  The VALUEs may only be set once in your program, and count for
+# all packages in the same TEXTDOMAIN.
+
+sub _setting($$;$)
+{   my ($class, $domain, $name, $value) = splice @_, 0, 4;
+    $domain ||= 'rescue';
+
+    defined $value
+        or return $settings{$domain}{$name};
+
+    # Where is the setting done?
+    my ($pkg, $fn, $line) = @_;
+    ($pkg, $fn, $line) = caller    # direct call, not via import
+         unless defined $pkg;
+
+    my $s = $settings{$domain} ||= {_pkg => $pkg, _fn => $fn, _line => $line};
+
+    error __x"only one package can contain configuration; for {domain} already in {pkg} in file {fn} line {line}"
+        , domain => $domain, pkg => $s->{_pkg}
+        , fn => $s->{_fn}, line => $s->{_line}
+           if $s->{_pkg} ne $pkg || $s->{_fn} ne $fn;
+
+    error __x"value for {name} specified twice", name => $name
+        if exists $s->{$name};
+
+    $s->{$name} = $value;
 }
 
 =section Reasons
@@ -782,7 +859,7 @@ The REASON argument to C<report()> replace them all.
 The translations use the beautiful syntax defined by
 M<Locale::TextDomain>, with some extensions (of course).  The main
 difference is that the actual translations are delayed till the delivery
-step.  This means that the popup in the graphical interface of the
+step.  This means that the pop-up in the graphical interface of the
 user will show the text in the language of the user, say Chinese,
 but at the same time syslog may write the English version of the text.
 With a little luck, translations can be avoided.
@@ -794,7 +871,7 @@ The following ideas are the base of this implementation:
 =over 4
 
 =item . simplification
-Handling errors and warnings is probably the most labour-intensive
+Handling errors and warnings is probably the most labor-intensive
 task for a programmer: when programs are written correctly, up-to
 three-quarters of the code is related to testing, reporting, and
 handling (problem) conditions.  Simplifying the way to create reports,
@@ -814,12 +891,12 @@ pluggable translation backend.  Translations are postponed until the
 text is dispatched to a user or log-file; the same report can be sent
 to syslog in (for instance) English and to the user interface in Dutch.
 
-=item . avoid dupplication
+=item . avoid duplication
 The same message may need to be documented on multiple locations: in
 web-pages for the graphical interface, in pod for the command-line
 configuration.  The same text may even end-up in pdf user-manuals.  When
 the message is written inside the Perl code, it's quite hard to get it
-out, to generate these documents.  Only an abstract message discription
+out, to generate these documents.  Only an abstract message description
 protocol will make flexible re-use possible.
 This component still needs to be implemented.
 
@@ -841,7 +918,7 @@ as a whole will not die, just the execution of a part of the program
 will seize.  However, what if the condition which caused the routine to die
 is solvable on a higher level?  Or what if the user of the code doesn't
 bother that a part fails, because it has implemented alternatives for
-that situation?  Exception handling is quite clumpsy in Perl5.
+that situation?  Exception handling is quite clumsy in Perl5.
 
 The C<Log::Report> set of distributions let modules concentrate on the
 program flow, and let the main program decide on the report handling
@@ -855,7 +932,7 @@ pluggable back-ends.
 Traditionally, perl has a very simple view on error reports: you
 either have a warning or an error.  However, it would be much clearer
 for user's and module-using applications, when a distinction is made
-between various causes.  For instance, a configuarion error is quite
+between various causes.  For instance, a configuration error is quite
 different from a disk-full situation.  In C<Log::Report>, the produced
 reports in the code tell I<what> is wrong.  The main application defines
 loggers, which interpret the cause into (syslog) levels.
@@ -891,7 +968,7 @@ line from a log-file, but simply skips the line.
 =item . mistake (user)
 When a user does something wrong, but what is correctable by smart
 behavior of the program.  For instance, in some configuration file,
-you can fill-in "yes" or "no", but the user wrote "yeh".  The program
+you can fill-in "yes" or "no", but the user wrote "yeah".  The program
 interprets this as "yes", producing a mistake message as warning.
 
 It is much nicer to tell someone that he/she made a mistake, than
@@ -912,10 +989,10 @@ problem can be some user error (i.e. wrong filename), or external
 C<$!> (C<$ERRNO>) variable is set here.
 
 =item . alert (system)
-Some external cause disturbes the execution of the program, but the
+Some external cause disturbs the execution of the program, but the
 program stays alive and will try to continue operation.  For instance,
 the connection to the database is lost.  After a few attempts, the
-database can be reached and the program continues as if nothing happend.
+database can be reached and the program continues as if nothing happened.
 The cause is external, so C<$!> is set.  Usually, a system administrator
 needs to be informed about the problem.
 
@@ -925,7 +1002,7 @@ C<$!> is set, and usually the system administrator wants to be
 informed.  The program will die.
 
 =item . panic (program)
-All above report classes are expected: some predicitable situation
+All above report classes are expected: some predictable situation
 is encountered, and therefore a message is produced.  However, programs
 often do some internal checking.  Of course, these conditions should
 never be triggered, but if they do... then we can only stop.
@@ -973,7 +1050,7 @@ The run-mode change which messages are passed to a dispatcher, but
 from a different angle than the dispatch filters; the mode changes
 behavioral aspects of the messages, which are described in detail in
 L<Log::Report::Dispatcher/Processing the message>.  However, it should
-behave as you expect: the DEBUG mode shows more than the VERBOSe mode,
+behave as you expect: the DEBUG mode shows more than the VERBOSE mode,
 and both show more than the NORMAL mode.
 
 =example extract run mode from Getopt::Long
@@ -1009,7 +1086,7 @@ need to replace the dispatcher with a new one with the same name:
   dispatcher FILE => 'myname', to => ..., mode => 'DEBUG';
 
 This may reopen connections (depends on the actual dispatcher), which
-might be not what you wish to happend.  In that case, you must take
+might be not what you wish to happened.  In that case, you must take
 the following approach:
 
   # at the start of your program
@@ -1026,20 +1103,20 @@ Of course, this comes with a small overall performance penalty.
 =subsection Exceptions
 
 The simple view on live says: you 're dead when you die.  However,
-complexer situations try to revive the dead.  Typically, the "die"
+more complex situations try to revive the dead.  Typically, the "die"
 is considered a terminating exception, but not terminating the whole
 program, but only some logical block.  Of course, a wrapper round
 that block must decide what to do with these emerging problems.
 
 Java-like languages do not "die" but throw exceptions which contain the
-information about what went wrong.  Perl modules like M<Exception::Class>
+information about what went wrong.  Perl modules like C<Exception::Class>
 simulate this.  It's a hassle to create exception class objects for each
 emerging problem, and the same amount of work to walk through all the
 options.
 
 Log::Report follows a simpler scheme.  Fatal messages will "die", which is
 caught with "eval", just the Perl way (used invisible to you).  However,
-the wrapper get's its hands on the message as the user has specified it:
+the wrapper gets its hands on the message as the user has specified it:
 untranslated, with all unprocessed parameters still at hand.
 
  try { fault __x "cannot open file {file}", file => $fn };
@@ -1142,19 +1219,19 @@ automatically.
 The distinction between C<error> and C<fault> is a bit artificial her, just
 to demonstrate the difference between the two.  In this case, I want to
 express very explicitly that the user made an error by passing the name
-of a directory in which a file is not readible.  In the common case,
+of a directory in which a file is not readable.  In the common case,
 the user is not to blame and we can use C<fault>.
 
-A module like M<Log::Message> is an object oriented version of the
-standard Perl functions, and as such not really contributing tp
-abstaction.
+A CPAN module like C<Log::Message> is an object oriented version of the
+standard Perl functions, and as such not really contributing to
+abstraction.
 
 =subsection Log::Dispatch and Log::Log4perl
 The two major logging frameworks for Perl are M<Log::Dispatch> and
 M<Log::Log4perl>; both provide a pluggable logging interface.
 
 Both frameworks do not have (gettext or maketext) language translation
-support, which has various concequences.  When you wish for to report
+support, which has various consequences.  When you wish for to report
 in some other language, it must be translated before the logging
 function is called.   This may mean that an error message is produced
 in Chinese, and therefore also ends-up in the syslog file in Chinese.
@@ -1165,7 +1242,7 @@ get the message in Chinese, but you get your report in your beloved Dutch.
 When no dispatcher needs to report the message, then no time is lost in
 translating.
 
-With both logging frameworks, you use terminology comparible to
+With both logging frameworks, you use terminology comparable to
 syslog: the module programmer determines the seriousness of the
 error message, not the application which integrates multiple modules.
 This is the way perl programs usually work, but often the cause for

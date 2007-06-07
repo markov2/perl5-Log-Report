@@ -166,7 +166,7 @@ It's always complicated to find the lexicon files, because the perl
 package can be installed on any weird operating system.  Therefore,
 you may need to specify the lexicon directory or alternative directories
 explicitly.  However, you may also choose to install the lexicon files
-inbetween the perl modules.
+in between the perl modules.
 
 =section merge lexicon files with perl modules
 By default, the filename which contains the package which contains the
@@ -237,7 +237,7 @@ The translation table is taken from the first existing of these files:
   nl/LC_MESSAGES/my-domain.po
 
 Then, attempts are made which are not compatible with gettext.  The
-advantange is that the directory structure is much simpler.  The idea
+advantage is that the directory structure is much simpler.  The idea
 is that each domain has its own locale installation directory, instead
 of everything merged in one place, what gettext presumes.
 
@@ -250,7 +250,7 @@ In order of attempts:
   my-domain/nl-NL.po
   my-domain/nl.po
 
-Filenames may get mutulated by the platform (which we will try to hide
+Filenames may get mutilated by the platform (which we will try to hide
 from you [please help improve this]), and are treated case-INsensitive!
 =cut
 

@@ -1,6 +1,34 @@
 
 ==== version history of Log::Report
 
+version 0.05: Thu Jun  7 13:18:13 CEST 2007
+	Changes:
+	- the stderr dispatcher will be opened when there is any
+	  file at STDERR, not only a tty.
+
+	Improvements:
+	- simplified t/50files.t
+	- another attempt to get t/01locale.t correct on all platforms
+	- ::Util; locale parser must accept C and POSIX
+	- ::Dispatcher; make message output format translatable
+	- ::Extract::PPI; report mistake when msgid ends with new-line
+	- ::Extract::PPI; mistake when a variable is interpolated in msgid
+	- ::Extract::PPI; qq{} msgids will now be detected as well
+	- ::Extract::PPI; special characters the "" and qq{} strings with
+	  get interpreted (PPI does not do that automatically)
+	- ::Extract::PPI: only report the nessecary
+	- after a long discussion within Amsterdam.pm about concatenation
+          of translated fragments, it was decided to permit it but put
+	  some extra warnings in the docs.
+	- also warn about __'xx'   meaning   __::xx '
+	- updated log-report/nl_NL.po translations
+	- configure native_language for a domain
+	- untranslated messages will still be formatted according to the
+          rules of the native_language
+	- translator table setting per domain now integrated with
+	  other settings for the domain.
+	- ran ispell on the man-pages
+
 version 0.04: Mon Jun  4 11:05:10 CEST 2007
 	- removed incorrect doc about "mode TRY", which does not exist.
 	- included syslog in "reason" comparison table

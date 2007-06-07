@@ -25,8 +25,8 @@ Log::Report::Dispatcher - manage dispatching
  dispatcher 'FILE', 'log'
    , mode => 'DEBUG', to => '/var/log/mydir/myfile';
 
- # The follow will be created for you always (when STDERR leads
- # to a terminal).  Full package name is used, same as 'FILE'
+ # The follow will be created for you always (when STDERR
+ # is open).  Full package name is used, same as 'FILE'
  dispatcher Log::Report::Dispatch::File => 'stderr'
     , to => \*STDERR, accept => 'NOTICE-';
 
@@ -37,7 +37,7 @@ Log::Report::Dispatcher - manage dispatching
 This base-class handles the creation of dispatchers, plus the
 common filtering rules.  
 
-When the program sees a terminal on STDERR (the usual case for any
+When the program sees an open file on STDERR (the usual case for any
 non-daemon), it will create a dispatcher for you to show all messages
 with minimal level NOTICE to it.  That dispatcher is named 'stderr',
 and when you create one with the same name yourself, it will replace
@@ -84,7 +84,7 @@ C<INFO> or debug messages, C<VERBOSE> (C<1>; shows C<INFO> not debug),
 C<ASSERT> (C<2>; only ignores C<TRACE> messages), or C<DEBUG> (C<3>)
 which shows everything.  See section L<Log::Report/Run modes>.
 
-You are adviced to use the symbolic mode names when the mode is
+You are advised to use the symbolic mode names when the mode is
 changed within your program: the numerical values are available
 for smooth M<Getopt::Long> integration.
 
@@ -113,9 +113,9 @@ sub new(@)
 }
 
 my %format_reason = 
-  ( LOWERCASE => sub { (lc $_[0]) . ': ' }
-  , UPPERCASE => sub { (uc $_[0]) . ': ' }
-  , UCFIRST   => sub { (ucfirst lc $_[0]) . ': '}
+  ( LOWERCASE => sub { lc $_[0] }
+  , UPPERCASE => sub { uc $_[0] }
+  , UCFIRST   => sub { ucfirst lc $_[0] }
   , IGNORE    => sub { '' }
   );
   
@@ -137,7 +137,7 @@ sub init($)
 }
 
 =method close
-Terminate the dispatcher's activities.  The dispatcher gets disabled,
+Terminate the dispatcher activities.  The dispatcher gets disabled,
 to avoid the case that it is accidentally used.  Returns C<undef> (false)
 if the dispatcher was already closed.
 =cut
@@ -194,7 +194,7 @@ sub _disable($)
 
 =method isDisabled
 =method needs
-Returns the list with all REASONS which are needed to fulfil this
+Returns the list with all REASONS which are needed to fulfill this
 dispatcher's needs.  When disabled, the list is empty, but not forgotten.
 =cut
 
@@ -221,7 +221,7 @@ may be multi-line (in case a stack trace is produced).
 
 my %always_loc = map {($_ => 1)} qw/ASSERT WARNING PANIC/;
 sub translate($$$)
-{   my ($self, $opts, $reason, $message) = @_;
+{   my ($self, $opts, $reason, $msg) = @_;
 
     my $mode = $self->{mode};
     my $code = $reason_code{$reason}
@@ -237,48 +237,46 @@ sub translate($$$)
      || ($mode==2 && $code >= $reason_code{ALERT})
      || ($mode==3 && $code >= $reason_code{ERROR});
 
-    my $translate = defined $message->msgid;
-    my $locale = $translate ? ($opts->{locale} || $self->{locale}) : 'en_US';
-    my $loc    = defined $locale ? setlocale(LC_ALL, $locale) : undef;
+    my $locale
+      = defined $msg->msgid
+      ? ($opts->{locale} || $self->{locale})      # translate whole
+      : Log::Report->_setting($msg->domain, 'native_language');
+    my $oldloc = setlocale(LC_ALL, $locale || 'en_US');
 
-    my $text;
-    if($translate)
-    {   $text  = $self->{format_reason}->((__$reason)->toString)
-              .  $message->toString;
-        $text .= ': ' . strerror($opts->{errno}) if $opts->{errno};
-        $text .= "\n";
-    }
-    else
-    {   $text   = $self->{format_reason}->($reason) . $message->untranslated;
-        $text  .= ': '. strerror($opts->{errno}) if $opts->{errno};
-        $text  .= "\n";
-    }
+    my $r = $self->{format_reason}->((__$reason)->toString);
+    my $e = $opts->{errno} ? strerror($opts->{errno}) : undef;
+
+    my $format
+      = $r && $e ? N__"{reason}: {message}; {error}"
+      : $r       ? N__"{reason}: {message}"
+      : $e       ? N__"{message}; {error}"
+      :            undef;
+
+    my $text = defined $format
+      ? __x($format, message => $msg->toString, reason => $r, error => $e
+           )->toString
+      : $msg->toString;
+    $text .= "\n";
 
     if($show_stack)
     {   my $stack = $opts->{stack} ||= $self->collectStack;
 
         foreach (@$stack)
-        {   $text .= $_->[0] . " " .
-              ( $translate
-              ? __x( 'at {filename} line {line}'
-                   , filename => $_->[1], line => $_->[2] )
-              : "at $_->[1] line $_->[2]"
-              ) . "\n";
+        {   $text .= $_->[0] . " "
+              . __x( 'at {filename} line {line}'
+                   , filename => $_->[1], line => $_->[2] )->toString
+              . "\n";
         }
     }
     elsif($show_loc)
     {   my $loc = $opts->{location} ||= $self->collectLocation;
         my ($pkg, $fn, $line, $sub) = @$loc;
-        $text .= " " .
-          ( $translate
-          ? __x('at {filename} line {line}', filename => $fn, line => $line)
-          : "at $fn line $line"
-          ) . "\n";
+        $text .= " "
+          . __x('at {filename} line {line}', filename => $fn, line => $line)->toString
+          . "\n";
     }
 
-    setlocale(LC_ALL, $loc)
-        if defined $loc;
-
+    setlocale(LC_ALL, $oldloc);
     $text;
 }
 
@@ -434,7 +432,7 @@ sub stackTraceParam($$$)
 When a dispatcher is created (via M<new()> or M<Log::Report::dispatcher()>),
 you must specify the TYPE of the dispatcher.  This can either be a class
 name, which extends a M<Log::Report::Dispatcher>, or a pre-defined
-abbrevation of a class name.  Implemented are:
+abbreviation of a class name.  Implemented are:
 
 =over 4
 =item M<Log::Report::Dispatcher::File> (abbreviation 'FILE')

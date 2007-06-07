@@ -33,7 +33,7 @@ Log::Report::Lexicon::POTcompact - use translations from a POT file
 
 =chapter DESCRIPTION
 This module is translating, based on PO files. PO files are used to store
-translations in humanly readible format for most of existing translation
+translations in humanly readable format for most of existing translation
 frameworks, like GNU gettext and Perl's Maketext.
 
 Internally, this module tries to be as efficient as possible: high
@@ -134,7 +134,7 @@ sub algorithm() {shift->{algo}}
 
 =method msgid STRING
 Lookup the translations with the STRING.  Returns a SCALAR, when only
-one translation is known, and an ARRAY wheren there are multiple.
+one translation is known, and an ARRAY wherein there are multiple.
 Returns C<undef> when the translation is not defined.
 =cut
 
@@ -159,8 +159,7 @@ sub msgstr($;$)
 
 =method header FIELD
 The translation of a blank MSGID is used to store a MIME header, which
-contains headeruration information.  When only a FIELD is specified, that
-content is looked-up (case-insensitive).
+contains meta-data.  The FIELD content is returned.
 
 =cut
 

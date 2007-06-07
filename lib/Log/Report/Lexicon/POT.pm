@@ -40,7 +40,7 @@ Log::Report::Lexicon::POT - manage PO files
 
 =chapter DESCRIPTION
 This module is reading, extending, and writing POT files.  POT files
-are used to store translations in humanly readible format for most of
+are used to store translations in humanly readable format for most of
 existing translation frameworks, like GNU gettext and Perl's Maketext.
 If you only wish to access the translation, then you may use the much
 more efficient M<Log::Report::Lexicon::POTcompact>.
@@ -84,7 +84,7 @@ with msgid as key.
 
 =option  date STRING
 =default date now
-Overrule the date which is included in the gerenated header.
+Overrule the date which is included in the generated header.
 
 =option  filename STRING
 =default filename C<undef>
@@ -310,13 +310,14 @@ sub nrPlurals()
     $self->{nplurals} ||= _nr_plurals($self->header('Plural-Forms'));
 }
 
-=method header FIELD, [CONTENT]
+=method header [FIELD, [CONTENT]]
 The translation of a blank MSGID is used to store a MIME header, which
-contains headeruration information.  When only a FIELD is specified, that
-content is looked-up (case-insensitive).  When a CONTENT is specified,
-the knowledge will be stored.  In latter case, the headeruration structure
+contains some meta-data.  When only a FIELD is specified, that content is
+looked-up (case-insensitive) and returned.  When a CONTENT is specified,
+the knowledge will be stored.  In latter case, the header structure
 may get created.  When the CONTENT is set to C<undef>, the field will
 be removed.
+
 =cut
 
 sub _now() { strftime "%Y-%m-%d %H:%M%z", localtime }

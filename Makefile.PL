@@ -4,7 +4,7 @@ use 5.8.2;
 
 WriteMakefile
   ( NAME      => 'Log::Report'
-  , VERSION   => '0.04'
+  , VERSION   => '0.05'
   , PREREQ_PM => { Test::More => 0.47 }
 
   , EXE_FILES => [ 'bin/xgettext-perl' ]
@@ -32,6 +32,6 @@ HTML_PACKAGE    = ../public_html/log-report/htmlpkg
 
 # for Log::Report
 xgettext: $(TO_INST_PM)
-	PERL5LIB=lib bin/xgettext-perl --mode=DEBUG \
+	PERL5LIB=lib bin/xgettext-perl --mode=VERBOSE \
 	    -p lib/Log/Report/messages
 __POSTAMBLE

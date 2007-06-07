@@ -10,7 +10,7 @@ use POSIX  qw/locale_h/;
 Log::Report::Message - a piece of text to be translated
 
 =chapter SYNOPSIS
- Used internally by Log::Report
+ # Created by Log::Report's __ functions
 
 =chapter DESCRIPTION
 Any used of a translation function, like M<Log::Report::__()> or 
@@ -121,11 +121,15 @@ Returns the msgid which will later be translated.
 =method append
 Returns the string or M<Log::Report::Message> object which is appended
 after this one.  Usually C<undef>.
+
+=method domain
+Returns the domain of the first translatable string in the structure.
 =cut
 
 sub prepend() {shift->{_prepend}}
 sub msgid()   {shift->{_msgid}}
 sub append()  {shift->{_append}}
+sub domain()  {shift->{_domain}}
 
 =method toString [LOCALE]
 Translate a message.  If not specified, the default locale is used.
@@ -195,11 +199,11 @@ sub untranslated()
    . (defined $self->{_append}  ? $self->{_append}  : '');
 }
 
-=method concat STRING|OBJECT, [REVERSED]
+=method concat STRING|OBJECT, [PREPEND]
 This method implements the overloading of concatenation, which is needed
-to delay translations even longer.  When REVERSED is true, the STRING
+to delay translations even longer.  When PREPEND is true, the STRING
 or OBJECT (other C<Log::Report::Message>) needs to prepended, otherwise
-appended.
+it is appended.
 
 =examples of concatenation
  print __"Hello" . ' ' . __"World!";
@@ -232,7 +236,7 @@ interpolate OPTION values in your strings.
 =subsection Interpolating
 With the C<__x()> or C<__nx()>, interpolation will take place on the
 translated MSGID string.  The translation can contain the VARIABLE
-and OPTION names inbetween curly brackets.  Text between curly brackets
+and OPTION names between curly brackets.  Text between curly brackets
 which is not a known parameter will be left untouched.
 
 Next to the name, you can specify a format code.  With C<gettext()>,
@@ -259,7 +263,7 @@ examples:
          , size => '12345', fn => $filename;
 
 An additional advantage is the fact that not all languages produce
-comparible length strings.  Now, the translators can take care that
+comparable length strings.  Now, the translators can take care that
 the layout of tables is optimal.
 
 =subsection Interpolation of OPTIONS
@@ -297,7 +301,7 @@ With C<Log::Report>, you can do
              );
 
 Of course, you need to be aware that the name used to reference the
-counter is pixed to C<_count>.  The first example works as well, but
+counter is fixed to C<_count>.  The first example works as well, but
 is more verbose.
 
 =subsection Interpolation of VARIABLES
@@ -328,7 +332,7 @@ only argument.  This is a hash in which all OPTIONS and VARIABLES
 can be found.
 =item .
 When the value is an ARRAY, all members will be interpolated with C<$">
-inbetween the elements.
+between the elements.
 =back
 
 =example reducing the number of translations

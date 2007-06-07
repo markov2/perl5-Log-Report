@@ -36,7 +36,7 @@ Log::Report::Dispatcher::Syslog - send messages to syslog
    , format_reason => 'IGNORE'
    , to_prio => [ 'ALERT-' => 'err' ];
 
- # disable default dispatcher
+ # disable default dispatcher, when daemon
  dispatcher close => 'stderr';
 
 =chapter DESCRIPTION

@@ -3,7 +3,7 @@ use warnings;
 use strict;
 use lib 'lib', '../lib';
 
-use Test::More tests => 45;
+use Test::More tests => 53;
 
 use Log::Report;
 use Log::Report::Util;
@@ -30,6 +30,9 @@ try_parse('nl.utf-8');
 try_parse('nl.utf-8@mod');
 try_parse('nl_NL@mod', 'nl', 'NL', undef, 'mod');
 try_parse('nl@mod', 'nl', undef, undef, 'mod');
+
+try_parse('C', 'C');
+try_parse('POSIX', 'POSIX');
 
 #
 ## expand_reasons

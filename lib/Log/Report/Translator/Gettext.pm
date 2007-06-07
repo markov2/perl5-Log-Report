@@ -17,7 +17,7 @@ Log::Report::Translator::Gettext - the GNU gettext infrastructure
  use Log::Report 'my-domain'
    , translator => Log::Report::Translator::Gettext->new;
 
- print __"Hello World\n";  # language determined by enviroment
+ print __"Hello World\n";  # language determined by environment
 
  # internal use
 
