@@ -12,8 +12,7 @@ use Log::Report undef, syntax => 'SHORT';
 
 use POSIX ':locale_h', 'setlocale';  # avoid user's environment
 
-setlocale(LC_ALL)
-   or setlocal(LC_ALL, 'en_US');
+setlocale(LC_ALL, 'POSIX');
 
 # start a new logger
 my $text = '';

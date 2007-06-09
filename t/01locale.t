@@ -4,36 +4,53 @@
 use Test::More;
 use POSIX;
 
-my $default;
+my $alt_locale;
 BEGIN  {
    eval "POSIX->import( qw/setlocale :locale_h/ )";
-   $@ and plan skip_all => "no translation support in Perl or OS";
 
-   $default = setlocale(LC_MESSAGES);
-   plan tests => 10;
+   # locale disabled?
+   defined setlocale(LC_MESSAGES, 'POSIX')
+      or plan skip_all => "no translation support in Perl or OS";
+
+ LOCALE:
+   foreach my $l (qw/nl_NL de_DE pt_PT tr_TR/)  # only non-english!
+   {   foreach my $c (qw/utf-8 iso-8859-1/)
+       {   $alt_locale = "$l.$c";
+           last LOCALE
+               if defined setlocale(LC_ALL, "$alt_locale");
+       }
+       undef $alt_locale;
+   }
+
+   defined $alt_locale
+      or plan skip_all => "cannot find alternative language for tests";
+
+   plan tests => 11;
 }
 
-ok(1, "default locale: $default");
+ok(1, "alt locale: $alt_locale");
 
-my $try = setlocale LC_MESSAGES, 'en_GB';
-ok(defined $try, 'defined return');
-is($try, 'en_GB');
+ok(defined setlocale(LC_MESSAGES, 'POSIX'), 'set POSIX');
+
+my $try = setlocale LC_MESSAGES;
+ok(defined $try, 'explicit POSIX found');
+ok($try eq 'POSIX' || $try eq 'C');  # GNU changes colour
 
 $! = 2;
-my $err_en = "$!";
-ok(defined $err_en, $err_en);  # platform dependent
+my $err_posix = "$!";
+ok(defined $err_posix, $err_posix);  # english
 
-$try = setlocale LC_MESSAGES, 'nl_NL';
-ok(defined $try, 'defined return');
-is($try, 'nl_NL');
+$try = setlocale LC_MESSAGES, $alt_locale;
+ok(defined $try, 'defined return for alternative locale');
+is($try, $alt_locale);
 
-is(setlocale(LC_MESSAGES), 'nl_NL');
+is(setlocale(LC_MESSAGES), $alt_locale, "set successful?");
 $! = 2;
-my $err_nl = "$!";
-ok(defined $err_nl, $err_nl);
-isnt($err_en, $err_nl);
+my $err_alt = "$!";
+ok(defined $err_alt, $err_alt);
+isnt($err_posix, $err_alt);
 
-setlocale(LC_MESSAGES, 'en_US');
+setlocale(LC_MESSAGES, 'POSIX');
 $! = 2;
-my $err_en2 = "$!";
-is($err_en, $err_en2, $err_en2);
+my $err_posix2 = "$!";
+is($err_posix, $err_posix2, $err_posix2);

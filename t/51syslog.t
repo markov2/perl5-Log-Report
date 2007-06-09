@@ -16,8 +16,9 @@ BEGIN
         if $@;
 
     my $sv = Sys::Syslog->VERSION;
+    eval { Sys::Syslog->VERSION(0.11) };
     plan skip_all => "Sys::Syslog too old (is $sv, requires 0.11)"
-        if $sv < 0.11;
+        if $@;
 
     plan tests => 1;
     use_ok('Log::Report::Dispatcher::Syslog');

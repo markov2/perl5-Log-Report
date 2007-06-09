@@ -4,8 +4,11 @@ use 5.8.2;
 
 WriteMakefile
   ( NAME      => 'Log::Report'
-  , VERSION   => '0.05'
-  , PREREQ_PM => { Test::More => 0.47 }
+  , VERSION   => '0.06'
+  , PREREQ_PM =>
+     { Test::More => 0.47
+     , Test::Pod  => 1.00
+     }
 
   , EXE_FILES => [ 'bin/xgettext-perl' ]
 

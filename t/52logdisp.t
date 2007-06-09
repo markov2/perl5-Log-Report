@@ -16,8 +16,9 @@ BEGIN
         if $@;
 
     my $sv = Log::Dispatch->VERSION;
+    eval { Log::Dispatch->VERSION(2.00) };
     plan skip_all => "Log::Dispatch too old (is $sv, requires 2.00)"
-        if $sv < 2.00;
+        if $@;
 
     plan tests => 5;
     use_ok('Log::Report::Dispatcher::LogDispatch');

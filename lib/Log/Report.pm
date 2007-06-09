@@ -400,7 +400,7 @@ M<Log::Report::Dispatcher::Try> object, which contains the collected
 error messages.
 
 The OPTIONS are passed to the constructor of the try-dispatcher, see
-M<Log::Report::Dispatcher::Try::new().  For instance, you may like to
+M<Log::Report::Dispatcher::Try::new()>.  For instance, you may like to
 add C<< mode => 'DEBUG' >>, or C<< accept => 'ERROR-' >>.
 
 Be warned that the parameter to C<try> is a CODE reference.  This means
@@ -480,7 +480,7 @@ sub panic(@)   {report PANIC   => @_}
 =section Language Translations
 
 The language translations are initiate by limited set of functions
-which contain two under-score (E<_>) characters in their name.  Most
+which contain two under-score (C<_>) characters in their name.  Most
 of them return a M<Log::Report::Message> object.
 
 BE WARNED(1) that -in general- its considered very bad practice to

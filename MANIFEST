@@ -40,3 +40,4 @@ t/52logdisp.t
 t/53log4perl.t
 t/54try.t
 t/hello-world-slovak.po
+t/pod.t

@@ -1,6 +1,13 @@
 
 ==== version history of Log::Report
 
+version 0.06:
+	Improvements:
+	- t/51syslog.t compares required version via UNIVERSAL::VERSION
+          (cpan-tester David Cantrell)  Other version checks adapted as well.
+	- add t/pod.t, which tests produced pods
+	- t/01locale.t even smarter, with help of Andreas Koenig
+
 version 0.05: Thu Jun  7 13:18:13 CEST 2007
 	Changes:
 	- the stderr dispatcher will be opened when there is any

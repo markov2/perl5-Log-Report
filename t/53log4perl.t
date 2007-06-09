@@ -16,8 +16,9 @@ BEGIN
         if $@;
 
     my $sv = Log::Log4perl->VERSION;
+    eval { Log::Log4perl->VERSION(1.00) };
     plan skip_all => "Log::Log4perl too old (is $sv, requires 1.00)"
-        if $sv < 1.00;
+        if $@;
 
     plan tests => 3;
 }
