@@ -4,7 +4,7 @@ use 5.8.2;
 
 WriteMakefile
   ( NAME      => 'Log::Report'
-  , VERSION   => '0.06'
+  , VERSION   => '0.07'
   , PREREQ_PM =>
      { Test::More => 0.47
      , Test::Pod  => 1.00

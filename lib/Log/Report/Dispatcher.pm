@@ -276,7 +276,9 @@ sub translate($$$)
           . "\n";
     }
 
-    setlocale(LC_ALL, $oldloc);
+    setlocale(LC_ALL, $oldloc)
+        if defined $oldloc;
+
     $text;
 }
 

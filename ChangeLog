@@ -1,7 +1,9 @@
 
 ==== version history of Log::Report
 
-version 0.06:
+version 0.07:
+
+version 0.06: Sat Jun  9 10:33:23 CEST 2007
 	Improvements:
 	- t/51syslog.t compares required version via UNIVERSAL::VERSION
           (cpan-tester David Cantrell)  Other version checks adapted as well.

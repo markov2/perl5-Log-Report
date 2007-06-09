@@ -108,9 +108,13 @@ sub find($$)
     my $index = $self->index;
     keys %$index or return undef;
 
-    my ($lang,$terr,$cs,$modif) = parse_locale $locale
-        or error "illegal locale '{locale}', when looking for {domain}"
-               , locale => $locale, domain => $domain;
+    my ($lang,$terr,$cs,$modif) = parse_locale $locale;
+    unless(defined $lang)
+    {   # avoid problem with recursion, not translatable
+        defined $locale or $locale = '<undef>';
+        warn "illegal locale $locale, when looking for $domain";
+        return undef;
+    }
 
     $terr  = defined $terr  ? '_'.$terr  : '';
     $cs    = defined $cs    ? '.'.$cs    : '';
