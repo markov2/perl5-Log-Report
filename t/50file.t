@@ -54,7 +54,7 @@ is($needs[-1], 'INFO');
 
 # silence default dispatcher for tests
 
-dispatcher close => 'stderr';
+dispatcher close => 'default';
 
 @disp = dispatcher 'list';
 cmp_ok(scalar(@disp), '==', 2);

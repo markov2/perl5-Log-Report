@@ -15,18 +15,22 @@ my %modes = (NORMAL => 0, VERBOSE => 1, ASSERT => 2, DEBUG => 3
 my @default_accept = ('NOTICE-', 'INFO-', 'ASSERT-', 'ALL');
 
 my %predef_dispatchers = map { (uc($_) => __PACKAGE__.'::'.$_) }
-   qw/File Syslog Try/;
+   qw/File Perl Syslog Try/;
 
 =chapter NAME
 Log::Report::Dispatcher - manage dispatching
 
 =chapter SYNOPSIS
  use Log::Report;
+
+ # The following will be created for you automatically
+ dispatcher 'PERL', 'default', accept => 'NOTICE-';
+ dispatcher close => 'default';  # after deamonize
+
  dispatcher 'FILE', 'log'
    , mode => 'DEBUG', to => '/var/log/mydir/myfile';
 
- # The follow will be created for you always (when STDERR
- # is open).  Full package name is used, same as 'FILE'
+ # Full package name is used, same as 'FILE'
  dispatcher Log::Report::Dispatch::File => 'stderr'
     , to => \*STDERR, accept => 'NOTICE-';
 
@@ -36,12 +40,6 @@ Log::Report::Dispatcher - manage dispatching
 =chapter DESCRIPTION
 This base-class handles the creation of dispatchers, plus the
 common filtering rules.  
-
-When the program sees an open file on STDERR (the usual case for any
-non-daemon), it will create a dispatcher for you to show all messages
-with minimal level NOTICE to it.  That dispatcher is named 'stderr',
-and when you create one with the same name yourself, it will replace
-the default one.
 
 See the L</DETAILS> section, below.
 
@@ -272,8 +270,9 @@ sub translate($$$)
     {   my $loc = $opts->{location} ||= $self->collectLocation;
         my ($pkg, $fn, $line, $sub) = @$loc;
         $text .= " "
-          . __x('at {filename} line {line}', filename => $fn, line => $line)->toString
-          . "\n";
+              . __x( 'at {filename} line {line}'
+                   , filename => $fn, line => $line)->toString
+              . "\n";
     }
 
     setlocale(LC_ALL, $oldloc)
@@ -437,6 +436,10 @@ name, which extends a M<Log::Report::Dispatcher>, or a pre-defined
 abbreviation of a class name.  Implemented are:
 
 =over 4
+=item M<Log::Report::Dispatcher::Perl> (abbreviation 'PERL')
+Use Perl's own C<print()>, C<warn()> and C<die()> to ventilate
+reports.  This is the default dispatcher.
+
 =item M<Log::Report::Dispatcher::File> (abbreviation 'FILE')
 Logs the message into a file, which can either be opened by the
 class or be opened before the dispatcher is created.

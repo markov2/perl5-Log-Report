@@ -25,5 +25,5 @@ BEGIN
 }
 
 dispatcher SYSLOG => 'syslog', to_prio => ['ALERT-' => 'err'];
-dispatcher close => 'stderr';
+dispatcher close => 'default';
 notice "this is a test";

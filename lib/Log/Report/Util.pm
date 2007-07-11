@@ -51,7 +51,7 @@ sub parse_locale($)
             $
        /x;
 
-    $_[0] =~ m/^(C|POSIX)$/ ? ($1) : ();
+    $_[0] =~ m/^(C|POSIX)$/i ? ($1) : ();
 }
 
 =function expand_reasons REASONS

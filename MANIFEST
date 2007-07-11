@@ -8,6 +8,7 @@ lib/Log/Report/Dispatcher.pm
 lib/Log/Report/Dispatcher/File.pm
 lib/Log/Report/Dispatcher/Log4perl.pm
 lib/Log/Report/Dispatcher/LogDispatch.pm
+lib/Log/Report/Dispatcher/Perl.pm
 lib/Log/Report/Dispatcher/Syslog.pm
 lib/Log/Report/Dispatcher/Try.pm
 lib/Log/Report/Exception.pm

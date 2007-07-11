@@ -46,9 +46,7 @@ __PACKAGE__->_setting('log-report', translator =>
 
 __PACKAGE__->_setting('rescue', translator => Log::Report::Translator->new);
 
-dispatcher FILE => stderr =>
-   to => \*STDERR, accept => 'NOTICE-'
-      if STDERR->fileno;
+dispatcher PERL => 'default', accept => 'NOTICE-';
 
 =chapter NAME
 Log::Report - report a problem, pluggable handlers and language support
@@ -63,7 +61,7 @@ Log::Report - report a problem, pluggable handlers and language support
 
  use Log::Report;
 
- dispatcher FILE => 'stderr', to => \*STDERR
+ dispatcher PERL => 'default'
    , reasons => 'NOTICE-';   # this disp. is automatically added
 
  dispatcher SYSLOG => 'syslog'
@@ -203,6 +201,8 @@ Use this specific locale, in stead of the user's preference.
 
 =cut
 
+# $^S = $EXCEPTIONS_BEING_CAUGHT; parse: undef, eval: 1, else 0
+
 sub report($@)
 {   my $opts   = ref $_[0] eq 'HASH' ? +{ %{ (shift) } } : {};
     @_ or return ();
@@ -219,13 +219,14 @@ sub report($@)
     $opts->{errno} ||= $!+0  # want copy!
         if $use_errno{$reason};
 
-    my $stop = $is_fatal{$reason};
+    my $stop = $opts->{is_fatal} ||= $is_fatal{$reason};
 
     # exit when needed, even when message doesn't go anywhere.
     my $disp = $reporter->{needs}{$reason};
     unless($disp)
-    {   if($stop) { $! = $opts->{errno} || 1; die }
-        return ();
+    {   if(!$stop) {return ()}
+        elsif($^S) {$! = $opts->{errno}; die}
+        else       {exit $opts->{errno}}
     }
 
     # explicit destination
@@ -244,6 +245,8 @@ sub report($@)
     ref $message && $message->isa('Log::Report::Message')
         or $message = Log::Report::Message->new(_prepend => $message);
 
+    my @last_call;
+
     if($reporter->{filters})
     {
       DISPATCHER:
@@ -254,17 +257,36 @@ sub report($@)
                 ($r, $m) = $filter->[0]->($disp, $opts, $r, $m);
                 $r or next DISPATCHER;
             }
-            $disp->log($opts, $reason, $message);
+
+            if($disp->isa('Log::Report::Dispatcher::Perl'))
+            {   # can be only one
+                @last_call = ($disp, { %$opts }, $reason, $message);
+            }
+            else
+            {   $disp->log($opts, $reason, $message);
+            }
         }
     }
     else
-    {   $_->log($opts, $reason, $message)
-            for @disp;
+    {   foreach my $disp (@disp)
+        {   if($disp->isa('Log::Report::Dispatcher::Perl'))
+            {   # can be only one
+                @last_call = ($disp, { %$opts }, $reason, $message);
+            }
+            else
+            {   $disp->log($opts, $reason, $message);
+            }
+        }
+    }
+
+    if(@last_call)
+    {   # the PERL dispatcher may terminate the program
+        shift(@last_call)->log(@last_call);
     }
 
     if($stop)
-    {   $! = $opts->{errno} || 1;
-        die;
+    {   if($^S) {$! = $opts->{errno}; die}
+        else    {exit $opts->{errno}}
     }
 
     @disp;
@@ -315,9 +337,8 @@ context with only one name, the one object is returned.
  if(dispatcher needs => 'INFO') ...
 
  # Getopt::Long integration: see Log::Report::Dispatcher::mode()
- dispatcher FILE => stderr =>
-    to => \*STDERR, mode => 'DEBUG', accept => 'ALL'
-       if $debug;
+ dispatcher PERL => 'default', mode => 'DEBUG', accept => 'ALL'
+     if $debug;
 
 =error in SCALAR context, only one dispatcher name accepted
 The M<dispatcher()> method returns the M<Log::Report::Dispatcher>
@@ -1066,7 +1087,7 @@ on the command-line when a C<+> is after the option name.
           , 'mode=s'    => \$mode
      or exit 1;
 
- dispatcher FILE => 'stderr', to => \*STDERR, mode => $mode;
+ dispatcher 'PERL', 'default', mode => $mode;
 
 Now, C<-vv> will set C<$mode> to C<2>, as will C<--verbose 2> and
 C<--verbose=2> and C<--mode=ASSERT>.  Of course, you do not need to
@@ -1173,7 +1194,9 @@ Where C<die>, C<warn>, and C<print> are used for various tasks.  With
 C<Log::Report>, you would write
 
  use Log::Report syntax => 'SHORT';
- dispatcher stderr => 'FILE', mode => 'DEBUG', to => \*STDERR;
+
+ # can be left-out when there is no debug/verbose
+ dispatcher PERL => 'default', mode => 'DEBUG';
 
  my $dir = '/etc';
 

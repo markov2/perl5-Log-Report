@@ -18,7 +18,7 @@ setlocale(LC_ALL, 'POSIX');
 my $text = '';
 open my($fh), '>', \$text;
 
-dispatcher close => 'stderr';
+dispatcher close => 'default';
 dispatcher FILE => 'out', to => $fh, accept => 'ALL';
 
 cmp_ok(length $text, '==', 0, 'created normal file logger');

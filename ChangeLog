@@ -1,7 +1,20 @@
 
 ==== version history of Log::Report
 
-version 0.07:
+version 0.08: Wed Jul 11 14:09:32 CEST 2007
+	Changes:
+	- default dispatcher is now named 'default', type PERL
+
+	Improvements:
+	- added comments by [Guido Flohr] about use of Locale::gettext
+	- NetBSD has locale C and POSIX in lower-case. [cpan-testers]
+	- improve handling of undef values during expand
+	- added PERL=Log::Report::Dispatcher::Perl
+
+version 0.07: Wed Jun 20 14:01:18 CEST 2007
+	Improvements:
+	- another attempt to find-out why some platforms report a
+	  deep recursion.
 
 version 0.06: Sat Jun  9 10:33:23 CEST 2007
 	Improvements:

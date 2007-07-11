@@ -11,11 +11,10 @@ use IO::File;
 Log::Report::Dispatcher::File - send messages to a file or file-handle
 
 =chapter SYNOPSIS
- # automatically created when STDERR is open
  dispatcher Log::Report::Dispatcher::File => 'stderr'
    , to => \*STDERR, accept => 'NOTICE-';
 
- # disable default dispatcher
+ # close a dispatcher
  dispatcher close => 'stderr';
 
  # let dispatcher open and close the file

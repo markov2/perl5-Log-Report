@@ -31,7 +31,7 @@ dispatcher 'Log::Dispatch::File' => 'logger'
    , filename => $outfn
    , to_level => ['ALERT-' => 'err'];
 
-dispatcher close => 'stderr';
+dispatcher close => 'default';
 
 cmp_ok(-s $outfn, '==', 0);
 notice "this is a test";

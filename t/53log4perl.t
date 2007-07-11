@@ -38,7 +38,7 @@ __CONFIG
 dispatcher 'Log::Log4perl' => $name, config => \$conf
    , to_level => ['ALERT-' => 3];
 
-dispatcher close => 'stderr';
+dispatcher close => 'default';
 
 cmp_ok(-s $outfn, '==', 0);
 notice "this is a test";

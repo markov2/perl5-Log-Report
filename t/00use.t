@@ -3,12 +3,13 @@ use warnings;
 use strict;
 use lib 'lib', '../lib';
 
-use Test::More tests => 13;
+use Test::More tests => 14;
 
 use_ok('Log::Report');
 use_ok('Log::Report::Dispatcher');
 use_ok('Log::Report::Dispatcher::File');
 use_ok('Log::Report::Dispatcher::Try');
+use_ok('Log::Report::Dispatcher::Perl');
 use_ok('Log::Report::Exception');
 use_ok('Log::Report::Lexicon::Index');
 use_ok('Log::Report::Lexicon::PO');

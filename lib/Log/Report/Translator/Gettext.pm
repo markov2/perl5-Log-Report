@@ -33,6 +33,15 @@ Log::Report::Translator::Gettext - the GNU gettext infrastructure
 UNTESTED!!!  PLEASE CONTRIBUTE!!!
 Translate a message using the GNU gettext infrastructure.
 
+Guido Flohr reports:
+be aware that Locale::gettext is only a binding for the C library
+libintl and depends on its features.  That means that your module will
+effectively only run on GNU systems and maybe on Solaris (depending
+on the exact version), because only these systems provide the plural
+handling functions ngettext(), dngettext() and dcngettext().  Sooner or
+later you will probably also need bind_textdomain_codeset() which is
+also only available on certain systems.
+
 =chapter METHODS
 =cut
 
