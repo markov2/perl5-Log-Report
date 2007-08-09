@@ -97,6 +97,9 @@ returned text is used.
 sub new(@)
 {   my ($class, $type, $name, %args) = @_;
 
+use Carp;
+@_%2 or confess "@_";
+
     my $backend
       = $predef_dispatchers{$type}          ? $predef_dispatchers{$type}
       : $type->isa('Log::Dispatch::Output') ? __PACKAGE__.'::LogDispatch'
@@ -256,8 +259,21 @@ sub translate($$$)
       : $msg->toString;
     $text .= "\n";
 
+    if($show_loc)
+    {   if(my $loc = exists $opts->{location} ? $opts->{location}
+                   : [ $self->collectLocation ])
+        {   my ($pkg, $fn, $line, $sub) = @$loc;
+            # pkg and sub are missing when decoded by ::Die
+            $text .= " "
+                  . __x( 'at {filename} line {line}'
+                       , filename => $fn, line => $line)->toString
+                  . "\n";
+        }
+    }
+
     if($show_stack)
-    {   my $stack = $opts->{stack} ||= $self->collectStack;
+    {   my $stack
+          = $opts->{stack} ||= $self->collectStack;
 
         foreach (@$stack)
         {   $text .= $_->[0] . " "
@@ -265,14 +281,6 @@ sub translate($$$)
                    , filename => $_->[1], line => $_->[2] )->toString
               . "\n";
         }
-    }
-    elsif($show_loc)
-    {   my $loc = $opts->{location} ||= $self->collectLocation;
-        my ($pkg, $fn, $line, $sub) = @$loc;
-        $text .= " "
-              . __x( 'at {filename} line {line}'
-                   , filename => $fn, line => $line)->toString
-              . "\n";
     }
 
     setlocale(LC_ALL, $oldloc)
@@ -289,8 +297,9 @@ sub collectStack($)
 {   my ($self, $max) = @_;
 
     my ($nest, $sub) = (1, undef);
-    $sub = (caller $nest++)[3]
-        while defined $sub && $sub ne 'Log::Report::report';
+    do { $sub = (caller $nest++)[3] }
+    while(defined $sub && $sub ne 'Log::Report::report');
+    defined $sub or $nest = 1;  # not found
 
     # skip syntax==SHORT routine entries
     $nest++ if defined $sub && $sub =~ m/^Log\:\:Report\:\:/;
@@ -311,24 +320,24 @@ sub collectStack($)
   }
 }
 
-=method collectLocation
+=ci_method collectLocation
 Collect the information to be displayed as line where the error occurred.
 Probably, this needs improvement, where carp and die show different lines.
 =cut
 
 sub collectLocation()
-{   my $self = shift;
-    my $nest = 1;
+{   my $thing = shift;
+    my $nest  = 1;
     my @args;
 
     do {@args = caller $nest++}
-    until $args[3] eq 'Log::Report::report';  # sub
+    until $args[3] eq 'Log::Report::report';  # common entry point
 
     # skip syntax==SHORT routine entries
     @args = caller $nest++
-        if +(caller $nest)[3] =~ m/^Log\:\:Report\:\:/;
+        if +(caller $nest)[3] =~ m/^Log\:\:Report\:\:[^:]*$/;
 
-    \@args;
+    @args;
 }
 
 =ci_method stackTraceLine OPTIONS

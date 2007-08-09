@@ -4,7 +4,7 @@ use 5.8.2;
 
 WriteMakefile
   ( NAME      => 'Log::Report'
-  , VERSION   => '0.08'
+  , VERSION   => '0.09'
   , PREREQ_PM =>
      { Test::More => 0.47
      , Test::Pod  => 1.00
@@ -14,6 +14,7 @@ WriteMakefile
 
   , AUTHOR    => 'Mark Overmeer'
   , ABSTRACT  => 'report a problem, pluggable handlers and language support'
+  , LICENSE   => 'perl'
   );
 
 sub MY::postamble { <<'__POSTAMBLE' }
@@ -27,6 +28,7 @@ LICENSE         = artistic
 FIRST_YEAR      = 2007
 EMAIL           = perl@overmeer.net
 WEBSITE         = http://perl.overmeer.net/log-report/
+EXTENDS		= ../LogReportView
 
 # for OODoc's oodist, HTML
 HTML_OUTPUT     = ../public_html/log-report/html

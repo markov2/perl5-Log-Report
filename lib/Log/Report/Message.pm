@@ -4,7 +4,8 @@ use strict;
 package Log::Report::Message;
 
 use Log::Report 'log-report';
-use POSIX  qw/locale_h/;
+use POSIX      qw/locale_h/;
+use List::Util qw/first/;
 
 =chapter NAME
 Log::Report::Message - a piece of text to be translated
@@ -22,8 +23,6 @@ Creating an object first, and translating it later, is slower than
 translating it immediately.  However, on the location where the message
 is produced, we do not yet know to what language to translate: that
 depends on the front-end, the log dispatcher.
-
-See L</DETAILS> section below, for an in-depth description.
 
 =chapter OVERLOADING
 
@@ -85,6 +84,21 @@ will also be used if there is no translation possible
 
 =option  _append  STRING
 =default _append  C<undef>
+
+=option  _class   STRING|ARRAY
+=default _class   []
+When messages are used for exception based programming, you add
+C<_class> parameters to the argument list.  Later, with for instance
+M<Log::Report::Dispatcher::Try::wasFatal(class)>, you can check the
+category of the message.
+
+One message can be part of multiple classes.  The STRING is used as
+comma- and/or blank seperated list of class tokens, the ARRAY lists all
+tokens seperately.
+
+=option  _classes STRING|ARRAY
+=default _classes []
+Alternative for C<_class>, which cannot be used at the same time.
 =cut
 
 sub new($@)
@@ -124,13 +138,65 @@ after this one.  Usually C<undef>.
 
 =method domain
 Returns the domain of the first translatable string in the structure.
+
+=method count
+Returns the count, which is used to select the translation
+alternatives.
 =cut
 
 sub prepend() {shift->{_prepend}}
 sub msgid()   {shift->{_msgid}}
 sub append()  {shift->{_append}}
 sub domain()  {shift->{_domain}}
+sub count()   {shift->{_count}}
 
+=method classes
+Returns the LIST of classes which are defined for this message; message
+group indicators, as often found in exception-based programming.
+=cut
+
+sub classes()
+{   my $class = $_[0]->{_class} || $_[0]->{_classes} || [];
+    ref $class ? @$class : split(/[\s,]+/, $class);
+}
+
+=method valueOf PARAMETER
+Lookup the named PARAMETER for the message.  All pre-defined names
+have their own method, and should be used with preference.
+
+=example
+When the message was produced with
+  my @files = qw/one two three/;
+  my $msg = __xn "found one file: {files}"
+               , "found {_count} files: {files}"
+               , scalar @files, files => \@files
+               , _class => 'IO, files';
+
+then the values can be takes from the produced message as
+  my $files = $msg->valueOf('files');  # returns ARRAY reference
+  print @$files;              # 3
+  my $count = $msg->count;    # 3
+  my @class = $msg->classes;  # 'IO', 'files'
+  if($msg->inClass('files'))  # true
+  
+=cut
+
+sub valueOf($) { $_[0]->{$_[1]} }
+
+=section Processing
+
+=method inClass CLASS|REGEX
+Returns true if the message is in the specified CLASS (string) or
+matches the REGEX.  The trueth value is the (first matching) class.
+=cut
+
+sub inClass($)
+{   my @classes = shift->classes;
+       ref $_[0] eq 'Regexp'
+    ? (first { $_ =~ $_[0] } @classes)
+    : (first { $_ eq $_[0] } @classes);
+}
+    
 =method toString [LOCALE]
 Translate a message.  If not specified, the default locale is used.
 =cut
@@ -281,6 +347,11 @@ M<Log::Report::__n()> and M<Log::Report::__nx()>
 
 =item _textdomain
 The label of the textdomain in which the translation takes place.
+
+=item _class or _classes
+Are to be used to group reports, and can be queried with M<inClass()>,
+M<Log::Report::Exception::inClass()>, or
+M<Log::Report::Dispatcher::Try::wasFatal()>.
 =back
 
 =example using the _count
@@ -336,7 +407,8 @@ When the value is an ARRAY, all members will be interpolated with C<$">
 between the elements.
 =back
 
-=example reducing the number of translations
+=subsection Avoiding repetative translations
+
 This way of translating is somewhat expensive, because an object to
 handle the C<__x()> is created each time.
 

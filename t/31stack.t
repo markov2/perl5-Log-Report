@@ -19,9 +19,6 @@ sub fff(@) { ggg(reverse @_) }
 
 fff(42, 3.2, "this is a text");
 
-#use Data::Dumper;
-#warn Dumper $stack;
-
 is_deeply($stack,
   [ [ 'main::hhh(3.2, 42)',                   $0, $start+2 ]
   , [ 'main::ggg("this is a text", 3.2, 42)', $0, $start+3 ]

@@ -16,6 +16,9 @@ Log::Report::Dispatcher::Try - capture all reports as exceptions
 
  if(try {...}) {    # block ended normally
 
+ my $x = try {read_temperature()};
+ my @x = try {read_lines_from_file()};
+
  try { ... }        # no comma!!
     mode => 'DEBUG', accept => 'ERROR-';
 
@@ -143,6 +146,8 @@ sub log($$$)
          , message     => $message
          );
 
+    # later changed into nice message
+    $self->{died} ||= $opts->{is_fatal};
     $self;
 }
 
@@ -176,14 +181,23 @@ Returns true if the block exited normally.
 sub failed()  {   shift->{died}}
 sub success() { ! shift->{died}}
 
-=method wasFatal
+=method wasFatal OPTIONS
 Returns the M<Log::Report::Exception> which caused the "try" block to
 die, otherwise an empty LIST (undef).
+
+=option  class CLASS|REGEX
+=default class C<undef>
+Only return the exception if it was fatal, and in the same time in
+the specified CLASS (as string) or matches the REGEX.
+See M<Log::Report::Message::inClass()>
 =cut
 
-sub wasFatal()
-{   my $self = shift;
-    $self->{died} ? $self->{exceptions}[-1] : ();
+sub wasFatal(@)
+{   my ($self, %args) = @_;
+    $self->{died} or return ();
+    my $ex = $self->{exceptions}[-1];
+    $args{class}  or return $ex;
+    $ex->inClass($args{class}) ? $ex : ();
 }
 
 =method showStatus
@@ -196,8 +210,11 @@ using M<reportAll()> or M<reportFatal()>.
 =cut
 
 sub showStatus()
-{   my $fatal = shift->wasFatal or return '';
-    __x"try-block stopped with {reason}", reason => $fatal->reason;
+{   my $self  = shift;
+    my $fatal = $self->wasFatal or return '';
+    __x"try-block stopped with {reason}: {text}"
+      , reason => $fatal->reason
+      , text   => $self->died;
 }
 
 1;

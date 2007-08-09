@@ -18,6 +18,7 @@ our @EXPORT_OK = (@make_msg, @functions, @reason_functions);
 require Log::Report::Util;
 require Log::Report::Message;
 require Log::Report::Dispatcher;
+require Log::Report::Dispatcher::Try;
 
 # See chapter Run modes
 my %is_reason = map {($_=>1)} @Log::Report::Util::reasons;
@@ -98,6 +99,9 @@ Log::Report - report a problem, pluggable handlers and language support
  setlocale(LC_ALL, 'nl_NL');
  info __"Hello World!";  # in Dutch, if translation table found
 
+ my $msg = __x"something", _class => 'local,mine';
+ if($msg->inClass('local')) ...
+
 =chapter DESCRIPTION 
 Handling messages to users can be a hassle, certainly when the same
 module is used for command-line and in a graphical interfaces, and
@@ -138,11 +142,12 @@ M<Log::Report::Dispatcher::Try>.
 
 =section Report Production and Configuration
 
-=function report [HASH-of-OPTIONS], REASON, MESSAGE [,more MESSAGE parts]
+=function report [HASH-of-OPTIONS], REASON, MESSAGE|(STRING,PARAMS), 
 
-Produce a report for certain REASON.  The MESSAGE is a LIST containing
-strings and M<Log::Report::Message> objects (which are created with the
-special translation syntax like M<__x()>).  The HASH is an optional
+Produce a report for certain REASON.  The MESSAGE is a
+M<Log::Report::Message> object (which are created with the
+special translation syntax like M<__x()>).  A not-translated message
+is B<ONE> string with optional parameters.  The HASH is an optional
 first parameter, which can be used to influence the dispatchers.  The
 HASH contains any combination of the OPTIONS listed below.
 
@@ -186,7 +191,7 @@ Use this specific locale, in stead of the user's preference.
 
 =examples for use of M<report()>
  report TRACE => "start processing now";
- report INFO  => '500: ', __'Internal Server Error';
+ report INFO  => '500: ' . __'Internal Server Error';
 
  report {to => 'syslog'}, NOTICE => "started process $$";
 
@@ -197,8 +202,8 @@ Use this specific locale, in stead of the user's preference.
 
  # error message, overruled to be printed in Brazilian
  report {locale => 'pt_BR'}
-     WARNING => __$!;
-
+    , WARNING => "do this at home!";
+ 
 =cut
 
 # $^S = $EXCEPTIONS_BEING_CAUGHT; parse: undef, eval: 1, else 0
@@ -209,7 +214,7 @@ sub report($@)
 
     my $reason = shift;
     $is_reason{$reason}
-       or error __"Token '{token}' not recognized as reason"
+       or error __x"Token '{token}' not recognized as reason"
             , token => $reason;
 
     my @disp;
@@ -219,14 +224,33 @@ sub report($@)
     $opts->{errno} ||= $!+0  # want copy!
         if $use_errno{$reason};
 
+    exists $opts->{location}
+        or $opts->{location} = [ Log::Report::Dispatcher->collectLocation ];
+
     my $stop = $opts->{is_fatal} ||= $is_fatal{$reason};
+
+    my $stop_msg;
+    if($stop && $^S)   # within nested eval, we like a nice message
+    {   my $loc   = $opts->{location};
+        $stop_msg = $loc ? "fatal at $loc->[1] line $loc->[2]\n" : "fatal\n";
+    }
 
     # exit when needed, even when message doesn't go anywhere.
     my $disp = $reporter->{needs}{$reason};
     unless($disp)
     {   if(!$stop) {return ()}
-        elsif($^S) {$! = $opts->{errno}; die}
+        elsif($^S) {$! = $opts->{errno}; die $stop_msg}
         else       {exit $opts->{errno}}
+    }
+
+    my $message = shift;
+    if(ref $message && $message->isa('Log::Report::Message'))
+    {   @_==0 or panic "a message object is reported, which does not allow additional parameters";
+    }
+    else
+    {   # untranslated message into object
+        @_%2 and panic "odd length parameter list with non-translated";
+        $message = Log::Report::Message->new(_prepend => $message, @_);
     }
 
     # explicit destination
@@ -236,14 +260,6 @@ sub report($@)
         }
     }
     else { @disp = @$disp }
-
-    # join does not respect overload of '.'
-    my $message = shift;
-    $message   .= shift while @_;
-
-    # untranslated message into object
-    ref $message && $message->isa('Log::Report::Message')
-        or $message = Log::Report::Message->new(_prepend => $message);
 
     my @last_call;
 
@@ -285,8 +301,8 @@ sub report($@)
     }
 
     if($stop)
-    {   if($^S) {$! = $opts->{errno}; die}
-        else    {exit $opts->{errno}}
+    {   if($^S) {$! = $opts->{errno}; die $stop_msg}
+        else    {exit $opts->{errno} || 0}
     }
 
     @disp;
@@ -414,11 +430,16 @@ sub _whats_needed()
 }
 
 =function try CODE, OPTIONS
-Execute the CODE, but block all dispatchers as long as it is
-running.  When the execution of the CODE is terminated with an
-error, that is captured.  After the C<try>, the C<$@> will contain a
-M<Log::Report::Dispatcher::Try> object, which contains the collected
-error messages.
+Execute the CODE, but block all dispatchers as long as it is running.
+When the execution of the CODE is terminated with an report which triggers
+an error, that is captured.  After the C<try>, the C<$@> will contain
+a M<Log::Report::Dispatcher::Try> object, which contains the collected
+error messages.  When there where no errors, the result of the code
+execution is returned.
+
+Run-time errors from Perl and die's, croak's and confess's within the
+program (which shouldn't appear, but you never know) are collected into an
+M<Log::Report::Message> object, using M<Log::Report::Die>.
 
 The OPTIONS are passed to the constructor of the try-dispatcher, see
 M<Log::Report::Dispatcher::Try::new()>.  For instance, you may like to
@@ -443,16 +464,32 @@ block if there are no arguments.
 
 sub try(&@)
 {   my $code = shift;
+
+    @_ % 2
+      and report {location => [caller 0]}, PANIC =>
+          __x"odd length parameter list for try(): forgot the terminating ';'?";
+
     local $reporter->{dispatchers} = undef;
     local $reporter->{needs};
 
     my $disp = dispatcher TRY => 'try', @_;
 
-    eval { $code->() };
-    $disp->died($@);
+    my ($ret, @ret);
+    if(!defined wantarray)  { eval { $code->() } } # VOID   context
+    elsif(wantarray) { @ret = eval { $code->() } } # LIST   context
+    else             { $ret = eval { $code->() } } # SCALAR context
 
+    my $err = $@;
+    if($err && !$disp->wasFatal)
+    {   require Log::Report::Die;
+        ($err, my($opts, $reason, $msg)) = Log::Report::Die::die_decode($err);
+        $disp->log($opts, $reason, $msg);
+    }
+
+    $disp->died($err);
     $@ = $disp;
-    $disp->success;
+
+    wantarray ? @ret : $ret;
 }
 
 =section Abbreviations for report()

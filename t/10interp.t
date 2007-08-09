@@ -131,4 +131,3 @@ is((__x "{perms} {links%2d} {user%-8s} {size%8d} {fn}"
          , size => '1234567', fn => '/etc/profile')
   , '-rw-r--r--  1 superman  1234567 /etc/profile');
 
-

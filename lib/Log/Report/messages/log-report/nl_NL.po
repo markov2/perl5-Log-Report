@@ -4,7 +4,7 @@ msgstr ""
 "Project-Id-Version: log-report 0.01\n"
 "Report-Msgid-Bugs-To:\n"
 "POT-Creation-Date: 2007-05-14 17:14+0200\n"
-"PO-Revision-Date: 2007-06-07 12:46+0200\n"
+"PO-Revision-Date: 2007-08-09 11:41+0200\n"
 "Last-Translator: Mark Overmeer <mark@overmeer.net>\n"
 "Language-Team:\n"
 "MIME-Version: 1.0\n"
@@ -86,7 +86,7 @@ msgstr "'{token}' is niet herkend als rapportage reden"
 msgid "WARNING"
 msgstr "WAARSCHUWING"
 
-#: lib/Log/Report/Dispatcher.pm:266 lib/Log/Report/Dispatcher.pm:275
+#: lib/Log/Report/Dispatcher.pm:268 lib/Log/Report/Dispatcher.pm:280
 msgid "at {filename} line {line}"
 msgstr "in {filename} regel {line}"
 
@@ -106,7 +106,7 @@ msgstr "kan bestand {filename} niet lezen"
 msgid "cannot read in {cs} from file {fn}"
 msgstr "kan bestand {fn} niet lezen in {cs}"
 
-#: lib/Log/Report/Dispatcher/File.pm:85
+#: lib/Log/Report/Dispatcher/File.pm:84
 msgid "cannot write log into {file} with {binmode}"
 msgstr "kan log niet naar bestand {file} schrijven in {binmode}"
 
@@ -122,7 +122,7 @@ msgstr "charset argument is verplicht voor {fn}"
 msgid "charset parameter required for {fn}"
 msgstr ""
 
-#: lib/Log/Report/Dispatcher/File.pm:72
+#: lib/Log/Report/Dispatcher/File.pm:71
 msgid "dispatcher {name} needs parameter 'to'"
 msgstr "dispatcher {name} verwacht argument 'to'"
 
@@ -152,15 +152,15 @@ msgid_plural "found {_count} pot files for domain {domain}"
 msgstr[0] "één pot bestand voor domein {domain} gevonden"
 msgstr[1] "{_count} pot bestanden voor domain {domain} gevonden"
 
-#: lib/Log/Report/Dispatcher.pm:133
+#: lib/Log/Report/Dispatcher.pm:134
 msgid "illegal format_reason '{format}' for dispatcher"
 msgstr "onbekende format_reason '{format}' voor dispatcher"
 
-#: lib/Log/Report.pm:362
+#: lib/Log/Report.pm:392
 msgid "in SCALAR context, only one dispatcher name accepted"
 msgstr "in SCALAR context kan slechts één dispatcher naam worden gebruikt"
 
-#: lib/Log/Report/Lexicon/POTcompact.pm:183
+#: lib/Log/Report/Lexicon/POTcompact.pm:182
 msgid "invalid plural-form algorithm '{alg}'"
 msgstr "incorrect meervoudsvorm algoritme '{alg}'"
 
@@ -172,7 +172,7 @@ msgstr "een regel-overgang wordt automatisch toegevoegd (gevonden op regel {line
 msgid "no filename or file-handle specified for PO"
 msgstr "geen bestandsnaam of -handle meegegeven voor PO"
 
-#: lib/Log/Report/Lexicon/POT.pm:327
+#: lib/Log/Report/Lexicon/POT.pm:328
 msgid "no header defined in POT for file {fn}"
 msgstr "geen kop opgegeven in POT in bestand {fn}"
 
@@ -188,7 +188,11 @@ msgstr "geen meervoudsvormen voor '{msgid}'"
 msgid "no textdomain for translatable at {fn} line {line}"
 msgstr "geen textdomain voor vertaling in {fn} regel {line}"
 
-#: lib/Log/Report.pm:819
+#: lib/Log/Report.pm:463
+msgid "odd length parameter list for try(): forgot the terminating ';'?"
+msgstr "oneven lengte van parameterlijst voor try(): afsluitende ';' vergeten?"
+
+#: lib/Log/Report.pm:870
 msgid "only one package can contain configuration; for {domain} already in {pkg} in file {fn} line {line}"
 msgstr "slechts één package mag configuratie informatie bevatten; voor {domain} is dit al gevonden in {pkg}, bestand {fn} regel {line}"
 
@@ -212,7 +216,7 @@ msgstr "reden '{begin}' is serieuzer dan '{end}' in '{reasons}'"
 msgid "starting new textdomain {domain}, template in {filename}"
 msgstr "begin van nieuw textdomain {domain}, sjabloon in {filename}"
 
-#: lib/Log/Report/Lexicon/POTcompact.pm:195
+#: lib/Log/Report/Lexicon/POTcompact.pm:194
 msgid "string '{text}' not between quotes at {location}"
 msgstr "tekst '{text}' niet tussen quotes in {location}"
 
@@ -220,7 +224,7 @@ msgstr "tekst '{text}' niet tussen quotes in {location}"
 msgid "string is incorrect at line {line}: {error}"
 msgstr "foutieve string in regel {regel}: {error}"
 
-#: lib/Log/Report/Dispatcher.pm:184
+#: lib/Log/Report/Dispatcher.pm:185
 msgid "switching to run mode {mode}"
 msgstr "overschakeling naar verwerkingsmode {mode}"
 
@@ -228,7 +232,7 @@ msgstr "overschakeling naar verwerkingsmode {mode}"
 msgid "syslog level '{level}' not understood"
 msgstr "syslog level '{level}' niet herkend."
 
-#: lib/Log/Report.pm:787
+#: lib/Log/Report.pm:838
 msgid "textdomain for translator not defined"
 msgstr "tekstdomein voor vertaler niet gedefinieerd"
 
@@ -236,15 +240,15 @@ msgstr "tekstdomein voor vertaler niet gedefinieerd"
 msgid "textdomain parameter is required"
 msgstr "tekstdomain argument is verplicht"
 
-#: lib/Log/Report.pm:353
+#: lib/Log/Report.pm:383
 msgid "the 'filter' sub-command needs a CODE reference"
 msgstr "het 'filter' sub-commando verwacht een CODE referentie"
 
-#: lib/Log/Report.pm:340
+#: lib/Log/Report.pm:370
 msgid "the 'list' sub-command doesn't expect additional parameters"
 msgstr "het 'list' sub-commando verwacht geen aanvullende argumenten"
 
-#: lib/Log/Report.pm:346
+#: lib/Log/Report.pm:376
 msgid "the 'needs' sub-command parameter '{reason}' is not a reason"
 msgstr "het 'needs' sub-commando argument '{reason}' is geen reden"
 
@@ -260,13 +264,13 @@ msgstr "te veel meervouden voor '{msgid}'"
 msgid "translation already exists for '{msgid}'"
 msgstr "er bestaat al een vertaling voor '{msgid}'"
 
-#: lib/Log/Report.pm:794
+#: lib/Log/Report.pm:845
 msgid "translator must be a Log::Report::Translator object"
 msgstr "vertaler moet een Log::Report::Translator object zijn"
 
-#: lib/Log/Report/Dispatcher/Try.pm:200
-msgid "try-block stopped with {reason}"
-msgstr "try-blok gestopt met {reason}"
+#: lib/Log/Report/Dispatcher/Try.pm:206
+msgid "try-block stopped with {reason}: {text}"
+msgstr "try-blok gestopt met {reason}: {text}"
 
 #: lib/Log/Report/Lexicon/PO.pm:326
 msgid "unknown comment type '{cmd}' at {where}"
@@ -280,7 +284,7 @@ msgstr "onbekende vlag {flag} wordt genegeerd"
 msgid "unknown reason {which} in '{reasons}'"
 msgstr "onbekende reden {which} is '{reasons}'"
 
-#: lib/Log/Report/Dispatcher.pm:182
+#: lib/Log/Report/Dispatcher.pm:183
 msgid "unknown run mode '{mode}'"
 msgstr "onbekende verwerkingsmode '{mode}'"
 
@@ -288,7 +292,7 @@ msgstr "onbekende verwerkingsmode '{mode}'"
 msgid "unnamed file"
 msgstr ""
 
-#: lib/Log/Report.pm:824
+#: lib/Log/Report.pm:875
 msgid "value for {name} specified twice"
 msgstr "twee keer een waarde voor {name}"
 
@@ -298,7 +302,7 @@ msgstr "schrijfproblemen bij bestand {fn}"
 
 #: lib/Log/Report/Extract/PerlPPI.pm:270
 msgid "{domain}: one file with {ids} msgids"
-msgid_plural "{domain}: {_count} files with {ids} msgids"
+msgid_plural "{domain}: {_count} files with each {ids} msgids"
 msgstr[0] "{domain}: één bestand met {ids} mgsids"
 msgstr[1] "{domain}: {_count} bestanden met elk {ids} msgids"
 
@@ -312,14 +316,14 @@ msgstr[1] "{domain}: {_count} bestanden met elk {ids} msgids, {f} fuzzy en {i} o
 msgid "{domain}: {fuzzy%3d} fuzzy, {inact%3d} inactive in {filename}"
 msgstr "{domain}: {fuzzy%3d} fuzzy, {inact%3d} op non-actief in {filename}"
 
-#: lib/Log/Report/Dispatcher.pm:252
+#: lib/Log/Report/Dispatcher.pm:253
 msgid "{message}; {error}"
 msgstr "{message}; {error}"
 
-#: lib/Log/Report/Dispatcher.pm:251
+#: lib/Log/Report/Dispatcher.pm:252
 msgid "{reason}: {message}"
 msgstr "{reason}: {message}"
 
-#: lib/Log/Report/Dispatcher.pm:250
+#: lib/Log/Report/Dispatcher.pm:251
 msgid "{reason}: {message}; {error}"
 msgstr "{reason}: {message}; {error}"

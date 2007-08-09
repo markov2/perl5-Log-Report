@@ -3,9 +3,10 @@ use warnings;
 use strict;
 use lib 'lib', '../lib';
 
-use Test::More tests => 14;
+use Test::More tests => 15;
 
 use_ok('Log::Report');
+use_ok('Log::Report::Die');
 use_ok('Log::Report::Dispatcher');
 use_ok('Log::Report::Dispatcher::File');
 use_ok('Log::Report::Dispatcher::Try');

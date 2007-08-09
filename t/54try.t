@@ -6,9 +6,10 @@ use strict;
 use lib 'lib', '../lib';
 
 use File::Temp   qw/tempfile/;
-use Test::More tests => 23;
+use Test::More tests => 43;
 
 use Log::Report undef, syntax => 'SHORT';
+use Carp;  # required for tests
 
 use POSIX ':locale_h', 'setlocale';  # avoid user's environment
 
@@ -34,7 +35,7 @@ is($l1[0]->name, 'out');
 try { my @l2 = dispatcher 'list';
       cmp_ok(scalar(@l2), '==', 1);
       is($l2[0]->name, 'try', 'only try dispatcher');
-      error __"this is an error"
+      error "this is an error"
     };
 my $caught = $@;   # be careful with this... Test::More may spoil it.
 my @l3 = dispatcher 'list';
@@ -79,4 +80,56 @@ eval {
        };
    $@->reportAll;
 };
-is($@, "try-block stopped with FAILURE");
+like($@, qr[^fatal at t/54try.t line \d+$]);
+
+### context
+
+my $context;
+my $scalar = try {
+    $context = !wantarray && defined wantarray ? 'SCALAR' : 'OTHER';
+    my @x = 1..10;
+    @x;
+};
+
+is($context, 'SCALAR', 'try in SCALAR context');
+cmp_ok($scalar, '==', 10);
+
+try {
+   $context = !defined wantarray ? 'VOID' : 'OTHER';
+   3;
+};
+is($context, 'VOID', 'try in VOID context');
+
+my @list = try {
+   $context = wantarray ? 'LIST' : 'OTHER';
+   1..5;
+};
+is($context, 'LIST', 'try in LIST context');
+cmp_ok(scalar @list, '==', 5);
+
+### convert die/croak/confess
+# conversions by Log::Report::Die, see t/*die.t
+
+my $die = try { die "oops" };
+ok(ref $@, 'caught die');
+isa_ok($@, 'Log::Report::Dispatcher::Try');
+my $die_ex = $@->wasFatal;
+isa_ok($die_ex, 'Log::Report::Exception');
+is($die_ex->reason, 'ERROR');
+like("$@", qr[^try-block stopped with ERROR: oops at t/54try\.t line \d+$] );
+
+my $croak = try { croak "oops" };
+ok(ref $@, 'caught croak');
+isa_ok($@, 'Log::Report::Dispatcher::Try');
+my $croak_ex = $@->wasFatal;
+isa_ok($croak_ex, 'Log::Report::Exception');
+is($croak_ex->reason, 'ERROR');
+like("$@", qr[^try-block stopped with ERROR: oops at lib/Log/Report.pm line \d+$] );
+
+my $confess = try { confess "oops" };
+ok(ref $@, 'caught confess');
+isa_ok($@, 'Log::Report::Dispatcher::Try');
+my $confess_ex = $@->wasFatal;
+isa_ok($confess_ex, 'Log::Report::Exception');
+is($confess_ex->reason, 'PANIC');
+like("$@", qr[^try-block stopped with PANIC: oops at t/54try\.t line \d+$] );

@@ -17,6 +17,12 @@ Log::Report::Exception - a collected report
 
  $@->reportFatal;  # combination of above two lines
 
+ my $message = $exception->message;   # the Log::Report::Message
+
+ if($message->inClass('die')) ...
+ if($exception->inClass('die')) ...   # same
+ if($@->wasFatal(class => 'die')) ... # same
+
 =chapter DESCRIPTION
 In Log::Report, exceptions are not as extended as available in
 languages as Java: you do not create classes for them.  The only
@@ -28,7 +34,7 @@ an (untranslated) report.
 =chapter METHODS
 
 =section Constructors
-=c_method new OPTIONS, VARIABLES
+=c_method new OPTIONS
 
 =option  report_opts HASH
 =default report_opts {}
@@ -40,6 +46,8 @@ an (untranslated) report.
 sub new($@)
 {   my ($class, %args) = @_;
     $args{report_opts} ||= {};
+use Carp;
+$args{message} or confess @_;
     bless \%args, $class;
 }
 
@@ -54,7 +62,14 @@ sub report_opts() {shift->{report_opts}}
 sub reason()      {shift->{reason}}
 sub message()     {shift->{message}}
 
-=section Reporting Exceptions
+=section Processing
+
+=method inClass CLASS|REGEX
+Check whether any of the classes listed in the message match CLASS
+(string) or the REGEX.  This uses M<Log::Report::Message::inClass()>.
+=cut
+
+sub inClass($) { $_[0]->message->inClass($_[1]) }
 
 =method throw OPTIONS
 Insert the message contained in the exception into the currently

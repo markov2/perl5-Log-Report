@@ -1,7 +1,37 @@
 
 ==== version history of Log::Report
 
+version 0.09: Thu Aug  9 22:46:56 CEST 2007
+
+	Changes:
+
+	- a try{} block executes eval in the correct context, and
+	  returns its results.  Just like eval() does.
+
+	- a non-translated message MUST be only one string to be
+	  passed to report(), because other parameters are passed
+	  to the message constructor.
+
+	Fixes:
+
+	- stack-trace did not remove the trace of the Log::Report
+	  internal helpers.
+
+	- if try died indirectly from a nested died try, then that
+	  object is not captured in died() itself.
+
+	Improvements:
+
+	- try() catches Perl die/croak/warn as well, and translates them
+	  using Log::Report::Die.
+
+	- try() dies if parameter list has odd length (semi-colon forgotten)
+
+	- implementation of exception classes.
+	  See Log::Report::(Message|Exception)::inClass
+
 version 0.08: Wed Jul 11 14:09:32 CEST 2007
+
 	Changes:
 	- default dispatcher is now named 'default', type PERL
 
