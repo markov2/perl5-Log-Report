@@ -23,7 +23,7 @@ require Log::Report::Dispatcher::Try;
 # See chapter Run modes
 my %is_reason = map {($_=>1)} @Log::Report::Util::reasons;
 my %is_fatal  = map {($_=>1)} qw/ERROR FAULT FAILURE PANIC/;
-my %use_errno = map {($_=>1)} qw/WARNING FAULT ALERT FAILURE/;
+my %use_errno = map {($_=>1)} qw/FAULT ALERT FAILURE/;
 
 sub _whats_needed(); sub dispatcher($@);
 sub trace(@); sub assert(@); sub info(@); sub notice(@); sub warning(@);
@@ -53,14 +53,10 @@ dispatcher PERL => 'default', accept => 'NOTICE-';
 Log::Report - report a problem, pluggable handlers and language support
 
 =chapter SYNOPSIS
-
  # Read section "The Reason for the report" first!!!
- # THIS IS THE FIRST RELEASE... please report problems!!!  A few
- # things do need to be improved, but all the basics are in already.
 
  # In your main script
-
- use Log::Report;
+ use Log::Report 'my-domain';
 
  dispatcher PERL => 'default'
    , reasons => 'NOTICE-';   # this disp. is automatically added

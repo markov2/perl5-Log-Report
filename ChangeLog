@@ -1,6 +1,17 @@
 
 ==== version history of Log::Report
 
+version 0.10: Mon Oct 15 17:55:44 CEST 2007
+
+	Changes:
+
+	- WARNINGs should not included $!... use alert if you are
+	  tempted.
+
+	Improvements:
+
+	- few doc fixes.
+
 version 0.09: Thu Aug  9 22:46:56 CEST 2007
 
 	Changes:

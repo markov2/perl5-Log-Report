@@ -37,7 +37,7 @@ Log::Report::Dispatcher::Syslog - send messages to syslog
    , to_prio => [ 'ALERT-' => 'err' ];
 
  # disable default dispatcher, when daemon
- dispatcher close => 'stderr';
+ dispatcher close => 'default';
 
 =chapter DESCRIPTION
 This dispatchers produces output to syslog, based on the M<Sys::Syslog>

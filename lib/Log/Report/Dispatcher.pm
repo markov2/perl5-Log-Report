@@ -32,7 +32,7 @@ Log::Report::Dispatcher - manage dispatching
 
  # Full package name is used, same as 'FILE'
  dispatcher Log::Report::Dispatch::File => 'stderr'
-    , to => \*STDERR, accept => 'NOTICE-';
+   , to => \*STDERR, accept => 'NOTICE-';
 
  # Within a "try" block, there is only one dispatcher
  dispatcher TRY => 'try';
@@ -503,7 +503,7 @@ Exactly what will be added depends on the actual mode of the dispatcher
  info     program  T..       S    S    S
  notice   program  T..  S    S    S    S
  mistake  user     T..  S    S    S    SL
- warning  program  T.!  SL   SL   SL   SL
+ warning  program  T..  SL   SL   SL   SL
  error    user     TE.  S    S    SL   SC
  fault    system   TE!  S    S    SL   SC
  alert    system   T.!  S    S    SC   SC
