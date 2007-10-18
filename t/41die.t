@@ -5,6 +5,9 @@ use warnings;
 use strict;
 use lib 'lib', '../lib', 't';
 
+use POSIX;
+setlocale LC_ALL, 'POSIX';
+
 $! = 3;
 my $errno  = $!+0;
 my $errstr = "$!";

@@ -26,7 +26,7 @@ lib/Log/Report/Util.pm
 lib/Log/Report/messages/log-report.utf-8.po
 lib/Log/Report/messages/log-report/nl_NL.po
 t/00use.t
-t/01locale.t
+t/04locale.t
 t/05util.t
 t/10interp.t
 t/11concat.t

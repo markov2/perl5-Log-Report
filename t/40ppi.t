@@ -19,7 +19,7 @@ BEGIN
     use_ok('Log::Report::Extract::PerlPPI');
 }
 
-my $lexicon = tempdir; # CLEANUP => 1;
+my $lexicon = tempdir CLEANUP => 1;
 
 my %expect_pos = ('' => 1);  # expect header
 sub take($@)

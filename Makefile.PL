@@ -1,10 +1,10 @@
 use ExtUtils::MakeMaker;
 
-use 5.8.2;
+use 5.008;
 
 WriteMakefile
   ( NAME      => 'Log::Report'
-  , VERSION   => '0.10'
+  , VERSION   => '0.11'
   , PREREQ_PM =>
      { Test::More => 0.47
      , Test::Pod  => 1.00

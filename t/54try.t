@@ -5,7 +5,6 @@ use warnings;
 use strict;
 use lib 'lib', '../lib';
 
-use File::Temp   qw/tempfile/;
 use Test::More tests => 43;
 
 use Log::Report undef, syntax => 'SHORT';

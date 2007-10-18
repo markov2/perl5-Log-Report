@@ -1,6 +1,20 @@
 
 ==== version history of Log::Report
 
+version 0.11: Thu Oct 18 09:34:18 CEST 2007
+
+	Fixes:
+
+	- Running tests, a temporary directory remained in /tmp.
+	  [Andreas Koenig]
+
+	Improvements:
+
+	- Makefile.PL use 5.008 i.s.o. 5.8.2, otherwise not understood
+	  by perl 5.5. [Slaven Rezic]
+
+	- Added versions of optional modules to test output
+
 version 0.10: Mon Oct 15 17:55:44 CEST 2007
 
 	Changes:
