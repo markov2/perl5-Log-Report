@@ -242,7 +242,10 @@ sub translate($$$)
       = defined $msg->msgid
       ? ($opts->{locale} || $self->{locale})      # translate whole
       : Log::Report->_setting($msg->domain, 'native_language');
-    my $oldloc = setlocale(LC_ALL, $locale || 'en_US');
+
+    # not all implementations of setlocale() return the old value
+    my $oldloc = setlocale LC_ALL;
+    setlocale(LC_ALL, $locale || 'en_US');
 
     my $r = $self->{format_reason}->((__$reason)->toString);
     my $e = $opts->{errno} ? strerror($opts->{errno}) : undef;

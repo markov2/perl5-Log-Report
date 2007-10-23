@@ -17,6 +17,7 @@ my @show_versions =
     Log::Dispatch
    /;
 
+warn "Perl $]\n";
 foreach my $package (sort @show_versions)
 {   eval "require $package";
 

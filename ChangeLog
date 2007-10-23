@@ -1,6 +1,24 @@
 
 ==== version history of Log::Report
 
+version 0.12:
+
+	Improvements:
+
+	- t/04locale.t also tries charset eq ''
+
+	- t/04locale.t will produce a warning, not an error, when the
+	  setlocale() does not work
+
+	- t/*.t will use the 'C' locale, not the less often supported
+	  'POSIX'.
+
+	- added Log::Report::Win32Locale, with experimental application
+	  in Log::Report::Lexicon::Index
+
+	- on some platforms, LC_MESSAGES is not defined.  Work-around
+	  in Log::Report::Translator::POT.
+
 version 0.11: Thu Oct 18 09:34:18 CEST 2007
 
 	Fixes:

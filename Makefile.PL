@@ -2,14 +2,20 @@ use ExtUtils::MakeMaker;
 
 use 5.008;
 
+my $version = 0.12;
+
+my %prereq  =
+  ( Test::More => 0.47
+  , Test::Pod  => 1.00
+  );
+
+$prereq{ 'Win32::TieRegistry' } = 0.24
+    if $^O eq 'MSWin32';
+
 WriteMakefile
   ( NAME      => 'Log::Report'
-  , VERSION   => '0.11'
-  , PREREQ_PM =>
-     { Test::More => 0.47
-     , Test::Pod  => 1.00
-     }
-
+  , VERSION   => $version
+  , PREREQ_PM => \%prereq
   , EXE_FILES => [ 'bin/xgettext-perl' ]
 
   , AUTHOR    => 'Mark Overmeer'

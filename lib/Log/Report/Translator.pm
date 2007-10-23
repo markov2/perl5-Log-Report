@@ -59,8 +59,8 @@ used.  Otherwise, the default is C<utf-8>.
 
 =example default lexicon directory
  # file xxx/perl5.8.8/My/Module.pm
- use Log::Report 'my-domain',
-     translator => Log::Report::Translator::POT->new;
+ use Log::Report 'my-domain'
+   , translator => Log::Report::Translator::POT->new;
 
  # lexicon now in xxx/perl5.8.8/My/Module/messages/
 =cut

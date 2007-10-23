@@ -23,6 +23,7 @@ lib/Log/Report/Translator.pm
 lib/Log/Report/Translator/Gettext.pm
 lib/Log/Report/Translator/POT.pm
 lib/Log/Report/Util.pm
+lib/Log/Report/Win32Locale.pm
 lib/Log/Report/messages/log-report.utf-8.po
 lib/Log/Report/messages/log-report/nl_NL.po
 t/00use.t
