@@ -1,7 +1,17 @@
 
 ==== version history of Log::Report
 
-version 0.12:
+version 0.13: Mon Oct 29 09:20:04 CET 2007
+
+	Improvements:
+
+	- Log::Report::Dispatchers should now be able to handle
+	  situations where locale_h is not exported by POSIX.
+
+	- Stupid syntax error in the new Win32Locale.
+	  via cpantesters [mmusgrove]
+
+version 0.12: Tue Oct 23 15:26:07 CEST 2007
 
 	Improvements:
 

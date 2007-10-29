@@ -10,9 +10,10 @@ use Test::More tests => 43;
 use Log::Report undef, syntax => 'SHORT';
 use Carp;  # required for tests
 
-use POSIX ':locale_h', 'setlocale';  # avoid user's environment
-
-setlocale(LC_ALL, 'POSIX');
+eval
+{  use POSIX ':locale_h', 'setlocale';  # avoid user's environment
+   setlocale(LC_ALL, 'POSIX');
+};
 
 # start a new logger
 my $text = '';
