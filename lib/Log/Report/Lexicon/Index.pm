@@ -16,7 +16,7 @@ my $locale_unifier;
 if($^O eq 'MSWin32')
 {   require Log::Report::Win32Locale;
     Log::Report::Win32Locale->import;
-    $locale_unifier = sub { iso_locale $_[0] };
+    $locale_unifier = sub { iso_locale($_[0]) };
 }
 else
 {   # some UNIXes do not understand "POSIX"

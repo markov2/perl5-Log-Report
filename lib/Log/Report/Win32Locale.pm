@@ -14,6 +14,7 @@ while(<DATA>)
    $codepage2iso{hex $codepage} = $iso;
 }
 my $iso2codepage = reverse $codepage2iso;
+close DATA;
 
 =chapter NAME
 Log::Report::Win32Locale - unix/windows locales
@@ -84,7 +85,7 @@ my $del = {Delimiter => '/'};
 my $codepages = Win32::TieRegistry->new("$nls/CodePage", $del);
 my $languages = Win32::TieRegistry->new("$nls/Language", $del);
 
-=fuction charset_encoding
+=function charset_encoding
 Returns the encoding name (usable with module Encode) based on the current
 codepage.  For example, C<cp1252> for iso-8859-1 (latin-1) or C<cp932> for
 Shift-JIS Japanese.  Returns undef if the encoding cannot be identified.
