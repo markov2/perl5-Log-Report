@@ -196,8 +196,7 @@ sub wasFatal(@)
 {   my ($self, %args) = @_;
     $self->{died} or return ();
     my $ex = $self->{exceptions}[-1];
-    $args{class}  or return $ex;
-    $ex->inClass($args{class}) ? $ex : ();
+    (!$args{class} || $ex->inClass($args{class})) ? $ex : ();
 }
 
 =method showStatus

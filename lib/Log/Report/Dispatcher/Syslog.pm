@@ -4,7 +4,7 @@ use strict;
 package Log::Report::Dispatcher::Syslog;
 use base 'Log::Report::Dispatcher';
 
-use Sys::Syslog 0.11, qw/:standard :macros/;
+use Sys::Syslog 0.11, qw/:standard :extended :macros/;
 use Log::Report 'log-report', syntax => 'SHORT';
 use Log::Report::Util  qw/@reasons expand_reasons/;
 
@@ -69,16 +69,17 @@ using M<new(to_prio)>.  See example in SYNOPSIS.
 =c_method new TYPE, NAME, OPTIONS
 With syslog, people tend not to include the REASON of the message
 in the logs, because that is already used to determine the destination
-of the message.  Use M<new(format_reason)> with C<IGNORE> to achieve
-that.
+of the message.
+
+=default format_reason 'IGNORE'
 
 =option  identity STRING
 =default identity <basename $0>
 
 =option  flags STRING
 =default flags 'pid,nowait'
-Any combination of C<pid>, C<ndelay>, and C<nowait>, used with
-C<openlog(3)> if needed
+Any combination of flags as defined by M<Sys::Syslog>, for instance
+C<pid>, C<ndelay>, and C<nowait>.
 
 =option  facility STRING
 =default facility 'user'
@@ -89,11 +90,20 @@ only defines 'user' and 'local0' upto 'local7'.
 =default to_prio []
 See M<reasonToPrio()>.
 
+=option  logsocket 'unix'|'inet'|'stream'
+=default logsocket C<undef>
+If specified, the log socket type will be initialized to this before
+openlog is called.  If not specified, the system default is used.
 =cut
 
 sub init($)
 {   my ($self, $args) = @_;
+    $args->{format_reason} ||= 'IGNORE';
+
     $self->SUPER::init($args);
+
+    setlogsock(delete $args->{logsocket})
+        if $args->{logsocket};
 
     my $ident = delete $args->{identity} || basename $0;
     my $flags = delete $args->{flags}    || 'pid,nowait';

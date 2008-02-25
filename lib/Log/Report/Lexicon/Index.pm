@@ -110,7 +110,7 @@ LOCALE (there is no default on this level).
 
 # location to work-around platform dependent mutulations.
 # may be extended with mo files as well.
-sub _find($$) { $_[0]->{"$_[1].po"} }
+sub _find($$) { $_[0]->{lc($_[1]). '.po'} }
 
 sub find($$)
 {   my $self   = shift;
@@ -139,7 +139,6 @@ sub find($$)
     }
 
     my $fn;
-
     for my $f ("/lc_messages/$domain", "/$domain")
     {   $fn
         ||= _find($index, "$lang$terr$cs$modif$f")

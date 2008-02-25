@@ -26,8 +26,8 @@ try_parse('');
 try_parse('nl_NL', 'nl', 'NL');
 try_parse('nl_NL.utf-8', 'nl', 'NL', 'utf-8');
 try_parse('nl_NL.utf-8@mod', 'nl', 'NL', 'utf-8', 'mod');
-try_parse('nl.utf-8');
-try_parse('nl.utf-8@mod');
+try_parse('nl.utf-8', 'nl', undef, 'utf-8');
+try_parse('nl.utf-8@mod', 'nl', undef, 'utf-8', 'mod');
 try_parse('nl_NL@mod', 'nl', 'NL', undef, 'mod');
 try_parse('nl@mod', 'nl', undef, undef, 'mod');
 

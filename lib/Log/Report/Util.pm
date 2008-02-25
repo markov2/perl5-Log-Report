@@ -36,22 +36,66 @@ infrastructure.
 =chapter FUNCTIONS
 
 =function parse_locale STRING
-Returns a LIST of four elements when successful, and an empty
-LIST when the locale is not correct.  The LIST order is country,
-territory, character-set (codeset), and modifier.
+Decompose a locale string.
+
+For simplicity of the caller's code, the capatization of the returned
+fields is standardized to the preferred, although the match is case-
+insensitive as required by the RFC. The territory in returned in capitals
+(ISO3166), the language is lower-case (ISO639), the script as upper-case
+first, the character-set as lower-case, and the modifier and variant unchanged.
+
+In LIST context, four elements are returned: language, territory,
+character-set (codeset), and modifier.  Those four are important for the
+usual unix translationg infrastructure.  Only the "country" is obligatory,
+the others can be C<undef>.  It may also return C<C> and C<POSIX>.
+
+In SCALAR context, a HASH is returned which can contain more information:
+language, script, territory, variant, codeset, and modifiers.  The
+variant (RFC3066 is probably never used)
+
 =cut
 
 sub parse_locale($)
-{   return ($1, $2, $3, $4) if $_[0] =~
-      m/^ ([a-z]{2})              # ISO 631
-          (?: \_ ([a-zA-Z\d]+)    # ISO 3166
-              (?: \. ([\w-]+) )?  # codeset
-          )?
-          (?: \@ (\S+) )?         # modifier
-            $
-       /x;
+{   my $locale = shift;
+    defined $locale && length $locale
+        or return;
 
-    $_[0] =~ m/^(C|POSIX)$/i ? ($1) : ();
+    return if $locale !~
+      m/^ ([a-z_]+)
+          (?: \. ([\w-]+) )?  # codeset
+          (?: \@ (\S+) )?         # modifier
+        $/ix;
+
+    my ($lang, $codeset, $modifier) = ($1, $2, $3);
+
+    my @subtags  = split /[_-]/, $lang;
+    my $primary  = lc shift @subtags;
+
+    my $language
+      = $primary eq 'c'             ? 'C'
+      : $primary eq 'posix'         ? 'POSIX'
+      : $primary =~ m/^[a-z]{2,3}$/ ? $primary            # ISO639-1 and -2
+      : $primary eq 'i' && @subtags ? lc(shift @subtags)  # IANA
+      : $primary eq 'x' && @subtags ? lc(shift @subtags)  # Private
+      : error __x"unknown locale language in locale {locale}"
+           , locale => $locale;
+
+    my $script;
+    $script = ucfirst lc shift @subtags
+        if @subtags > 1 && length $subtags[0] > 3;
+
+    my $territory = @subtags ? uc(shift @subtags) : undef;
+
+    return ($language, $territory, $codeset, $modifier)
+        if wantarray;
+
+    +{ language  => $language
+     , script    => $script
+     , territory => $territory
+     , codeset   => $codeset
+     , modifier  => $modifier
+     , variant   => join('-', @subtags)
+     };
 }
 
 =function expand_reasons REASONS

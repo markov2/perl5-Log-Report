@@ -46,8 +46,6 @@ an (untranslated) report.
 sub new($@)
 {   my ($class, %args) = @_;
     $args{report_opts} ||= {};
-use Carp;
-$args{message} or confess @_;
     bless \%args, $class;
 }
 
@@ -77,7 +75,8 @@ defined dispatchers.  The C<throw> name is commonly known
 exception related terminology for C<report>.
 
 The OPTIONS overrule the captured options to M<Log::Report::report()>.
-This can be used to overrule a destination.
+This can be used to overrule a destination.  Also, the reason can
+be changed.
 
 =example overrule defaults to report
  try { print {to => 'stderr'}, ERROR => 'oops!' };
@@ -87,9 +86,10 @@ This can be used to overrule a destination.
 # if we would used "report" here, we get a naming conflict with
 # function Log::Report::report.
 sub throw(@)
-{   my $self = shift;
-    my $opts = @_ ? { %{$self->{report_opts}}, @_ } : $self->{report_opts};
-    report $opts, $self->reason, $self->message;
+{   my $self   = shift;
+    my $opts   = @_ ? { %{$self->{report_opts}}, @_ } : $self->{report_opts};
+    my $reason = delete $opts->{reason} || $self->reason;
+    report $opts, $reason, $self->message;
 }
 
 1;

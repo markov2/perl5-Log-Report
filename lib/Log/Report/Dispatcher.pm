@@ -103,9 +103,6 @@ returned text is used.
 sub new(@)
 {   my ($class, $type, $name, %args) = @_;
 
-use Carp;
-@_%2 or confess "@_";
-
     my $backend
       = $predef_dispatchers{$type}          ? $predef_dispatchers{$type}
       : $type->isa('Log::Dispatch::Output') ? __PACKAGE__.'::LogDispatch'
@@ -156,7 +153,10 @@ sub close()
     $self;
 }
 
-DESTROY() { shift->close }
+# horrible errors on some Perl versions if called during destruction
+my $in_global_destruction = 0;
+END { $in_global_destruction++ }
+sub DESTROY { $in_global_destruction or shift->close }
 
 =section Accessors
 
@@ -226,7 +226,7 @@ this method.  A string is returned, which ends on a new-line, and
 may be multi-line (in case a stack trace is produced).
 =cut
 
-my %always_loc = map {($_ => 1)} qw/ASSERT WARNING PANIC/;
+my %always_loc = map {($_ => 1)} qw/ASSERT PANIC/;
 sub translate($$$)
 {   my ($self, $opts, $reason, $msg) = @_;
 
@@ -512,7 +512,7 @@ Exactly what will be added depends on the actual mode of the dispatcher
  info     program  T..       S    S    S
  notice   program  T..  S    S    S    S
  mistake  user     T..  S    S    S    SL
- warning  program  T..  SL   SL   SL   SL
+ warning  program  T..  S    S    SL   SL
  error    user     TE.  S    S    SL   SC
  fault    system   TE!  S    S    SL   SC
  alert    system   T.!  S    S    SC   SC

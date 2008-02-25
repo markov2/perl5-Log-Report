@@ -1,6 +1,31 @@
 
 ==== version history of Log::Report
 
+version 0.15: Mon Feb 25 15:36:37 CET 2008
+
+	Changes:
+
+	- ::Dispatcher::Syslog::new(format_reason) change default to
+	  'IGNORE'.
+
+	- warning does not get a line-number/filename.  Use alert if
+	  you need those.
+
+	Improvements:
+
+	- added logsocket option to SYSLOG dispatcher.
+
+	- exception can be re-throw-n with a different reason.
+
+	- stop parse_locale() from complaining about locale==undef
+
+	- ::Util::parse_locale() does a better job trying to conform
+	  to various standards.  In SCALAR context, it now returns
+	  more information.
+
+	- avoid calling ::Dispatcher::DESTROY during global destruction,
+	  because Perl produces horrible complaints for some releases of
+	  Perl.
 version 0.14: Fri Nov  2 15:00:49 CET 2007
 
 	Fixes:
