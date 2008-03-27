@@ -28,7 +28,7 @@ Log::Report::Lexicon::Index - search through available translation files
 
 =chapter SYNOPSIS
  my $index = Log::Report::Lexicon::Index->new($directory);
- my $fn    = $index->find('my-domain', 'nl-NL.utf-8');
+ my $fn    = $index->find('my-domain', 'nl_NL.utf-8');
 
 =chapter DESCRIPTION
 This module handles the lookup of translation files for a whole
@@ -41,11 +41,13 @@ created.
 =section Constructors
 
 =c_method new DIRECTORY, OPTIONS
+Create an index for a certain directory.  If the directory does not
+exist, then the object will still be created.
 =cut
 
 sub new($;@)
-{   my $class = shift;
-    bless {dir => @_}, $class;  # dir before first argument.
+{   my ($class, $dir) = (shift, shift);
+    bless {dir => $dir, @_}, $class;  # dir before first argument.
 }
 
 =section Accessors
@@ -80,7 +82,9 @@ sub index()
              $self->addFile($key, $_);
              1;
            }
-         , follow   => 1, no_chdir => 1
+         , follow      => 1
+         , no_chdir    => 1
+         , follow_skip => 2
        } , $dir
     );
 
@@ -156,23 +160,40 @@ sub find($$)
     || _find($index, "$domain/$lang");
 }
 
-=method list DOMAIN
+=method list DOMAIN, [EXTENSION]
 Returned is a list of filenames which is used to update the list of
 MSGIDs when source files have changed.  All translation files which
 belong to a certain DOMAIN are listed.
 
-You probably need to filter the filenames further, for instance to reduce
-the set to only C<.po> files, get rit of C<mo> files and readme's.
+The EXTENSION filter can be used to reduce the filenames further, for
+instance to select only C<po> or only C<mo> files, and ignore readme's.
+Use an string, without dot and interpreted case-insensitive, or a
+regular expresion.
+
+=example
+  my @l = $index->list('my-domain');
+  my @l = $index->list('my-domain', 'po');
+  my @l = $index->list('my-domain', qr/^readme/i);
 =cut
 
-sub list($)
+sub list($;$)
 {   my $self   = shift;
     my $domain = lc shift;
+    my $filter = shift;
     my $index  = $self->index;
 
-    map { $index->{$_} }
-       grep m! ^\Q$domain\E/ | \b\Q$domain\E[^/]*$ !x
-          , keys %$index;
+    my @list   =
+        map { $index->{$_} }
+            grep { m! \b\Q$domain\E\b !x }
+                keys %$index;
+
+    defined $filter
+        or return @list;
+
+    $filter    = qr/\.\Q$filter\E$/i
+        if defined $filter && ref $filter ne 'Regexp';
+
+    grep { $_ =~ $filter } @list;
 }
 
 =chapter DETAILS

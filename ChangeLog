@@ -1,6 +1,25 @@
 
 ==== version history of Log::Report
 
+version 0.16: Thu Mar 27 11:32:08 CET 2008
+
+	Fixes:
+
+	- assert, error, and such are functions, but where documented
+	  as being methods.
+
+	- xgettext-perl -h did not exit.
+
+	- complaints on Windows about prototype mistake when redefining
+	  LC_MESSAGES [Adam Kennedy]
+
+	Improvements:
+
+	- ::Lexicon::Index::list() got second optional argument, to
+	  filter filenames.
+
+	- Silence symlink recursion errors in ::Lexicon::Index
+
 version 0.15: Mon Feb 25 15:36:37 CET 2008
 
 	Changes:
@@ -26,6 +45,10 @@ version 0.15: Mon Feb 25 15:36:37 CET 2008
 	- avoid calling ::Dispatcher::DESTROY during global destruction,
 	  because Perl produces horrible complaints for some releases of
 	  Perl.
+
+	- link manual-pages with Text::Catalog (renamed from
+	  Log::Report::View)
+
 version 0.14: Fri Nov  2 15:00:49 CET 2007
 
 	Fixes:

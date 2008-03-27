@@ -15,7 +15,7 @@ my %indices;
 # Sometimes, Perl is lazy.  Work-around for missing LC_MESSAGES
 eval "&LC_MESSAGES";
 if($@ =~ /^Your vendor has not/)
-{   *LC_MESSAGES = sub { 5 };
+{   *LC_MESSAGES = sub () { 5 };
 }
 
 =chapter NAME

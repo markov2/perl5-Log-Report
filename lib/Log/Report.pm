@@ -495,27 +495,27 @@ available when syntax is C<SHORT> (see M<import()>).  You cannot specify
 additional options to influence the behavior of C<report()>, which are
 usually not needed anyway.
 
-=method trace MESSAGE
+=function trace MESSAGE
 Short for C<< report TRACE => MESSAGE >>
-=method assert MESSAGE
+=function assert MESSAGE
 Short for C<< report ASSERT => MESSAGE >>
-=method info MESSAGE
+=function info MESSAGE
 Short for C<< report INFO => MESSAGE >>
-=method notice MESSAGE
+=function notice MESSAGE
 Short for C<< report NOTICE => MESSAGE >>
-=method warning MESSAGE
+=function warning MESSAGE
 Short for C<< report WARNING => MESSAGE >>
-=method mistake MESSAGE
+=function mistake MESSAGE
 Short for C<< report MISTAKE => MESSAGE >>
-=method error MESSAGE
+=function error MESSAGE
 Short for C<< report ERROR => MESSAGE >>
-=method fault MESSAGE
+=function fault MESSAGE
 Short for C<< report FAULT => MESSAGE >>
-=method alert MESSAGE
+=function alert MESSAGE
 Short for C<< report ALERT => MESSAGE >>
-=method failure MESSAGE
+=function failure MESSAGE
 Short for C<< report FAILURE => MESSAGE >>
-=method panic MESSAGE
+=function panic MESSAGE
 Short for C<< report PANIC => MESSAGE >>
 =cut
 

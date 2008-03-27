@@ -10,7 +10,6 @@ use Log::Report::Lexicon::PO;
 use Log::Report::Lexicon::POTcompact qw/_plural_algorithm _nr_plurals/;
 
 use POSIX       qw/strftime/;
-use IO::Handle;
 use IO::File;
 use List::Util  qw/sum/;
 

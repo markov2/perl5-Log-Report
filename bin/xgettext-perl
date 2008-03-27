@@ -44,6 +44,7 @@ if($help)
 Log::Report's version of xgettext, has a subset of options
 of GNU's version, and no own manual-page yet.
 __HELP
+   exit 0;
 }
 
 dispatcher FILE => stderr => to => \*STDERR, mode => $mode;
