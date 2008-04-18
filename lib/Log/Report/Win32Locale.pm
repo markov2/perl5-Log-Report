@@ -1,3 +1,5 @@
+use warnings;
+use strict;
 
 package Log::Report::Win32Locale;
 use base 'Exporter';

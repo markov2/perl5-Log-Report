@@ -1,6 +1,28 @@
 
 ==== version history of Log::Report
 
+version 0.17: Fri Apr 18 18:20:51 CEST 2008
+
+	Fixes:
+
+	- strackTrace error with isa() when parameter string contains
+	  a '::' and when a parameter is undefined.
+
+	Changes:
+
+	- changing the run-mode will change the accepted reasons as
+	  well, because it was too complex to understand.
+
+	Improvements:
+
+	- complain if syntax option has an invalid value.
+
+	- use warnings and strict in Win32Locale [cpants]
+
+	- dispatcher command on "ALL" defined dispatchers.
+
+	- use Log::Report mode => 'something'
+
 version 0.16: Thu Mar 27 11:32:08 CET 2008
 
 	Fixes:

@@ -20,7 +20,7 @@ require Log::Report::Message;
 require Log::Report::Dispatcher;
 require Log::Report::Dispatcher::Try;
 
-# See chapter Run modes
+# See section Run modes
 my %is_reason = map {($_=>1)} @Log::Report::Util::reasons;
 my %is_fatal  = map {($_=>1)} qw/ERROR FAULT FAILURE PANIC/;
 my %use_errno = map {($_=>1)} qw/FAULT ALERT FAILURE/;
@@ -37,6 +37,7 @@ require Log::Report::Translator::POT;
 my $reporter;
 my %domain_start;
 my %settings;
+my $default_mode = 0;
 
 #
 # Some initiations
@@ -319,7 +320,8 @@ Implemented COMMANDs are C<close>, C<find>, C<list>, C<disable>,
 C<enable>, C<mode>, C<filter>, and C<needs>.  Most commands are followed
 by a LIST of dispatcher NAMEs to be address.  For C<mode> see section
 L</Run modes>; it requires a MODE argument before the LIST of NAMEs.
-Non-existing names will be ignored.  For C<filter> see
+Non-existing names will be ignored. When C<ALL> is specified, then
+all existing dispatchers will get addressed.  For C<filter> see
 L<Log::Report::Dispatcher/Filters>; it requires a CODE reference before
 the NAMEs of the dispatchers which will have the it applied (defaults to
 all).
@@ -344,6 +346,7 @@ context with only one name, the one object is returned.
  dispatcher disable => 'syslog';
  dispatcher enable => 'mylog', 'syslog'; # more at a time
  dispatcher mode => DEBUG => 'mylog';
+ dispatcher mode => DEBUG => 'ALL';
 
  my @need_info = dispatcher needs => 'INFO';
  if(dispatcher needs => 'INFO') ...
@@ -360,10 +363,12 @@ wishes to return a LIST of objects, not the count of them.
 
 sub dispatcher($@)
 {   if($_[0] !~ m/^(?:close|find|list|disable|enable|mode|needs|filter)$/)
-    {   my $disp = Log::Report::Dispatcher->new(@_);
+    {   my ($type, $name) = (shift, shift);
+        my $disp = Log::Report::Dispatcher->new($type, $name
+          , mode => $default_mode, @_);
 
         # old dispatcher with same name will be closed in DESTROY
-        $reporter->{dispatchers}{$disp->name} = $disp;
+        $reporter->{dispatchers}{$name} = $disp;
         _whats_needed;
         return ($disp);
     }
@@ -390,14 +395,17 @@ sub dispatcher($@)
         return ();
     }
 
-    my $mode    = $command eq 'mode' ? shift : undef;
+    my $mode  = $command eq 'mode' ? shift : undef;
+    my @disps = @_==1 && $_[0] eq 'ALL' ? keys %{$reporter->{dispatchers}} : @_;
 
-    error __"in SCALAR context, only one dispatcher name accepted"
-        if @_ > 1 && !wantarray && defined wantarray;
+    my @dispatchers = grep defined, @{$reporter->{dispatchers}}{@disps};
+    @dispatchers or return;
 
-    my @dispatchers = grep defined, @{$reporter->{dispatchers}}{@_};
+    error __"only one dispatcher name accepted in SCALAR context"
+        if @dispatchers > 1 && !wantarray && defined wantarray;
+
     if($command eq 'close')
-    {   delete @{$reporter->{dispatchers}}{@_};
+    {   delete @{$reporter->{dispatchers}}{@disps};
         $_->close for @dispatchers;
     }
     elsif($command eq 'enable')  { $_->_disabled(0) for @dispatchers }
@@ -761,11 +769,19 @@ the non-translatable messages in.  In case no translation is needed,
 you still wish the system error messages to be in the same language
 as the report.  Of course, each textdomain can define its own.
 
+=option  mode LEVEL
+=default mode 'NORMAL'
+This sets the default mode for all created dispatchers.  You can
+also selectively change the output mode, like
+ dispatcher PERL => 'default', mode => 3
+
 =examples of import
- use Log::Report 'my-domain'    # in each package
+ use Log::Report mode => 3;     # or 'DEBUG'
+
+ use Log::Report 'my-domain'    # in each package producing messages
   , syntax     => 'SHORT';
 
- use Log::Report 'my-domain'    # in one package
+ use Log::Report 'my-domain'    # in one package, top of distr
   , translator => Log::Report::Translator::POT->new
      ( lexicon  => '/home/me/locale'  # bindtextdomain
      , charset  => 'UTF-8'            # codeset
@@ -796,11 +812,20 @@ sub import(@)
           , $pkg, $fn, $linenr);
     }
 
+    if(exists $opts{mode})
+    {   $default_mode = delete $opts{mode} || 0;
+        dispatcher mode => $default_mode, 'ALL';
+    }
+
     push @{$domain_start{$fn}}, [$linenr => $textdomain];
 
     my @export = (@functions, @make_msg);
-    push @export, @reason_functions
-        if $syntax eq 'SHORT';
+
+    if($syntax eq 'SHORT') { push @export, @reason_functions }
+    elsif($syntax ne 'REPORT')
+    {   error __x"syntax flag must be either SHORT or REPORT, not `{syntax}'"
+          , syntax => $syntax;
+    }
 
     $class->export_to_level(1, undef, @export);
 }

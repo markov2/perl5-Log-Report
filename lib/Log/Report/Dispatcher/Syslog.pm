@@ -124,7 +124,7 @@ sub init($)
             $self->{prio}{$_} = $prio for @reasons;
         }
     }
-            
+
     $self;
 }
 
