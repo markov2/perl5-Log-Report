@@ -1,6 +1,14 @@
 
 ==== version history of Log::Report
 
+version 0.18: Fri May  9 15:36:06 CEST 2008
+
+	Fixes:
+
+	- few fixes to Win32Locale and parse_locale() [Ari Jolma]
+
+	- Require Sys::Syslog 0.24
+
 version 0.17: Fri Apr 18 18:20:51 CEST 2008
 
 	Fixes:

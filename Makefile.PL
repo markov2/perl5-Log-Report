@@ -2,11 +2,12 @@ use ExtUtils::MakeMaker;
 
 use 5.008;
 
-my $version = 0.17;
+my $version = 0.18;
 
 my %prereq  =
-  ( Test::More => 0.47
-  , Test::Pod  => 1.00
+  ( Test::More  => 0.47
+  , Test::Pod   => 1.00
+  , Sys::Syslog => 0.24
   );
 
 $prereq{ 'Win32::TieRegistry' } = 0.24

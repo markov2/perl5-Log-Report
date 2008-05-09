@@ -15,7 +15,7 @@ while(<DATA>)
 {  my ($codepage, $iso) = split;
    $codepage2iso{hex $codepage} = $iso;
 }
-my $iso2codepage = reverse $codepage2iso;
+my %iso2codepage = reverse %codepage2iso;
 close DATA;
 
 =chapter NAME
@@ -75,7 +75,7 @@ C<undef>/false.  By default, the actual codepage is used.
 =cut
 
 sub iso_locale(;$)
-{   codepage_to_iso(shift || ms_codepage_id || ms_locale);
+{   codepage_to_iso(shift || ms_codepage_id() || ms_locale());
 }
 
 # the following functions are rewrites of Win32::Codepage version 1.00

@@ -4,7 +4,7 @@ use strict;
 package Log::Report::Dispatcher::Syslog;
 use base 'Log::Report::Dispatcher';
 
-use Sys::Syslog 0.11, qw/:standard :extended :macros/;
+use Sys::Syslog 0.24, qw/:standard :extended :macros/;
 use Log::Report 'log-report', syntax => 'SHORT';
 use Log::Report::Util  qw/@reasons expand_reasons/;
 
