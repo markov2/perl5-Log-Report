@@ -1,6 +1,33 @@
 
 ==== version history of Log::Report
 
+version 0.19: Mon Nov 24 12:52:34 CET 2008
+
+	Fixes:
+
+	- fix for Test::More interface change in 0.86.
+
+	- be strict on the character-set of the messages which are
+	  written, by default in UTF-8.  (LC_CTYPE for the File
+	  dispatcher if available)
+
+	Improvements:
+
+	- work around missing LC_MESSAGES on old perls [Toby Corkindale]
+
+	- few improvements in main SYNOPSIS
+
+	- removed ::Dispatcher::File setting of encoding in binmode,
+	  in favor of explicit (internal) encoding for all dispatched
+	  messages.
+
+	- require Encode 2.00+
+
+	- test do not say 'ERROR' but 'WARNING' in t/04setlocale.t
+	  when the setlocale() call does not return the old value as
+	  it should, according to the standards.  Less confusion to
+	  the end-user, hopefully.
+
 version 0.18: Fri May  9 15:36:06 CEST 2008
 
 	Fixes:

@@ -46,8 +46,8 @@ ok(defined $err_posix, $err_posix);  # english
 my $change = setlocale LC_ALL, $alt_locale;
 ok(defined $change, "returned change to alternative locale");
 if($change eq $alt_locale)
-{   ok(1, "ERROR: setlocale() returns new locale value, not the previous");
-    warn "*** ERROR: setlocale() returns new locale value, not the previous\n";
+{   ok(1, "WARNING: setlocale() returns new locale value, not the previous");
+  warn "*** WARNING: setlocale() returns new locale value, not the previous\n";
 }
 else
 {   ok(1, "result is old value");

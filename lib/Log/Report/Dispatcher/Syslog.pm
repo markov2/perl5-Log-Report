@@ -41,7 +41,8 @@ Log::Report::Dispatcher::Syslog - send messages to syslog
 
 =chapter DESCRIPTION
 This dispatchers produces output to syslog, based on the M<Sys::Syslog>
-module (which will NOT be automatically installed for you).
+module (which will NOT be automatically installed for you, because some
+systems have a problem with this dependency).
 
 The REASON for a message often uses names which are quite similar to
 the log-levels used by syslog.  However: they have a different purpose.
@@ -142,6 +143,7 @@ sub close()
 sub log($$$$)
 {   my $self = shift;
     my $text = $self->SUPER::translate(@_) or return;
+
     my $prio = $self->reasonToPrio($_[1]);
 
     # handle each line in message separately

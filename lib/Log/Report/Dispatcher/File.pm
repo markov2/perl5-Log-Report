@@ -5,7 +5,8 @@ package Log::Report::Dispatcher::File;
 use base 'Log::Report::Dispatcher';
 
 use Log::Report 'log-report', syntax => 'SHORT';
-use IO::File;
+use IO::File ();
+use Encode   qw/find_encoding/;
 
 =chapter NAME
 Log::Report::Dispatcher::File - send messages to a file or file-handle
@@ -53,19 +54,28 @@ any kind of handle or object which accepts supports C<print()>.
 When cleaning-up the dispatcher, the file will only be closed in case
 of a FILENAME.
 
-=option  charset STRING
-=default charset 'utf-8'
-Only used in combination with a FILENAME.
-
 =option  replace BOOLEAN
 =default replace C<false>
 Only used in combination with a FILENAME: throw away the old file
 if it exists.  Probably you wish to append to existing information.
+
+=default charset LOCALE
+Use the LOCALE setting by default, which is LC_CTYPE or LC_ALL or LANG
+(in that order).  If these contain a character-set which Perl understands,
+then that is used, otherwise silently ignored.
 =cut
 
 sub init($)
 {   my ($self, $args) = @_;
+
+    if(!$args->{charset})
+    {   my $lc = $ENV{LC_CTYPE} || $ENV{LC_ALL} || $ENV{LANG} || '';
+        my $cs = $lc =~ m/\.([\w-]+)/ ? $1 : '';
+        $args->{charset} = length $cs && find_encoding $cs ? $cs : undef;
+    }
+
     $self->SUPER::init($args);
+
     my $name = $self->name;
     my $to   = delete $args->{to}
         or error __x"dispatcher {name} needs parameter 'to'", name => $name;
@@ -76,9 +86,7 @@ sub init($)
     }
     else
     {   $self->{filename} = $to;
-        my $mode    = $args->{replace} ? '>' : '>>';
-        my $charset = delete $args->{charset} || 'utf-8';
-        my $binmode = "$mode:encoding($charset)";
+        my $binmode = $args->{replace} ? '>' : '>>';
 
         $self->{output} = IO::File->new($to, $binmode)
             or fault __x"cannot write log into {file} with {binmode}"

@@ -112,7 +112,7 @@ is($s->toString, "A=11;B=12");
 my $t = $s->(b=>13);
 isa_ok($t, 'Log::Report::Message');
 ok(reftype $t, 'HASH');
-isnt($s, $t);
+isnt("$s", "$t");
 is($t->toString, "A=11;B=13");
 is($s->toString, "A=11;B=12");  # unchanged
 

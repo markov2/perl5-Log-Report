@@ -16,8 +16,8 @@ Log::Report::Dispatcher::Try - capture all reports as exceptions
 
  if(try {...}) {    # block ended normally
 
- my $x = try {read_temperature()};
- my @x = try {read_lines_from_file()};
+ my $x = try { read_temperature() };
+ my @x = try { read_lines_from_file() };
 
  try { ... }        # no comma!!
     mode => 'DEBUG', accept => 'ERROR-';
@@ -35,7 +35,9 @@ Log::Report::Dispatcher::Try - capture all reports as exceptions
  if($@->failed) {   # same       # }
  if($@->success) {  # no errors  # }
 
- try { report {to => 'stderr'}, FAILURE => 'no network' };
+ try { # something causes an error report, which is caught
+       report {to => 'stderr'}, FAILURE => 'no network';
+     };
  $@->reportFatal(to => 'syslog');  # overrule destination
 
 =chapter DESCRIPTION

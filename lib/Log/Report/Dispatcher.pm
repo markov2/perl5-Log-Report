@@ -9,6 +9,7 @@ use Log::Report::Util qw/parse_locale expand_reasons %reason_code
 
 use POSIX      qw/strerror/;
 use List::Util qw/sum/;
+use Encode     qw/find_encoding FB_DEFAULT/;
 
 eval { POSIX->import('locale_h') };
 if($@)
@@ -98,6 +99,14 @@ How to show the reason text which is printed before the message. When
 a CODE is specified, it will be called with a translated text and the
 returned text is used.
 
+=option  charset CHARSET
+=default charset C<UTF-8> or C<UTF-16>
+Write the messages in the specified character-set (codeset).  By
+default, this will be UTF-16 on Windows and real UTF-8 (not perl's
+internal encoding) on all other systems.
+Conversion errors will not be reported, but result in replacement
+characters.
+
 =cut
 
 sub new(@)
@@ -136,6 +145,12 @@ sub init($)
     $self->{format_reason} = ref $f eq 'CODE' ? $f : $format_reason{$f}
         or error __x"illegal format_reason '{format}' for dispatcher",
              format => $f;
+
+    my $cs  = delete $args->{charset} || ($^O eq 'MSWin32'?'UTF-16':'UTF-8');
+    my $enc = find_encoding $cs
+        or error __x"Perl does not support charset {cs}", cs => $cs;
+    $self->{charset_enc}
+      = sub { no warnings 'utf8'; $enc->decode($_[0], FB_DEFAULT) };
 
     $self;
 }
@@ -299,7 +314,7 @@ sub translate($$$)
     setlocale(&LC_ALL, $oldloc)
         if defined $oldloc;
 
-    $text;
+    $self->{charset_enc}->($text);
 }
 
 =method collectStack [MAXDEPTH]

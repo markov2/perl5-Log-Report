@@ -56,9 +56,11 @@ Log::Report - report a problem, pluggable handlers and language support
 =chapter SYNOPSIS
  # Read section "The Reason for the report" first!!!
 
- # In your main script
+ # In each package, declare a name-space.  Different packages
+ # used by one program can have different translation tables.
  use Log::Report 'my-domain';
 
+ # Many destinations in parallel possible. Log::Report::Dispatcher
  dispatcher PERL => 'default'
    , reasons => 'NOTICE-';   # this disp. is automatically added
 
@@ -66,36 +68,43 @@ Log::Report - report a problem, pluggable handlers and language support
    , charset => 'iso-8859-1' # explicit conversions
    , locale => 'en_US';      # overrule user's locale
 
- # in all (other) files
- use Log::Report 'my-domain';
+ # Produce an error, long syntax
  report ERROR => __x('gettext string', param => $param, ...)
      if $condition;
 
- # overrule standard behavior for single message with HASH
- use Errno qw/ENOMEM/;
- report {to => 'syslog', errno => ENOMEM}
-   , FAULT => __x"cannot allocate {size} bytes", size => $size;
-
+ # Syntax SHORT, adding error() and many other
  use Log::Report 'my-domain', syntax => 'SHORT';
  error __x('gettext string', param => $param, ...)
      if $condition;
 
- # avoid messages without report level
- print __"Hello World", "\n";
+ # Overrule standard behavior for single message with HASH as
+ # first parameter.  Only long syntax
+ use Errno qw/ENOMEM/;
+ report {to => 'syslog', errno => ENOMEM}
+   , FAULT => __x"cannot allocate {size} bytes", size => $size;
 
+ # avoid messages without report level for daemons
+ print __"Hello World", "\n";  # only translation, no exception
+ print __'Hello World';  # ERROR!!  ' is alternative for ::
+
+ # fill-in values, like Locale::TextDomain and gettext
+ # See Log::Report::Message section DETAILS
  fault __x "cannot allocate {size} bytes", size => $size;
  fault "cannot allocate $size bytes";      # no translation
  fault __x "cannot allocate $size bytes";  # wrong, not static
 
  print __xn("found one file", "found {_count} files", @files), "\n";
 
- try { error };    # catch errors with hidden eval/die
+ # catch errors (implements hidden eval/die)
+ try { error };
  if($@) {...}      # $@ isa Log::Report::Dispatcher::Try
 
+ # Language translations at the IO/layer
  use POSIX ':locale_h';
  setlocale(LC_ALL, 'nl_NL');
  info __"Hello World!";  # in Dutch, if translation table found
 
+ # Exception classes, see Log::Report::Exception
  my $msg = __x"something", _class => 'local,mine';
  if($msg->inClass('local')) ...
 
