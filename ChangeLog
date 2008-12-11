@@ -1,6 +1,13 @@
 
 ==== version history of Log::Report
 
+version 0.20: Thu Dec 11 14:18:15 CET 2008
+
+	Fixes:
+
+	- dispatcher does not convert output to a default charset, because
+	  the optimal default cannot be established on most platforms.
+
 version 0.19: Mon Nov 24 12:52:34 CET 2008
 
 	Fixes:

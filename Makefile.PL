@@ -2,7 +2,7 @@ use ExtUtils::MakeMaker;
 
 use 5.008;
 
-my $version = 0.19;
+my $version = '0.20';
 
 my %prereq  =
   ( Test::More  =>  0.86

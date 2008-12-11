@@ -100,12 +100,10 @@ a CODE is specified, it will be called with a translated text and the
 returned text is used.
 
 =option  charset CHARSET
-=default charset C<UTF-8> or C<UTF-16>
-Write the messages in the specified character-set (codeset).  By
-default, this will be UTF-16 on Windows and real UTF-8 (not perl's
-internal encoding) on all other systems.
-Conversion errors will not be reported, but result in replacement
-characters.
+=default charset <undef>
+Convert the messages in the specified character-set (codeset).  By
+default, no conversion will take place, because the right choice cannot
+be determined automatically.
 
 =cut
 
@@ -146,11 +144,14 @@ sub init($)
         or error __x"illegal format_reason '{format}' for dispatcher",
              format => $f;
 
-    my $cs  = delete $args->{charset} || ($^O eq 'MSWin32'?'UTF-16':'UTF-8');
-    my $enc = find_encoding $cs
-        or error __x"Perl does not support charset {cs}", cs => $cs;
-    $self->{charset_enc}
-      = sub { no warnings 'utf8'; $enc->decode($_[0], FB_DEFAULT) };
+    my $csenc;
+    if(my $cs  = delete $args->{charset})
+    {   my $enc = find_encoding $cs
+            or error __x"Perl does not support charset {cs}", cs => $cs;
+        $csenc = sub { no warnings 'utf8'; $enc->encode($_[0]) };
+    }
+
+    $self->{charset_enc} = $csenc || sub { $_[0] };
 
     $self;
 }

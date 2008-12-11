@@ -128,7 +128,7 @@ sub find($$)
     unless(defined $lang)
     {   # avoid problem with recursion, not translatable
         defined $locale or $locale = '<undef>';
-        warn "illegal locale $locale, when looking for $domain";
+        warning "illegal locale $locale, when looking for $domain";
         return undef;
     }
 

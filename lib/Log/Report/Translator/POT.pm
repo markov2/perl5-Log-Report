@@ -12,9 +12,11 @@ use POSIX qw/:locale_h/;
 
 my %indices;
 
-# Work-around for missing LC_MESSAGES on old Perls
-eval "&LC_MESSAGES";
-*LC_MESSAGES = sub(){5} if $@;
+# Work-around for missing LC_MESSAGES on old Perls and Windows
+{ no warnings;
+  eval "&LC_MESSAGES";
+  *LC_MESSAGES = sub(){5} if $@;
+}
 
 =chapter NAME
 Log::Report::Translator::POT - translation based on POT files
