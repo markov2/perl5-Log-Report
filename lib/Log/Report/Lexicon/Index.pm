@@ -126,9 +126,9 @@ sub find($$)
 
     my ($lang, $terr, $cs, $modif) = parse_locale $locale;
     unless(defined $lang)
-    {   # avoid problem with recursion, not translatable
-        defined $locale or $locale = '<undef>';
-        warning "illegal locale $locale, when looking for $domain";
+    {   defined $locale or $locale = '<undef>';
+        # avoid problem with recursion, not translatable!
+        print STDERR "illegal locale $locale, when looking for $domain";
         return undef;
     }
 

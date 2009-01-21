@@ -1,6 +1,17 @@
 
 ==== version history of Log::Report
 
+version 0.21: Wed Jan 21 10:31:48 CET 2009
+
+	Fixes:
+
+	- avoid recursion when locale setting is not understood.
+	  rt.cpan.org#41943 [Serguei Trouchelle]
+
+	Improvements:
+
+	- add Log::Report::needs() for convenience
+
 version 0.20: Thu Dec 11 14:18:15 CET 2008
 
 	Fixes:

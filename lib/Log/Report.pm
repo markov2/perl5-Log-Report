@@ -5,6 +5,8 @@ use strict;
 package Log::Report;
 use base 'Exporter';
 
+use List::Util qw/first/;
+
 # domain 'log-report' via work-arounds:
 #     Log::Report cannot do "use Log::Report"
 
@@ -927,6 +929,25 @@ Returns true if the REASON is severe enough to cause an exception
 
 sub isValidReason($) { $is_reason{$_[1]} }
 sub isFatal($)       { $is_fatal{$_[1]} }
+
+=ci_method needs REASON, [REASONS]
+Returns true when the reporter needs any of the REASONS, when any of
+the active dispatchers is collecting messages in the specified level.
+This is useful when the processing of data for the message is relatively
+expensive, but for instance only required in debug mode.
+
+=example
+  if(Log::Report->needs('TRACE'))
+  {   my @args = ...expensive calculation...;
+      trace "your options are: @args";
+  }
+=cut
+
+sub needs(@)
+{   my $thing = shift;
+    my $self  = ref $thing ? $thing : $reporter;
+    first {$self->{needs}{$_}} @_;
+}
 
 =chapter DETAILS
 
