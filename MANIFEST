@@ -43,6 +43,6 @@ t/51syslog.t
 t/52logdisp.t
 t/53log4perl.t
 t/54try.t
+t/99pod.t
 t/DieTests.pm
 t/hello-world-slovak.po
-t/pod.t

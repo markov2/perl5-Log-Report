@@ -1,6 +1,15 @@
 
 ==== version history of Log::Report
 
+version 0.22: Mon Jan 26 09:05:55 CET 2009
+
+	Fixes:
+
+	- do not use /bin/pwd in t/pod.t, because it fails on Windows
+	  [Serguei Trouchelle]
+
+	- translate long Windows locales into short [Serguei Trouchelle]
+
 version 0.21: Wed Jan 21 10:31:48 CET 2009
 
 	Fixes:
