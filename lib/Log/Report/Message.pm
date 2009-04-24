@@ -244,6 +244,7 @@ sub _expand($$)
     use locale;
     if(ref $value eq 'ARRAY')
     {   my @values = map {defined $_ ? $_ : 'undef'} @$value;
+        @values or return '(none)';
         return $format
              ? join($", map {sprintf $format, $_} @values)
              : join($", @values);

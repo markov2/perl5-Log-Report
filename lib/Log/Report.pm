@@ -310,7 +310,7 @@ sub report($@)
 
     if($stop)
     {   if($^S) {$! = $opts->{errno}; die $stop_msg}
-        else    {exit $opts->{errno} || 0}
+        else    {exit ($opts->{errno} || 0) }
     }
 
     @disp;
@@ -406,8 +406,9 @@ sub dispatcher($@)
         return ();
     }
 
-    my $mode  = $command eq 'mode' ? shift : undef;
-    my @disps = @_==1 && $_[0] eq 'ALL' ? keys %{$reporter->{dispatchers}} : @_;
+    my $mode     = $command eq 'mode' ? shift : undef;
+    my $all_disp = @_==1 && $_[0] eq 'ALL';
+    my @disps    = $all_disp ? keys %{$reporter->{dispatchers}} : @_;
 
     my @dispatchers = grep defined, @{$reporter->{dispatchers}}{@disps};
     @dispatchers or return;
@@ -421,7 +422,10 @@ sub dispatcher($@)
     }
     elsif($command eq 'enable')  { $_->_disabled(0) for @dispatchers }
     elsif($command eq 'disable') { $_->_disabled(1) for @dispatchers }
-    elsif($command eq 'mode'){ $_->_set_mode($mode) for @dispatchers }
+    elsif($command eq 'mode')
+    {    Log::Report::Dispatcher->defaultMode($mode) if $all_disp;
+         $_->_set_mode($mode) for @dispatchers;
+    }
 
     # find does require reinventarization
     _whats_needed unless $command eq 'find';
@@ -825,6 +829,7 @@ sub import(@)
 
     if(exists $opts{mode})
     {   $default_mode = delete $opts{mode} || 0;
+        Log::Report::Dispatcher->defaultMode($default_mode);
         dispatcher mode => $default_mode, 'ALL';
     }
 

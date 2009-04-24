@@ -81,7 +81,7 @@ sub parse_locale($)
       : $primary =~ m/^[a-z]{2,3}$/ ? $primary            # ISO639-1 and -2
       : $primary eq 'i' && @subtags ? lc(shift @subtags)  # IANA
       : $primary eq 'x' && @subtags ? lc(shift @subtags)  # Private
-      : error __x"unknown locale language in locale {locale}"
+      : error __x"unknown locale language in locale `{locale}'"
            , locale => $locale;
 
     my $script;

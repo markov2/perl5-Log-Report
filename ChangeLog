@@ -1,6 +1,22 @@
 
 ==== version history of Log::Report
 
+version 0.23: Fri Apr 24 16:18:12 CEST 2009
+
+	Fixes:
+
+	- remember global mode, for dispatchers started later.
+
+	- let try() use dispatcher mode, not to loose trace etc.
+
+	- resolve complaint on exit.
+
+	Improvements:
+
+	- when an empty list has to be expanded, it will show '(none)'
+
+	- require Sys::Syslog 0.27
+
 version 0.22: Mon Jan 26 09:05:55 CET 2009
 
 	Fixes:
@@ -8,7 +24,8 @@ version 0.22: Mon Jan 26 09:05:55 CET 2009
 	- do not use /bin/pwd in t/pod.t, because it fails on Windows
 	  [Serguei Trouchelle]
 
-	- translate long Windows locales into short [Serguei Trouchelle]
+	- translate long Windows locales into short
+	  rt.cpan.org#41943 [Serguei Trouchelle]
 
 version 0.21: Wed Jan 21 10:31:48 CET 2009
 

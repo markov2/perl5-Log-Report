@@ -2,12 +2,12 @@ use ExtUtils::MakeMaker;
 
 use 5.008;
 
-my $version = '0.22';
+my $version = '0.23';
 
 my %prereq  =
   ( Test::More  =>  0.86
   , Test::Pod   => '1.00'
-  , Sys::Syslog =>  0.24
+  , Sys::Syslog => '0.27'
   , Encode      => '2.00'
   );
 

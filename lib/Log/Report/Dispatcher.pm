@@ -129,10 +129,12 @@ my %format_reason =
   , UCFIRST   => sub { ucfirst lc $_[0] }
   , IGNORE    => sub { '' }
   );
-  
+
+my $default_mode = 'NORMAL';
+
 sub init($)
 {   my ($self, $args) = @_;
-    my $mode = $self->_set_mode(delete $args->{mode} || 'NORMAL');
+    my $mode = $self->_set_mode(delete $args->{mode} || $default_mode);
 
     $self->{locale} = delete $args->{locale};
 
@@ -152,7 +154,6 @@ sub init($)
     }
 
     $self->{charset_enc} = $csenc || sub { $_[0] };
-
     $self;
 }
 
@@ -173,6 +174,8 @@ sub close()
 my $in_global_destruction = 0;
 END { $in_global_destruction++ }
 sub DESTROY { $in_global_destruction or shift->close }
+
+#----------------------------
 
 =section Accessors
 
@@ -195,6 +198,9 @@ and L<Log::Report/Run modes>.
 =cut
 
 sub mode() {shift->{mode}}
+
+#Please use C<dispatcher mode => $MODE;>
+sub defaultMode($) {$default_mode = $_[1]}
 
 # only to be used via Log::Report::dispatcher(mode => ...)
 # because requires re-investigating collective dispatcher needs
