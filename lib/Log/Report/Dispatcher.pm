@@ -277,7 +277,8 @@ sub translate($$$)
 
     # not all implementations of setlocale() return the old value
     my $oldloc = setlocale(&LC_ALL);
-    setlocale(&LC_ALL, $locale || 'en_US');
+    #setlocale(&LC_ALL, $locale || 'en_US');
+    setlocale(&LC_ALL, $locale) if $locale;
 
     my $r = $self->{format_reason}->((__$reason)->toString);
     my $e = $opts->{errno} ? strerror($opts->{errno}) : undef;

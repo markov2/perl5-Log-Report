@@ -4,7 +4,7 @@ msgstr ""
 "Project-Id-Version: log-report 0.01\n"
 "Report-Msgid-Bugs-To:\n"
 "POT-Creation-Date: 2007-05-14 17:14+0200\n"
-"PO-Revision-Date: 2009-02-27 11:34+0100\n"
+"PO-Revision-Date: 2009-04-27 09:47+0200\n"
 "Last-Translator:\n"
 "Language-Team:\n"
 "MIME-Version: 1.0\n"
@@ -111,7 +111,7 @@ msgstr ""
 msgid "WARNING"
 msgstr ""
 
-#: lib/Log/Report/Dispatcher.pm:303 lib/Log/Report/Dispatcher.pm:315
+#: lib/Log/Report/Dispatcher.pm:304 lib/Log/Report/Dispatcher.pm:316
 #, fuzzy
 msgid "at {filename} line {line}"
 msgstr ""
@@ -357,7 +357,7 @@ msgstr ""
 
 #: lib/Log/Report/Util.pm:84
 #, fuzzy
-msgid "unknown locale language in locale {locale}"
+msgid "unknown locale language in locale `{locale}'"
 msgstr ""
 
 #: lib/Log/Report/Util.pm:133 lib/Log/Report/Util.pm:148
@@ -404,17 +404,17 @@ msgstr[1] ""
 msgid "{domain}: {fuzzy%3d} fuzzy, {inact%3d} inactive in {filename}"
 msgstr ""
 
-#: lib/Log/Report/Dispatcher.pm:288
+#: lib/Log/Report/Dispatcher.pm:289
 #, fuzzy
 msgid "{message}; {error}"
 msgstr ""
 
-#: lib/Log/Report/Dispatcher.pm:287
+#: lib/Log/Report/Dispatcher.pm:288
 #, fuzzy
 msgid "{reason}: {message}"
 msgstr ""
 
-#: lib/Log/Report/Dispatcher.pm:286
+#: lib/Log/Report/Dispatcher.pm:287
 #, fuzzy
 msgid "{reason}: {message}; {error}"
 msgstr ""

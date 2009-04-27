@@ -4,7 +4,7 @@ msgstr ""
 "Project-Id-Version: log-report 0.01\n"
 "Report-Msgid-Bugs-To:\n"
 "POT-Creation-Date: 2007-05-14 17:14+0200\n"
-"PO-Revision-Date: 2009-02-27 11:34+0100\n"
+"PO-Revision-Date: 2009-04-27 09:47+0200\n"
 "Last-Translator: Mark Overmeer <mark@overmeer.net>\n"
 "Language-Team:\n"
 "MIME-Version: 1.0\n"
@@ -90,7 +90,7 @@ msgstr "'{token}' is niet herkend als rapportage reden"
 msgid "WARNING"
 msgstr "WAARSCHUWING"
 
-#: lib/Log/Report/Dispatcher.pm:303 lib/Log/Report/Dispatcher.pm:315
+#: lib/Log/Report/Dispatcher.pm:304 lib/Log/Report/Dispatcher.pm:316
 msgid "at {filename} line {line}"
 msgstr "in {filename} regel {line}"
 
@@ -331,14 +331,14 @@ msgstr[1] "{domain}: {_count} bestanden met elk {ids} msgids, {f} fuzzy en {i} o
 msgid "{domain}: {fuzzy%3d} fuzzy, {inact%3d} inactive in {filename}"
 msgstr "{domain}: {fuzzy%3d} fuzzy, {inact%3d} op non-actief in {filename}"
 
-#: lib/Log/Report/Dispatcher.pm:288
+#: lib/Log/Report/Dispatcher.pm:289
 msgid "{message}; {error}"
 msgstr "{message}; {error}"
 
-#: lib/Log/Report/Dispatcher.pm:287
+#: lib/Log/Report/Dispatcher.pm:288
 msgid "{reason}: {message}"
 msgstr "{reason}: {message}"
 
-#: lib/Log/Report/Dispatcher.pm:286
+#: lib/Log/Report/Dispatcher.pm:287
 msgid "{reason}: {message}; {error}"
 msgstr "{reason}: {message}; {error}"

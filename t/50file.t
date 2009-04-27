@@ -8,6 +8,9 @@ use lib 'lib', '../lib';
 use Test::More tests => 38;
 
 use Log::Report undef, syntax => 'SHORT';
+use POSIX 'locale_h';
+
+setlocale(LC_ALL, 'en_US');
 
 my @disp = dispatcher 'list';
 cmp_ok(scalar(@disp), '==', 1);
