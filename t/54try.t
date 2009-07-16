@@ -5,7 +5,7 @@ use warnings;
 use strict;
 use lib 'lib', '../lib';
 
-use Test::More tests => 43;
+use Test::More tests => 49;
 
 use Log::Report undef, syntax => 'SHORT';
 use Carp;  # required for tests
@@ -63,8 +63,17 @@ ok($caught->success);
 ok($caught ? 0 : 1);
 my @r3 = $caught->wasFatal;
 cmp_ok(scalar(@r3), '==', 0);
+
 my @r4 = $caught->exceptions;
 cmp_ok(scalar(@r4), '==', 2);
+
+isa_ok($r4[0], 'Log::Report::Exception');
+is($r4[0]->toString, "INFO: nothing wrong\n");
+is("$r4[0]", "INFO: nothing wrong\n");
+
+isa_ok($r4[1], 'Log::Report::Exception');
+is($r4[1]->toString, "TRACE: trace more\n");
+is("$r4[1]", "TRACE: trace more\n");
 
 $caught->reportAll;  # pass on errors
 my $text_l3 = length $text;

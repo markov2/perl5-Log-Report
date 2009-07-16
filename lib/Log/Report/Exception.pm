@@ -31,6 +31,12 @@ an (untranslated) report.
 
 =chapter OVERLOADING
 
+=overload stringification
+Produces "reason: message".
+=cut
+
+use overload '""' => 'toString';
+
 =chapter METHODS
 
 =section Constructors
@@ -90,6 +96,21 @@ sub throw(@)
     my $opts   = @_ ? { %{$self->{report_opts}}, @_ } : $self->{report_opts};
     my $reason = delete $opts->{reason} || $self->reason;
     report $opts, $reason, $self->message;
+}
+
+=method toString
+Prints the reason and the message.  Differently from M<throw()>, this
+only represents the textual content: it does not re-cast the exceptions to
+higher levels.
+
+=examples printing exceptions
+ print $_->toString for $@->exceptions;
+ print $_ for $@->exceptions;   # via overloading
+=cut
+
+sub toString()
+{   my $self = shift;
+    $self->reason . ": " . $self->message . "\n";
 }
 
 1;

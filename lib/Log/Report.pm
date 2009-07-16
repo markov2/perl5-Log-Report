@@ -10,8 +10,8 @@ use List::Util qw/first/;
 # domain 'log-report' via work-arounds:
 #     Log::Report cannot do "use Log::Report"
 
-my @make_msg   = qw/__ __x __n __nx __xn N__ N__n N__w/;
-my @functions  = qw/report dispatcher try/;
+my @make_msg         = qw/__ __x __n __nx __xn N__ N__n N__w/;
+my @functions        = qw/report dispatcher try/;
 my @reason_functions = qw/trace assert info notice warning
    mistake error fault alert failure panic/;
 
@@ -407,6 +407,7 @@ sub dispatcher($@)
     }
 
     my $mode     = $command eq 'mode' ? shift : undef;
+
     my $all_disp = @_==1 && $_[0] eq 'ALL';
     my @disps    = $all_disp ? keys %{$reporter->{dispatchers}} : @_;
 

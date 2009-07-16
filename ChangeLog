@@ -1,6 +1,13 @@
 
 ==== version history of Log::Report
 
+version 0.25: Thu Jul 16 12:18:51 CEST 2009
+
+	Improvements:
+
+	- new method Log::Report::Exception::toString(), also overloaded
+	  for stringification.
+
 version 0.24: Mon Apr 27 10:02:12 CEST 2009
 
 	Fixes:

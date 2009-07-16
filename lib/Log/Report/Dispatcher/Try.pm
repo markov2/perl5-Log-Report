@@ -40,6 +40,8 @@ Log::Report::Dispatcher::Try - capture all reports as exceptions
      };
  $@->reportFatal(to => 'syslog');  # overrule destination
 
+ print $@->exceptions; # no re-cast, just print
+
 =chapter DESCRIPTION
 The M<Log::Report::try()> catches errors in the block (CODE
 reference) which is just following the function name.  All
@@ -125,10 +127,10 @@ sub exceptions() { @{shift->{exceptions}} }
 =section Logging
 
 =method log OPTS, REASON, MESSAGE
-Other dispatchers translate the message here, and make it leave
-the program.   However, messages in a "try" block are only
-captured in an intermediate layer: they may never be presented
-to an end-users.  And for sure, we do not know the language yet.
+Other dispatchers translate the message here, and make it leave the
+program.  However, messages in a "try" block are only captured in
+an intermediate layer: they may never be presented to an end-users.
+And for sure, we do not know the language yet.
 
 The MESSAGE is either a STRING or a M<Log::Report::Message>.
 =cut
@@ -155,7 +157,7 @@ sub log($$$)
 
 =method reportAll OPTIONS
 Re-cast the messages in all collect exceptions into the defined
-dispatchers, which were disabled during the try block.  The OPTIONS
+dispatchers, which were disabled during the try block. The OPTIONS
 will end-up as HASH-of-OPTIONS to M<Log::Report::report()>; see
 M<Log::Report::Exception::throw()> which does the job.
 =cut
@@ -170,6 +172,8 @@ M<Log::Report::Exception::throw()> which does the job.
 =cut
 
 sub reportFatal(@) { $_->throw(@_) for shift->wasFatal }
+
+#-----------------
 
 =section Status
 
