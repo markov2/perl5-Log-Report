@@ -74,14 +74,14 @@ Log::Report - report a problem, pluggable handlers and language support
  report ERROR => __x('gettext string', param => $param, ...)
      if $condition;
 
- # Syntax SHORT, adding error() and many other
- use Log::Report 'my-domain', syntax => 'SHORT';
+ # when syntax=SHORT (default since 0.26), many useful functions
  error __x('gettext string', param => $param, ...)
      if $condition;
 
  # Overrule standard behavior for single message with HASH as
  # first parameter.  Only long syntax
  use Errno qw/ENOMEM/;
+ use Log::Report syntax => 'REPORT';
  report {to => 'syslog', errno => ENOMEM}
    , FAULT => __x"cannot allocate {size} bytes", size => $size;
 
@@ -257,7 +257,7 @@ sub report($@)
     }
     else
     {   # untranslated message into object
-        @_%2 and panic "odd length parameter list with non-translated";
+        @_%2 and panic "odd length parameter list with '$message'";
         $message = Log::Report::Message->new(_prepend => $message, @_);
     }
 
@@ -767,11 +767,12 @@ packages but one in your distribution, it will only contain the name of
 the DOMAIN.  For one package, it will contain configuration information.
 These OPTIONS are used for all packages which use the same DOMAIN.
 
-=option  syntax 'REPORT'|'SHORT'
-=default syntax 'REPORT'
+=option  syntax 'REPORT'|'SHORT'|'LONG'
+=default syntax 'SHORT'
 The SHORT syntax will add the report abbreviations (like function
 M<error()>) to your name-space.  Otherwise, each message must be produced
-with M<report()>.
+with M<report()>. C<LONG> is an alternative to C<REPORT>: both do not
+polute your namespace with the useful abbrev functions.
 
 =option  translator Log::Report::Translator
 =default translator <rescue>
@@ -794,15 +795,15 @@ also selectively change the output mode, like
 =examples of import
  use Log::Report mode => 3;     # or 'DEBUG'
 
- use Log::Report 'my-domain'    # in each package producing messages
-  , syntax     => 'SHORT';
+ use Log::Report 'my-domain';   # in each package producing messages
 
  use Log::Report 'my-domain'    # in one package, top of distr
   , translator => Log::Report::Translator::POT->new
      ( lexicon  => '/home/me/locale'  # bindtextdomain
      , charset  => 'UTF-8'            # codeset
      )
-  , native_language => 'nl_NL'; # untranslated msgs are Dutch
+  , native_language => 'nl_NL'  # untranslated msgs are Dutch
+  , syntax          => 'REPORT';# report ERROR, not error()
 
 =cut
 
@@ -811,7 +812,7 @@ sub import(@)
 
     my $textdomain = @_%2 ? shift : undef;
     my %opts   = @_;
-    my $syntax = delete $opts{syntax} || 'REPORT';
+    my $syntax = delete $opts{syntax} || 'SHORT';
     my ($pkg, $fn, $linenr) = caller;
 
     if(my $trans = delete $opts{translator})
@@ -839,7 +840,7 @@ sub import(@)
     my @export = (@functions, @make_msg);
 
     if($syntax eq 'SHORT') { push @export, @reason_functions }
-    elsif($syntax ne 'REPORT')
+    elsif($syntax ne 'REPORT' && $syntax ne 'LONG')
     {   error __x"syntax flag must be either SHORT or REPORT, not `{syntax}'"
           , syntax => $syntax;
     }

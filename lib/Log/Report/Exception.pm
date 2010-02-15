@@ -87,6 +87,10 @@ be changed.
 =example overrule defaults to report
  try { print {to => 'stderr'}, ERROR => 'oops!' };
  $@->reportFatal(to => 'syslog');
+
+ $exception->throw(to => 'syslog');
+
+ $@->wasFatal->throw(reason => 'WARNING', is_fatal => 0);
 =cut
 
 # if we would used "report" here, we get a naming conflict with

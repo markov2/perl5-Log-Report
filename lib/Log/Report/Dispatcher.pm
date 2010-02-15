@@ -535,7 +535,7 @@ Exactly what will be added depends on the actual mode of the dispatcher
 (change it with M<mode()>, initiate it with M<new(mode)>).
 
                         mode mode mode mode
- REASON   SOURCE   TE!  NORM -v   -vv  -vvv
+ REASON   SOURCE   TE!  NORM VERB ASSE DEBUG
  trace    program  ...                 S
  assert   program  ...            SL   SL
  info     program  T..       S    S    S
@@ -548,12 +548,9 @@ Exactly what will be added depends on the actual mode of the dispatcher
  failure  system   TE!  S    S    SC   SC
  panic    program  .E.  SC   SC   SC   SC
 
- -v = verbose, -vv = debug, -vvv = trace
  T - usually translated
- E - exception
+ E - exception (execution interrupted)
  ! - will include $! text
- B - leave block with exception
- D - delayed; only shown when block completes without error
  L - include filename and linenumber
  S - show/print when accepted
  C - stack trace (like Carp::confess())

@@ -1,6 +1,20 @@
 
 ==== version history of Log::Report
 
+version 0.26: Mon Feb 15 10:08:23 CET 2010
+
+	Changes:
+
+	- default of 'syntax' changed from 'REPORT' to 'SHORT'.
+
+	Improvements:
+
+	- fixes in dispatcher doc "mode" table.
+
+	- document use of ::Exception::throw a bit better.
+
+	- more useful error when parameter list has odd length.
+
 version 0.25: Thu Jul 16 12:18:51 CEST 2009
 
 	Improvements:
