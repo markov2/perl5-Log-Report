@@ -48,9 +48,13 @@ This basic file logger accepts an file-handle or filename as destination.
 =section Constructors
 
 =c_method new TYPE, NAME, OPTIONS
-=requires to FILENAME|FILEHANDLE|FILE-OBJECT
-You can either specify a FILENAME, which is opened in append mode, or
-any kind of handle or object which accepts supports C<print()>.
+
+=requires to FILENAME|FILEHANDLE|OBJECT
+You can either specify a FILENAME, which is opened in append mode with
+autoflush on. Or pass any kind of FILE-HANDLE or some OBJECT which
+implements a C<print()> method. You probably want to have autoflush
+enabled on your FILE-HANDLES.
+
 When cleaning-up the dispatcher, the file will only be closed in case
 of a FILENAME.
 
@@ -88,9 +92,10 @@ sub init($)
     {   $self->{filename} = $to;
         my $binmode = $args->{replace} ? '>' : '>>';
 
-        $self->{output} = IO::File->new($to, $binmode)
+        my $f = $self->{output} = IO::File->new($to, $binmode)
             or fault __x"cannot write log into {file} with {binmode}"
                    , binmode => $binmode, file => $to;
+        $f->autoflush;
 
         trace "opened dispatcher $name to $to with $binmode";
     }

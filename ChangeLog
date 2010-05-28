@@ -1,6 +1,15 @@
 
 ==== version history of Log::Report
 
+version 0.27: Fri May 28 15:37:44 CEST 2010
+
+	Fixes:
+
+	- turn autoflush on for FILE dispatcher.  Found by [Robin V.]
+
+	- Test::More 0.95_01 changes is() w.r.t. overloading... broken
+	  tests.  rt.cpan.org#57703 [Slaven Rezic]
+
 version 0.26: Mon Feb 15 10:08:23 CET 2010
 
 	Changes:
