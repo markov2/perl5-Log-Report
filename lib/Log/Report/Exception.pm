@@ -114,7 +114,8 @@ higher levels.
 
 sub toString()
 {   my $self = shift;
-    $self->reason . ": " . $self->message . "\n";
+    my $msg  = $self->message;
+    $self->reason . ': ' . (ref $msg ? $msg->toString : $msg) . "\n";
 }
 
 1;

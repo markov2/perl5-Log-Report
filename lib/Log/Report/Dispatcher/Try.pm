@@ -88,7 +88,7 @@ The exit string ($@) of the eval'ed block.
 
 sub init($)
 {   my ($self, $args) = @_;
-    $self->SUPER::init($args);
+    defined $self->SUPER::init($args) or return;
     $self->{exceptions} = delete $args->{exceptions} || [];
     $self->{died} = delete $args->{died};
     $self;

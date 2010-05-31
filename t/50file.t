@@ -112,5 +112,5 @@ dispatcher filter => sub { push @messages2, $_[3] }, 'file2';
 
 notice "here we are";
 cmp_ok(scalar(@messages), '==', 1, 'capture message');
-is($messages[0], 'here we are');
+is($messages[0]->toString, 'here we are');
 cmp_ok(scalar(@messages2), '==', 0, 'do not capture message');

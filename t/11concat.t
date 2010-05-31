@@ -25,12 +25,12 @@ is("$c", "abcdef");
 is($c->prepend, 'ab');
 isa_ok($c->append, 'Log::Report::Message');
 is($c->msgid, 'c');
-is($c->untranslated, 'abcdef');
+is($c->untranslated->toString, 'abcdef');
 
 my $d = __("Hello")->concat(' ')->concat(__"World!")->concat("\n");
 isa_ok($d, 'Log::Report::Message');
 is("$d", "Hello World!\n");
-is($d->untranslated, "Hello World!\n");
+is($d->untranslated->toString, "Hello World!\n");
 
 my $h = __"Hello";
 my $w = __"World!";
