@@ -96,9 +96,13 @@ be changed.
 # if we would used "report" here, we get a naming conflict with
 # function Log::Report::report.
 sub throw(@)
-{   my $self   = shift;
-    my $opts   = @_ ? { %{$self->{report_opts}}, @_ } : $self->{report_opts};
-    my $reason = delete $opts->{reason} || $self->reason;
+{   my $self    = shift;
+    my $opts    = @_ ? { %{$self->{report_opts}}, @_ } : $self->{report_opts};
+    my $reason  = delete $opts->{reason} || $self->reason;
+
+    $opts->{stack} = Log::Report::Dispatcher->collectStack
+        if $opts->{stack} && @{$opts->{stack}};
+
     report $opts, $reason, $self->message;
 }
 

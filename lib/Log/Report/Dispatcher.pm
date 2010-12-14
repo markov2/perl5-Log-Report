@@ -296,8 +296,7 @@ sub translate($$$)
     $text .= "\n";
 
     if($show_loc)
-    {   if(my $loc = exists $opts->{location} ? $opts->{location}
-                   : [ $self->collectLocation ])
+    {   if(my $loc = $opts->{location} || $self->collectLocation)
         {   my ($pkg, $fn, $line, $sub) = @$loc;
             # pkg and sub are missing when decoded by ::Die
             $text .= " "
@@ -308,9 +307,7 @@ sub translate($$$)
     }
 
     if($show_stack)
-    {   my $stack
-          = $opts->{stack} ||= $self->collectStack;
-
+    {   my $stack = $opts->{stack} ||= $self->collectStack;
         foreach (@$stack)
         {   $text .= $_->[0] . " "
               . __x( 'at {filename} line {line}'
@@ -325,12 +322,12 @@ sub translate($$$)
     $self->{charset_enc}->($text);
 }
 
-=method collectStack [MAXDEPTH]
+=ci_method collectStack [MAXDEPTH]
 Returns an ARRAY of ARRAYs with text, filename, line-number.
 =cut
 
 sub collectStack($)
-{   my ($self, $max) = @_;
+{   my ($thing, $max) = @_;
 
     my ($nest, $sub) = (1, undef);
     do { $sub = (caller $nest++)[3] }
@@ -348,7 +345,7 @@ sub collectStack($)
     {   my ($pkg, $fn, $linenr, $sub) = caller $nest++;
         defined $pkg or last;
 
-        my $line = $self->stackTraceLine(call => $sub, params => \@DB::args);
+        my $line = $thing->stackTraceLine(call => $sub, params => \@DB::args);
         push @stack, [$line, $fn, $linenr];
     }
 
@@ -373,7 +370,7 @@ sub collectLocation()
     @args = caller $nest++
         if +(caller $nest)[3] =~ m/^Log\:\:Report\:\:[^:]*$/;
 
-    @args;
+    @args ? \@args : undef;
 }
 
 =ci_method stackTraceLine OPTIONS

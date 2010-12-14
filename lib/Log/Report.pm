@@ -159,9 +159,10 @@ is B<ONE> string with optional parameters.  The HASH is an optional
 first parameter, which can be used to influence the dispatchers.  The
 HASH contains any combination of the OPTIONS listed below.
 
-When C<syntax => 'SHORT'> is configured, you will also have abbreviations
-available, where the REASON is the name of the function.  See for
-instance M<info()>.  In that case, you loose the chance for OPTIONS.
+When C<syntax => 'SHORT'> is configured (the default), you will also have
+abbreviations available, where the REASON is the name of the function.
+See for instance M<info()>. In that case, you loose the chance for
+OPTIONS.
 
 Returns is the LIST of dispatchers used to log the MESSAGE.  When
 empty, no back-end has accepted it so the MESSAGE was "lost".  Even when
@@ -197,6 +198,13 @@ any attempt to display this line.
 =default locale C<undef>
 Use this specific locale, in stead of the user's preference.
 
+=option  is_fatal BOOLEAN
+=default is_fatal <depends on reason>
+Some logged exceptions are fatal, other aren't.  The default usually
+is correct. However, you may want an error to be caught (usually with
+M<try()>), redispatch it to syslog, but without it killing the main
+program.
+
 =examples for use of M<report()>
  report TRACE => "start processing now";
  report INFO  => '500: ' . __'Internal Server Error';
@@ -218,88 +226,66 @@ Use this specific locale, in stead of the user's preference.
 
 sub report($@)
 {   my $opts   = ref $_[0] eq 'HASH' ? +{ %{ (shift) } } : {};
-    @_ or return ();
-
     my $reason = shift;
-    $is_reason{$reason}
-       or error __x"Token '{token}' not recognized as reason"
-            , token => $reason;
+    my $stop = exists $opts->{is_fatal} ? $opts->{is_fatal} : $is_fatal{$reason};
 
-    my @disp;
-    keys %{$reporter->{dispatchers}}
-        or return;
+    # return when no-one needs it: skip unused trace() fast!
+    my $disp = $reporter->{needs}{$reason};
+    $disp || $stop or return;
+
+    $is_reason{$reason}
+        or error __x"Token '{token}' not recognized as reason", token => $reason;
 
     $opts->{errno} ||= $!+0  # want copy!
         if $use_errno{$reason};
 
-    exists $opts->{location}
-        or $opts->{location} = [ Log::Report::Dispatcher->collectLocation ];
-
-    my $stop = $opts->{is_fatal} ||= $is_fatal{$reason};
-
-    my $stop_msg;
-    if($stop && $^S)   # within nested eval, we like a nice message
-    {   my $loc   = $opts->{location};
-        $stop_msg = $loc ? "fatal at $loc->[1] line $loc->[2]\n" : "fatal\n";
+    if(my $to = delete $opts->{to})
+    {   # explicit destination, still disp may not need it.
+        if(ref $to eq 'ARRAY')
+        {   my %disp = map {$_->name => $_} @$disp;
+            $disp    = [ grep defined, @disp{@$to} ];
+        }
+        else
+        {   $disp    = [ grep $_->name eq $to, @$disp ];
+        }
+        @$disp || $stop
+            or return;
     }
 
-    # exit when needed, even when message doesn't go anywhere.
-    my $disp = $reporter->{needs}{$reason};
-    unless($disp)
-    {   if(!$stop) {return ()}
-        elsif($^S) {$! = $opts->{errno}; die $stop_msg}
-        else       {exit $opts->{errno}}
-    }
+     $opts->{location} ||= Log::Report::Dispatcher->collectLocation;
 
     my $message = shift;
-    if(ref $message && $message->isa('Log::Report::Message'))
-    {   @_==0 or panic "a message object is reported, which does not allow additional parameters";
+    if(UNIVERSAL::isa($message, 'Log::Report::Message'))
+    {   @_==0 or error __x"a message object is reported with more parameters";
     }
     else
     {   # untranslated message into object
-        @_%2 and panic "odd length parameter list with '$message'";
+        @_%2 and error __x"odd length parameter list with '$message'";
         $message = Log::Report::Message->new(_prepend => $message, @_);
     }
 
-    # explicit destination
-    if(my $to = delete $opts->{to})
-    {   foreach my $t (ref $to eq 'ARRAY' ? @$to : $to)
-        {   push @disp, grep {$_->name eq $t} @$disp;
-        }
-    }
-    else { @disp = @$disp }
-
-    my @last_call;
-
+    my @last_call;     # call Perl dispatcher always last
     if($reporter->{filters})
     {
       DISPATCHER:
-        foreach my $disp (@disp)
+        foreach my $d (@$disp)
         {   my ($r, $m) = ($reason, $message);
             foreach my $filter ( @{$reporter->{filters}} )
-            {   next if keys %{$filter->[1]} && !$filter->[1]{$disp->name};
-                ($r, $m) = $filter->[0]->($disp, $opts, $r, $m);
+            {   next if keys %{$filter->[1]} && !$filter->[1]{$d->name};
+                ($r, $m) = $filter->[0]->($d, $opts, $r, $m);
                 $r or next DISPATCHER;
             }
 
-            if($disp->isa('Log::Report::Dispatcher::Perl'))
-            {   # can be only one
-                @last_call = ($disp, { %$opts }, $reason, $message);
-            }
-            else
-            {   $disp->log($opts, $reason, $message);
-            }
+            if($d->isa('Log::Report::Dispatcher::Perl'))
+                 { @last_call = ($d, { %$opts }, $r, $m) }
+            else { $d->log($opts, $r, $m) }
         }
     }
     else
-    {   foreach my $disp (@disp)
-        {   if($disp->isa('Log::Report::Dispatcher::Perl'))
-            {   # can be only one
-                @last_call = ($disp, { %$opts }, $reason, $message);
-            }
-            else
-            {   $disp->log($opts, $reason, $message);
-            }
+    {   foreach my $d (@$disp)
+        {   if($d->isa('Log::Report::Dispatcher::Perl'))
+                 { @last_call = ($d, { %$opts }, $reason, $message) }
+            else { $d->log($opts, $reason, $message) }
         }
     }
 
@@ -309,11 +295,15 @@ sub report($@)
     }
 
     if($stop)
-    {   if($^S) {$! = $opts->{errno}; die $stop_msg}
-        else    {exit ($opts->{errno} || 0) }
+    {   # ^S = EXCEPTIONS_BEING_CAUGHT, within eval or try
+        $^S or exit $opts->{errno};
+
+        $! = $opts->{errno};
+        $@ = $message;
+        die;   # $@->PROPAGATE() will be called, some eval will catch this
     }
 
-    @disp;
+    @$disp;
 }
 
 =function dispatcher (TYPE, OPTIONS)|(COMMAND => NAME, [NAMEs])
@@ -501,7 +491,7 @@ sub try(&@)
     else             { $ret = eval { $code->() } } # SCALAR context
 
     my $err = $@;
-    if($err && !$disp->wasFatal)
+    if($err && !$disp->wasFatal && !UNIVERSAL::isa($err, 'Log::Report::Message'))
     {   require Log::Report::Die;
         ($err, my($opts, $reason, $msg)) = Log::Report::Die::die_decode($err);
         $disp->log($opts, $reason, $msg);

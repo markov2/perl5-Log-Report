@@ -107,8 +107,8 @@ cmp_ok($t5, '==', $t4, 'disp2 ignores warnings');
 #
 
 my (@messages, @messages2);
-dispatcher filter => sub { push @messages,  $_[3] }, 'file1';
-dispatcher filter => sub { push @messages2, $_[3] }, 'file2';
+dispatcher filter => sub { push @messages,  $_[3]; @_[2,3] }, 'file1';
+dispatcher filter => sub { push @messages2, $_[3]; @_[2,3] }, 'file2';
 
 notice "here we are";
 cmp_ok(scalar(@messages), '==', 1, 'capture message');

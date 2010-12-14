@@ -32,22 +32,27 @@ cmp_ok($text_l2, '>', $text_l1);
 my @l1 = dispatcher 'list';
 cmp_ok(scalar(@l1), '==', 1);
 is($l1[0]->name, 'out');
+
 try { my @l2 = dispatcher 'list';
       cmp_ok(scalar(@l2), '==', 1);
       is($l2[0]->name, 'try', 'only try dispatcher');
       error "this is an error"
     };
+
 my $caught = $@;   # be careful with this... Test::More may spoil it.
 my @l3 = dispatcher 'list';
 cmp_ok(scalar(@l3), '==', 1);
 is($l3[0]->name, 'out', 'original dispatcher restored');
 
 isa_ok($caught, 'Log::Report::Dispatcher::Try');
+
 ok($caught->failed);
 ok($caught ? 1 : 0);
 my @r1 = $caught->exceptions;
 cmp_ok(scalar(@r1), '==', 1);
+
 isa_ok($r1[0], 'Log::Report::Exception');
+
 my @r2 = $caught->wasFatal;
 cmp_ok(scalar(@r2), '==', 1);
 isa_ok($r2[0], 'Log::Report::Exception');
@@ -89,7 +94,7 @@ eval {
        };
    $@->reportAll;
 };
-like($@, qr[^fatal at t/54try.t line \d+$]);
+like($@, qr[^oops]);
 
 ### context
 
