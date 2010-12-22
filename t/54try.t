@@ -73,12 +73,12 @@ my @r4 = $caught->exceptions;
 cmp_ok(scalar(@r4), '==', 2);
 
 isa_ok($r4[0], 'Log::Report::Exception');
-is($r4[0]->toString, "INFO: nothing wrong\n");
-is("$r4[0]", "INFO: nothing wrong\n");
+is($r4[0]->toString, "info: nothing wrong\n");
+is("$r4[0]", "info: nothing wrong\n");
 
 isa_ok($r4[1], 'Log::Report::Exception');
-is($r4[1]->toString, "TRACE: trace more\n");
-is("$r4[1]", "TRACE: trace more\n");
+is($r4[1]->toString, "trace: trace more\n");
+is("$r4[1]", "trace: trace more\n");
 
 $caught->reportAll;  # pass on errors
 my $text_l3 = length $text;
@@ -94,7 +94,7 @@ eval {
        };
    $@->reportAll;
 };
-like($@, qr[^oops]);
+like($@, qr[^failure: oops]i);
 
 ### context
 

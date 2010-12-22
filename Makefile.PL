@@ -2,7 +2,7 @@ use ExtUtils::MakeMaker;
 
 use 5.008;
 
-my $version = '0.29';
+my $version = '0.90';
 
 my %prereq  =
   ( Test::More   =>  0.86
@@ -32,6 +32,7 @@ sub MY::postamble { <<'__POSTAMBLE' }
 RAWDIR          = ../public_html/log-report/raw
 DISTDIR         = ../public_html/log-report/source
 LICENSE         = artistic
+SKIP_LINKS	= XML::LibXML
 
 # for OODoc's oodist, POD
 FIRST_YEAR      = 2007

@@ -103,8 +103,11 @@ sub throw(@)
     $opts->{stack} = Log::Report::Dispatcher->collectStack
         if $opts->{stack} && @{$opts->{stack}};
 
-    report $opts, $reason, $self->message;
+    report $opts, $reason, $self;
 }
+
+# where the throw is handled is not interesting
+sub PROPAGATE($$) {shift}
 
 =method toString
 Prints the reason and the message.  Differently from M<throw()>, this
@@ -119,7 +122,7 @@ higher levels.
 sub toString()
 {   my $self = shift;
     my $msg  = $self->message;
-    $self->reason . ': ' . (ref $msg ? $msg->toString : $msg) . "\n";
+    lc($self->reason) . ': ' . (ref $msg ? $msg->toString : $msg) . "\n";
 }
 
 1;

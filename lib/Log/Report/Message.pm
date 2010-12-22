@@ -290,11 +290,6 @@ sub concat($;$)
     ref($self)->new(%$self, _append => $what);
 }
 
-sub PROPAGATE($$) {$_[0]}
-# ignore location info about rethrow of the same exception
-#   my ($self, $fn, $line) = @_;
-#   warn "$fn, $line";
-
 =chapter DETAILS
 
 =section OPTIONS and VARIABLES

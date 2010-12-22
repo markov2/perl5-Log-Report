@@ -227,17 +227,17 @@ program.
 sub report($@)
 {   my $opts   = ref $_[0] eq 'HASH' ? +{ %{ (shift) } } : {};
     my $reason = shift;
-    my $stop = exists $opts->{is_fatal} ? $opts->{is_fatal} : $is_fatal{$reason};
+    my $stop = exists $opts->{is_fatal} ? $opts->{is_fatal} :$is_fatal{$reason};
 
     # return when no-one needs it: skip unused trace() fast!
     my $disp = $reporter->{needs}{$reason};
     $disp || $stop or return;
 
     $is_reason{$reason}
-        or error __x"Token '{token}' not recognized as reason", token => $reason;
+        or error __x"token '{token}' not recognized as reason", token=>$reason;
 
     $opts->{errno} ||= $!+0  # want copy!
-        if $use_errno{$reason};
+        if $use_errno{$reason} && !defined $opts->{errno};
 
     if(my $to = delete $opts->{to})
     {   # explicit destination, still disp may not need it.
@@ -252,11 +252,16 @@ sub report($@)
             or return;
     }
 
-     $opts->{location} ||= Log::Report::Dispatcher->collectLocation;
+    $opts->{location} ||= Log::Report::Dispatcher->collectLocation;
 
     my $message = shift;
+    my $exception;
     if(UNIVERSAL::isa($message, 'Log::Report::Message'))
     {   @_==0 or error __x"a message object is reported with more parameters";
+    }
+    elsif(UNIVERSAL::isa($message, 'Log::Report::Exception'))
+    {   $exception = $message;
+        $message   = $exception->message;
     }
     else
     {   # untranslated message into object
@@ -296,10 +301,11 @@ sub report($@)
 
     if($stop)
     {   # ^S = EXCEPTIONS_BEING_CAUGHT, within eval or try
-        $^S or exit $opts->{errno};
+        $^S or exit($opts->{errno} || 0);
 
-        $! = $opts->{errno};
-        $@ = $message;
+        $! = $opts->{errno} || 0;
+        $@ = $exception || Log::Report::Exception->new(report_opts => $opts
+          , reason => $reason, message => $message);
         die;   # $@->PROPAGATE() will be called, some eval will catch this
     }
 
@@ -491,7 +497,9 @@ sub try(&@)
     else             { $ret = eval { $code->() } } # SCALAR context
 
     my $err = $@;
-    if($err && !$disp->wasFatal && !UNIVERSAL::isa($err, 'Log::Report::Message'))
+    if(   $err
+       && !$disp->wasFatal
+       && !UNIVERSAL::isa($err, 'Log::Report::Exception'))
     {   require Log::Report::Die;
         ($err, my($opts, $reason, $msg)) = Log::Report::Die::die_decode($err);
         $disp->log($opts, $reason, $msg);
