@@ -1,6 +1,26 @@
 
 ==== version history of Log::Report
 
+version 0.91: Wed Jan 26 16:24:25 CET 2011
+
+	Fixes:
+
+	- enabling and disabling dispatchers did not work
+	  [Patrick Powell]
+
+	Improvements:
+
+	- produce nice error when __x received even length list.
+
+	- added Log::Report::Dispatcher::Callback
+
+	- typos in new Callback.pm   [Patrick Powell]
+
+	- disable test which fails on bug in confess on Windows
+	  http://rt.perl.org/rt3/Ticket/Display.html?id=81586
+
+	- improved output with new OODoc
+
 version 0.90: Wed Dec 22 16:29:51 CET 2010
 
 	Changes:

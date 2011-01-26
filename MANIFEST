@@ -6,6 +6,7 @@ bin/xgettext-perl
 lib/Log/Report.pm
 lib/Log/Report/Die.pm
 lib/Log/Report/Dispatcher.pm
+lib/Log/Report/Dispatcher/Callback.pm
 lib/Log/Report/Dispatcher/File.pm
 lib/Log/Report/Dispatcher/Log4perl.pm
 lib/Log/Report/Dispatcher/LogDispatch.pm

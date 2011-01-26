@@ -145,6 +145,14 @@ DieTests::run_tests()#t/41die.t#XX
 main::simple_wrapper()#t/41die.t#XX
 __OUT
 
+
+if($^O eq 'Win32')
+{   # perl bug http://rt.perl.org/rt3/Ticket/Display.html?id=81586
+    pass 'Win32/confess bug #81586';
+}
+else
+{
+
 eval { $! = $errno; confess "ouch $!\n" };
 my $confess_text4 = $@;
 is(process($confess_text4),  <<__OUT, "confess");
@@ -157,5 +165,7 @@ main::simple_wrapper()#t/41die.t#XX
 __OUT
 
 }
+
+}  # run_tests()
 
 1;

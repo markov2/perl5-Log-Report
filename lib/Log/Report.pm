@@ -435,7 +435,7 @@ END { $_->close for grep defined, values %{$reporter->{dispatchers}} }
 
 # _whats_needed
 # Investigate from all dispatchers which reasons will need to be
-# passed on.   After dispatchers are added, enabled, or disabled,
+# passed on. After dispatchers are added, enabled, or disabled,
 # this method shall be called to re-investigate the back-ends.
 
 sub _whats_needed()
@@ -633,7 +633,10 @@ mix with variables.
 
 # label "msgid" added before first argument
 sub __x($@)
-{   Log::Report::Message->new
+{   @_%2 or error __x"even length parameter list for __x at {where}",
+        where => join(' line ', (caller)[1,2]);
+
+    Log::Report::Message->new
      ( _msgid  => @_
      , _expand => 1
      , _domain => _default_domain(caller)

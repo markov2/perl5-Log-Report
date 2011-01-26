@@ -22,7 +22,7 @@ my %modes = (NORMAL => 0, VERBOSE => 1, ASSERT => 2, DEBUG => 3
 my @default_accept = ('NOTICE-', 'INFO-', 'ASSERT-', 'ALL');
 
 my %predef_dispatchers = map { (uc($_) => __PACKAGE__.'::'.$_) }
-   qw/File Perl Syslog Try/;
+   qw/File Perl Syslog Try Callback/;
 
 =chapter NAME
 Log::Report::Dispatcher - manage dispatching
@@ -220,7 +220,7 @@ sub _set_mode($)
 
 # only to be called from Log::Report::dispatcher()!!
 # because requires re-investigating needs
-sub _disable($)
+sub _disabled($)
 {   my $self = shift;
     @_ ? ($self->{disabled} = shift) : $self->{disabled};
 }

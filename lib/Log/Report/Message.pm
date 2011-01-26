@@ -101,10 +101,7 @@ tokens seperately.
 Alternative for C<_class>, which cannot be used at the same time.
 =cut
 
-sub new($@)
-{   my ($class, %args) = @_;
-    bless \%args, $class;
-}
+sub new($@) { my $class = shift; bless {@_}, $class }
 
 =method clone OPTIONS, VARIABLES
 Returns a new object which copies info from original, and updates it
