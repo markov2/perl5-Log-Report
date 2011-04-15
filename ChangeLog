@@ -1,6 +1,19 @@
 
 ==== version history of Log::Report
 
+version 0.92: Fri Apr 15 10:26:33 CEST 2011
+
+	Fixes:
+
+	- another attempt to silence test for Windows bug.
+
+	Improvements:
+
+	- additional doc to dispatcher(), triggered by [Patrick Powell]
+
+	- add i              error 'xx', _to => $disp;
+          as alternative to  report {to => $disp}, ERROR => 'xx';
+
 version 0.91: Wed Jan 26 16:24:25 CET 2011
 
 	Fixes:

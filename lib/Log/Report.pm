@@ -210,6 +210,7 @@ program.
  report INFO  => '500: ' . __'Internal Server Error';
 
  report {to => 'syslog'}, NOTICE => "started process $$";
+ notice "started process $$", _to => 'syslog'; #same
 
  # with syntax SHORT
  trace "start processing now";
@@ -269,6 +270,11 @@ sub report($@)
         $message = Log::Report::Message->new(_prepend => $message, @_);
     }
 
+    if(my $to = $message->to)
+    {   $disp    = [ grep $_->name eq $to, @$disp ];
+        @$disp or return;
+    }
+
     my @last_call;     # call Perl dispatcher always last
     if($reporter->{filters})
     {
@@ -312,9 +318,14 @@ sub report($@)
     @$disp;
 }
 
-=function dispatcher (TYPE, OPTIONS)|(COMMAND => NAME, [NAMEs])
+=function dispatcher (TYPE, NAME, OPTIONS)|(COMMAND => NAME, [NAMEs])
+
+The C<dispatcher> function controls access to dispatchers: the back-ends
+which do the actual logging. Dispatchers are global entities, address by
+a symbolic free to chose NAME.
+
 The C<Log::Report> suite has its own dispatcher TYPES, but also connects
-to external dispatching frame-works.  Each need some (minor) conversions,
+to external dispatching frame-works. Each need some (minor) conversions,
 especially with respect to translation of REASONS of the reports
 into log-levels as the back-end understands.
 

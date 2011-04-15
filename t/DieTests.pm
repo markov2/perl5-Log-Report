@@ -13,7 +13,8 @@ my $errno  = $!+0;
 my $errstr = "$!";
 
 sub process($)
-{   my ($err, $opt, $reason, $message) = die_decode shift;
+{
+    my ($err, $opt, $reason, $message) = die_decode shift;
     $err =~ s/\d+\.?$/XX/;
     my $errno = $opt->{errno}    || 'no errno';
     my $loc   = $opt->{location};
@@ -146,7 +147,7 @@ main::simple_wrapper()#t/41die.t#XX
 __OUT
 
 
-if($^O eq 'Win32')
+if($^O eq 'MSWin32')
 {   # perl bug http://rt.perl.org/rt3/Ticket/Display.html?id=81586
     pass 'Win32/confess bug #81586';
 }

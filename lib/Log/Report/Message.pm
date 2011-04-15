@@ -94,11 +94,16 @@ category of the message.
 
 One message can be part of multiple classes.  The STRING is used as
 comma- and/or blank seperated list of class tokens, the ARRAY lists all
-tokens seperately.
+tokens seperately. See M<classes()>.
 
 =option  _classes STRING|ARRAY
 =default _classes []
 Alternative for C<_class>, which cannot be used at the same time.
+
+=option  _to NAME
+=default _to <undef>
+Specify the NAME of a dispatcher as destination explicitly. Short
+for  C<< report {to => NAME}, ... >>  See M<to()>
 =cut
 
 sub new($@) { my $class = shift; bless {@_}, $class }
@@ -155,6 +160,17 @@ group indicators, as often found in exception-based programming.
 sub classes()
 {   my $class = $_[0]->{_class} || $_[0]->{_classes} || [];
     ref $class ? @$class : split(/[\s,]+/, $class);
+}
+
+=method to [NAME]
+Returns the NAME of a dispatcher if explicitly specified with
+the '_to' key. Can also be used to set it.  Usually, this will
+return undef, because usually all dispatchers get all messages.
+=cut
+
+sub to(;$)
+{   my $self = shift;
+    @_ ? $self->{_to} = shift : $self->{_to};
 }
 
 =method valueOf PARAMETER
