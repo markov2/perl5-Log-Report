@@ -1,6 +1,25 @@
 
 ==== version history of Log::Report
 
+version 0.93: Thu Jun 30 09:45:24 CEST 2011
+
+	Fixes:
+
+	- faults caused by $? should not exit with 0
+	  rt.cpan.org #68496 [Zephaniah E. Hull]
+
+	- die's in try blocks did not produce a Log::Report::Message
+	  reported by [Patrick Powell]
+
+	- fix use for non-admin Windows users
+	  rt.cpan.org#67935 [unknown]
+
+	Improvements:
+
+	- ability to change message and reason of an ::Exception
+
+	- lazy-load Log::Report::Die
+
 version 0.92: Fri Apr 15 10:26:33 CEST 2011
 
 	Fixes:
@@ -11,7 +30,7 @@ version 0.92: Fri Apr 15 10:26:33 CEST 2011
 
 	- additional doc to dispatcher(), triggered by [Patrick Powell]
 
-	- add i              error 'xx', _to => $disp;
+	- add                error 'xx', _to => $disp;
           as alternative to  report {to => $disp}, ERROR => 'xx';
 
 version 0.91: Wed Jan 26 16:24:25 CET 2011

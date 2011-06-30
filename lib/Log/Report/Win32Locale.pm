@@ -95,7 +95,7 @@ sub iso_locale(;$)
 # Win32 does not nicely export the functions.
 
 my $nls = 'HKEY_LOCAL_MACHINE/SYSTEM/CurrentControlSet/Control/Nls';
-my $del = {Delimiter => '/'};
+my $del = {Access => Win32::TieRegistry::KEY_READ(), Delimiter => '/'};
 my $codepages = Win32::TieRegistry->new("$nls/CodePage", $del);
 my $languages = Win32::TieRegistry->new("$nls/Language", $del);
 

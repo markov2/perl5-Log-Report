@@ -50,6 +50,8 @@ use overload
 
 =section Constructors
 =c_method new OPTIONS, VARIABLES
+B<Do not use this method directly>, but use M<Log::Report::__()> and
+friends.
 
 =option  _expand BOOLEAN
 =default _expand C<false>

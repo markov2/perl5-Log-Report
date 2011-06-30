@@ -3,9 +3,10 @@ use warnings;
 use strict;
 
 use Log::Report::Die qw/die_decode/;
+use Log::Report      qw/try/;
 use Carp;
 
-use Test::More tests => 13;
+use Test::More tests => 27;
 use DieTests;
 
 $! = 3;
@@ -32,6 +33,10 @@ __RESULT
 
 sub run_tests()
 {
+
+###
+#### Testing die_decode itself
+###
 
 ok(1, "err $errno is '$errstr'");
 
@@ -166,6 +171,40 @@ main::simple_wrapper()#t/41die.t#XX
 __OUT
 
 }
+
+###
+#### Testing try{} with various die's
+##
+
+my $r = try { die "Arggghh!"; 1 };
+ok(defined $@, "try before you die");
+ok(!$r, "no value returned");
+isa_ok($@, 'Log::Report::Dispatcher::Try');
+my $fatal1 = $@->wasFatal;
+isa_ok($fatal1, 'Log::Report::Exception');
+my $msg1   = $fatal1->message;
+isa_ok($msg1, 'Log::Report::Message');
+is("$msg1", 'Arggghh!');
+
+try { eval "program not perl"; die $@ if $@ };
+ok(defined $@, "parse not perl");
+my $fatal2 = $@->wasFatal;
+isa_ok($fatal2, 'Log::Report::Exception');
+my $msg2   = $fatal2->message;
+isa_ok($msg2, 'Log::Report::Message');
+like("$msg2", qr/^syntax error at \(eval \d+\) line 1, near \"program not \"/);
+
+eval <<'__TEST'
+   try { require "Does::Not::Exist";
+       };
+   ok(defined $@, "perl error");
+   my $fatal3 = $@->wasFatal;
+   isa_ok($fatal3, 'Log::Report::Exception');
+   my $msg3   = $fatal3->message;
+   isa_ok($msg3, 'Log::Report::Message');
+   like("$msg3", qr/^Can\'t locate Does\:\:Not\:\:Exist in \@INC /);
+__TEST
+
 
 }  # run_tests()
 

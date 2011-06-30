@@ -58,13 +58,40 @@ sub new($@)
 =section Accessors
 
 =method report_opts
-=method reason
-=method message
 =cut
 
 sub report_opts() {shift->{report_opts}}
-sub reason()      {shift->{reason}}
-sub message()     {shift->{message}}
+
+=method reason [REASON]
+=cut
+
+sub reason(;$)
+{   my $self = shift;
+    @_ ? $self->{reason} = uc(shift) : $self->{reason};
+}
+
+=method message [MESSAGE]
+Change the MESSAGE of the exception, must be a M<Log::Report::Message>
+object.
+
+When you use a C<Log::Report::Message> object, you will get a new one
+returned. Therefore, if you want to modify the message in an exception,
+you have to re-assign the result of the modification.
+
+=examples
+ $e->message->concat('!!')); # will not work!
+ $e->message($e->message->concat('!!'));
+ $e->message(__x"some message {msg}", msg => $xyz);
+=cut
+
+sub message(;$)
+{   my $self = shift;
+    @_ or return $self->{message};
+    my $msg = shift;
+    UNIVERSAL::isa($msg, 'Log::Report::Message')
+        or panic __x"message() of exception expects Log::Report::Message";
+    $self->{message} = $msg;
+}
 
 =section Processing
 
@@ -122,7 +149,20 @@ higher levels.
 sub toString()
 {   my $self = shift;
     my $msg  = $self->message;
-    lc($self->reason) . ': ' . (ref $msg ? $msg->toString : $msg) . "\n";
+    lc($self->{reason}) . ': ' . (ref $msg ? $msg->toString : $msg) . "\n";
+}
+
+=method print [FILEHANDLE]
+The default filehandle is STDOUT.
+
+=examples
+ print $exception;  # via overloading
+ $exception->print; # OO style
+=cut
+
+sub print(;$)
+{   my $self = shift;
+    (shift || *STDERR)->print($self->toString);
 }
 
 1;
