@@ -1,6 +1,17 @@
 
 ==== version history of Log::Report
 
+version 0.94: Tue Aug 23 11:14:59 CEST 2011
+
+	Changes:
+
+	- when an exception get throw()n again, but with a different
+	  "reason", the fatality "is_fatal" will automatically adapt.
+
+	Improvements:
+
+	- add Log::Report::Exception::isFatal()
+
 version 0.93: Thu Jun 30 09:45:24 CEST 2011
 
 	Fixes:

@@ -70,6 +70,16 @@ sub reason(;$)
     @_ ? $self->{reason} = uc(shift) : $self->{reason};
 }
 
+=method isFatal
+Returns whether this exception has a severity which makes it fatal
+when thrown.  See M<Log::Report::isFatal()>.
+=example
+  if($ex->isFatal) { $ex->throw(reason => 'ALERT') }
+  else { $ex->throw }
+=cut
+
+sub isFatal() { Log::Report->isFatal(shift->{reason}) }
+
 =method message [MESSAGE]
 Change the MESSAGE of the exception, must be a M<Log::Report::Message>
 object.
@@ -117,15 +127,21 @@ be changed.
 
  $exception->throw(to => 'syslog');
 
- $@->wasFatal->throw(reason => 'WARNING', is_fatal => 0);
+ $@->wasFatal->throw(reason => 'WARNING');
 =cut
 
-# if we would used "report" here, we get a naming conflict with
-# function Log::Report::report.
 sub throw(@)
 {   my $self    = shift;
     my $opts    = @_ ? { %{$self->{report_opts}}, @_ } : $self->{report_opts};
-    my $reason  = delete $opts->{reason} || $self->reason;
+
+    my $reason;
+    if($reason = delete $opts->{reason})
+    {   $opts->{is_fatal} = Log::Report->isFatal($reason)
+            unless exists $opts->{is_fatal};
+    }
+    else
+    {   $reason = $self->{reason};
+    }
 
     $opts->{stack} = Log::Report::Dispatcher->collectStack
         if $opts->{stack} && @{$opts->{stack}};

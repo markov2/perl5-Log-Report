@@ -511,7 +511,7 @@ sub try(&@)
     if(   $err
        && !$disp->wasFatal
        && !UNIVERSAL::isa($err, 'Log::Report::Exception'))
-    {   eval "require Log::Report::Die";
+    {   eval "require Log::Report::Die"; panic $@ if $@;
         ($err, my($opts, $reason, $text)) = Log::Report::Die::die_decode($err);
         $disp->log($opts, $reason, __$text);
     }
