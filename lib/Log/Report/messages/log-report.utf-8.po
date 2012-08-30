@@ -4,7 +4,7 @@ msgstr ""
 "Project-Id-Version: log-report 0.01\n"
 "Report-Msgid-Bugs-To:\n"
 "POT-Creation-Date: 2007-05-14 17:14+0200\n"
-"PO-Revision-Date: 2009-04-27 09:47+0200\n"
+"PO-Revision-Date: 2012-08-30 21:52+0200\n"
 "Last-Translator:\n"
 "Language-Team:\n"
 "MIME-Version: 1.0\n"
@@ -81,7 +81,7 @@ msgstr ""
 msgid "PANIC"
 msgstr ""
 
-#: lib/Log/Report/Extract/PerlPPI.pm:112
+#: lib/Log/Report/Extract/PerlPPI.pm:66
 #, fuzzy
 msgid "PPI only supports iso-8859-1 (latin-1) on the moment"
 msgstr ""
@@ -91,19 +91,9 @@ msgstr ""
 msgid "Perl does not support charset {cs}"
 msgstr ""
 
-#: lib/Log/Report/Extract/PerlPPI.pm:67
-#, fuzzy
-msgid "PerlPPI requires explicit lexicon directory"
-msgstr ""
-
 #: lib/Log/Report/Util.pm:14
 #, fuzzy
 msgid "TRACE"
-msgstr ""
-
-#: lib/Log/Report.pm:225
-#, fuzzy
-msgid "Token '{token}' not recognized as reason"
 msgstr ""
 
 #: lib/Log/Report/Util.pm:14
@@ -111,14 +101,24 @@ msgstr ""
 msgid "WARNING"
 msgstr ""
 
-#: lib/Log/Report/Dispatcher.pm:304 lib/Log/Report/Dispatcher.pm:316
+#: lib/Log/Report.pm:268
+#, fuzzy
+msgid "a message object is reported with more parameters"
+msgstr ""
+
+#: lib/Log/Report/Dispatcher.pm:303 lib/Log/Report/Dispatcher.pm:313
 #, fuzzy
 msgid "at {filename} line {line}"
 msgstr ""
 
-#: lib/Log/Report/Extract/PerlPPI.pm:70
+#: lib/Log/Report/Extract.pm:50
 #, fuzzy
 msgid "cannot create lexicon directory {dir}"
+msgstr ""
+
+#: bin/xgettext-perl:60
+#, fuzzy
+msgid "cannot create output directory {dir}"
 msgstr ""
 
 #: lib/Log/Report/Dispatcher/Log4perl.pm:121
@@ -126,7 +126,12 @@ msgstr ""
 msgid "cannot find logger '{name}' in configuration {config}"
 msgstr ""
 
-#: lib/Log/Report/Extract/PerlPPI.pm:115
+#: bin/xgettext-perl:68
+#, fuzzy
+msgid "cannot read filename list from {fn}"
+msgstr ""
+
+#: lib/Log/Report/Extract/PerlPPI.pm:69
 #, fuzzy
 msgid "cannot read from file {filename}"
 msgstr ""
@@ -136,7 +141,12 @@ msgstr ""
 msgid "cannot read in {cs} from file {fn}"
 msgstr ""
 
-#: lib/Log/Report/Dispatcher/File.pm:92
+#: lib/Log/Report/Extract/Template.pm:92
+#, fuzzy
+msgid "cannot read template from {fn}"
+msgstr ""
+
+#: lib/Log/Report/Dispatcher/File.pm:96
 #, fuzzy
 msgid "cannot write log into {file} with {binmode}"
 msgstr ""
@@ -156,12 +166,22 @@ msgstr ""
 msgid "charset parameter required for {fn}"
 msgstr ""
 
-#: lib/Log/Report/Dispatcher/File.pm:81
+#: lib/Log/Report/Dispatcher/Callback.pm:62
+#, fuzzy
+msgid "dispatcher {name} needs a 'callback'"
+msgstr ""
+
+#: lib/Log/Report/Dispatcher/File.pm:85
 #, fuzzy
 msgid "dispatcher {name} needs parameter 'to'"
 msgstr ""
 
-#: lib/Log/Report/Extract/PerlPPI.pm:200
+#: bin/xgettext-perl:65
+#, fuzzy
+msgid "do not combine command-line filenames with --files-from"
+msgstr ""
+
+#: lib/Log/Report/Extract/PerlPPI.pm:170
 #, fuzzy
 msgid "do not interpolate in msgid (found '{var}' in line {line})"
 msgstr ""
@@ -178,12 +198,27 @@ msgid ""
 "  {line}"
 msgstr ""
 
+#: lib/Log/Report.pm:654
+#, fuzzy
+msgid "even length parameter list for __x at {where}"
+msgstr ""
+
+#: bin/xgettext-perl:57
+#, fuzzy
+msgid "explicit output directory (-p) required"
+msgstr ""
+
+#: lib/Log/Report/Extract.pm:47
+#, fuzzy
+msgid "extractions require an explicit lexicon directory"
+msgstr ""
+
 #: lib/Log/Report/Lexicon/POT.pm:163 lib/Log/Report/Lexicon/POTcompact.pm:106
 #, fuzzy
 msgid "failed reading from file {fn}"
 msgstr ""
 
-#: lib/Log/Report/Extract/PerlPPI.pm:322
+#: lib/Log/Report/Extract.pm:199
 #, fuzzy
 msgid "found one pot file for domain {domain}"
 msgid_plural "found {_count} pot files for domain {domain}"
@@ -200,9 +235,24 @@ msgstr ""
 msgid "invalid plural-form algorithm '{alg}'"
 msgstr ""
 
-#: lib/Log/Report/Extract/PerlPPI.pm:218
+#: lib/Log/Report/Exception.pm:102
+#, fuzzy
+msgid "message() of exception expects Log::Report::Message"
+msgstr ""
+
+#: lib/Log/Report/Extract/Template.pm:102
+#, fuzzy
+msgid "need pattern to scan for, either via new() or process()"
+msgstr ""
+
+#: lib/Log/Report/Extract/PerlPPI.pm:188
 #, fuzzy
 msgid "new-line is added automatically (found in line {line})"
+msgstr ""
+
+#: lib/Log/Report/Extract/PerlPPI.pm:73
+#, fuzzy
+msgid "no Perl in file {filename}"
 msgstr ""
 
 #: lib/Log/Report/Lexicon/POT.pm:187
@@ -225,29 +275,39 @@ msgstr ""
 msgid "no plurals for '{msgid}'"
 msgstr ""
 
-#: lib/Log/Report/Extract/PerlPPI.pm:155
+#: lib/Log/Report/Extract/PerlPPI.pm:121
 #, fuzzy
-msgid "no textdomain for translatable at {fn} line {line}"
+msgid "no text-domain for translatable at {fn} line {line}"
 msgstr ""
 
-#: lib/Log/Report.pm:489
+#: lib/Log/Report.pm:505
 #, fuzzy
 msgid "odd length parameter list for try(): forgot the terminating ';'?"
 msgstr ""
 
-#: lib/Log/Report.pm:416
+#: lib/Log/Report.pm:276
+#, fuzzy
+msgid "odd length parameter list with '{msg}'"
+msgstr ""
+
+#: lib/Log/Report.pm:432
 #, fuzzy
 msgid "only one dispatcher name accepted in SCALAR context"
 msgstr ""
 
-#: lib/Log/Report.pm:914
+#: lib/Log/Report.pm:939
 #, fuzzy
 msgid "only one package can contain configuration; for {domain} already in {pkg} in file {fn} line {line}"
 msgstr ""
 
-#: lib/Log/Report/Extract/PerlPPI.pm:109
+#: lib/Log/Report/Extract/PerlPPI.pm:77 lib/Log/Report/Extract/Template.pm:87
 #, fuzzy
 msgid "processing file {fn} in {charset}"
+msgstr ""
+
+#: bin/xgettext-perl:54
+#, fuzzy
+msgid "programming language {lang} not supported"
 msgstr ""
 
 #: lib/Log/Report/Lexicon/PO.pm:360
@@ -265,7 +325,12 @@ msgstr ""
 msgid "reason '{begin}' more serious than '{end}' in '{reasons}"
 msgstr ""
 
-#: lib/Log/Report/Extract/PerlPPI.pm:330
+#: lib/Log/Report/Extract/Template.pm:186
+#, fuzzy
+msgid "scan pattern `{pattern}' not recognized"
+msgstr ""
+
+#: lib/Log/Report/Extract.pm:208
 #, fuzzy
 msgid "starting new textdomain {domain}, template in {filename}"
 msgstr ""
@@ -275,7 +340,7 @@ msgstr ""
 msgid "string '{text}' not between quotes at {location}"
 msgstr ""
 
-#: lib/Log/Report/Extract/PerlPPI.pm:208
+#: lib/Log/Report/Extract/PerlPPI.pm:178
 #, fuzzy
 msgid "string is incorrect at line {line}: {error}"
 msgstr ""
@@ -285,7 +350,7 @@ msgstr ""
 msgid "switching to run mode {mode}, accept {accept}"
 msgstr ""
 
-#: lib/Log/Report.pm:842
+#: lib/Log/Report.pm:867
 #, fuzzy
 msgid "syntax flag must be either SHORT or REPORT, not `{syntax}'"
 msgstr ""
@@ -295,7 +360,7 @@ msgstr ""
 msgid "syslog level '{level}' not understood"
 msgstr ""
 
-#: lib/Log/Report.pm:882
+#: lib/Log/Report.pm:907
 #, fuzzy
 msgid "textdomain for translator not defined"
 msgstr ""
@@ -305,17 +370,17 @@ msgstr ""
 msgid "textdomain parameter is required"
 msgstr ""
 
-#: lib/Log/Report.pm:402
+#: lib/Log/Report.pm:417
 #, fuzzy
 msgid "the 'filter' sub-command needs a CODE reference"
 msgstr ""
 
-#: lib/Log/Report.pm:389
+#: lib/Log/Report.pm:404
 #, fuzzy
 msgid "the 'list' sub-command doesn't expect additional parameters"
 msgstr ""
 
-#: lib/Log/Report.pm:395
+#: lib/Log/Report.pm:410
 #, fuzzy
 msgid "the 'needs' sub-command parameter '{reason}' is not a reason"
 msgstr ""
@@ -323,6 +388,11 @@ msgstr ""
 #: lib/Log/Report/Lexicon/POT.pm:286
 #, fuzzy
 msgid "the only acceptable parameter is 'ACTIVE', not '{p}'"
+msgstr ""
+
+#: lib/Log/Report.pm:245
+#, fuzzy
+msgid "token '{token}' not recognized as reason"
 msgstr ""
 
 #: lib/Log/Report/Lexicon/PO.pm:435
@@ -335,12 +405,12 @@ msgstr ""
 msgid "translation already exists for '{msgid}'"
 msgstr ""
 
-#: lib/Log/Report.pm:889
+#: lib/Log/Report.pm:914
 #, fuzzy
 msgid "translator must be a Log::Report::Translator object"
 msgstr ""
 
-#: lib/Log/Report/Dispatcher/Try.pm:216
+#: lib/Log/Report/Dispatcher/Try.pm:220
 #, fuzzy
 msgid "try-block stopped with {reason}: {text}"
 msgstr ""
@@ -375,7 +445,7 @@ msgstr ""
 msgid "unnamed file"
 msgstr ""
 
-#: lib/Log/Report.pm:919
+#: lib/Log/Report.pm:944
 #, fuzzy
 msgid "value for {name} specified twice"
 msgstr ""
@@ -385,21 +455,21 @@ msgstr ""
 msgid "write errors for file {fn}"
 msgstr ""
 
-#: lib/Log/Report/Extract/PerlPPI.pm:270
+#: lib/Log/Report/Extract.pm:146
 #, fuzzy
 msgid "{domain}: one file with {ids} msgids"
 msgid_plural "{domain}: {_count} files with each {ids} msgids"
 msgstr[0] ""
 msgstr[1] ""
 
-#: lib/Log/Report/Extract/PerlPPI.pm:263
+#: lib/Log/Report/Extract.pm:139
 #, fuzzy
 msgid "{domain}: one file with {ids} msgids, {f} fuzzy and {i} inactive translations"
 msgid_plural "{domain}: {_count} files each {ids} msgids, {f} fuzzy and {i} inactive translations in total"
 msgstr[0] ""
 msgstr[1] ""
 
-#: lib/Log/Report/Extract/PerlPPI.pm:253
+#: lib/Log/Report/Extract.pm:129
 #, fuzzy
 msgid "{domain}: {fuzzy%3d} fuzzy, {inact%3d} inactive in {filename}"
 msgstr ""

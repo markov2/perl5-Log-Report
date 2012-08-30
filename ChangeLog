@@ -1,6 +1,33 @@
 
 ==== version history of Log::Report
 
+version 0.95:
+
+	Changes:
+
+	- new parameters for xgettext-perl, now also able to handle
+	  extracting from templates.  Script needs man-page.
+
+	Fixes:
+
+	- xgettext-perl showed counts twice.
+
+	- text-domain specified as "qw/domain/" now gets recognized by PerlPPI.
+
+	Improvements:
+
+	- some spelling corrections by rt.cpan.org#70959 [Fabrizio Regalli]
+
+	- synopsis fix in ::Dispatcher::Callback by [gbjk]
+
+	- cleaned-up the synopsis of Log::Report a bit.
+
+	- split base-class Log::Report::Extract from ::Extract::PerlPPI
+
+	- remove dependency to Test::Pod
+
+	- add Log::Report::Extract::Template and t/42templ.t
+
 version 0.94: Tue Aug 23 11:14:59 CEST 2011
 
 	Changes:

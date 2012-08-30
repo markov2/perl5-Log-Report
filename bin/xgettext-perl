@@ -7,28 +7,24 @@ use strict;
 
 use Log::Report 'log-report', syntax => 'SHORT';
 use Getopt::Long qw/:config no_ignore_case bundling/;
+use File::Find   qw/find/;
 
-use Log::Report::Extract::PerlPPI;
-
-my $from     = 'MANIFEST';
-my $output;
 my $lang     = 'perl';
-my $char_in  = 'iso-8859-1';
-my $char_out = 'utf-8';
-my $merge    = 0;
 my $version  = 0;
 my $help     = 0;
-my $mode;
+my ($from, $output);
+my ($char_in, $char_out, $domain, $mode, $template);
 
 GetOptions
    'files-from|f=s'    => \$from
  , 'output-dir|p=s'    => \$output
+ , 'domain|d=s'        => \$domain
  , 'language|L=s'      => \$lang
  , 'from-code=s'       => \$char_in
  , 'to-code=s'         => \$char_out  # missing in xgettext?
- , 'join-existing|j=s' => \$merge
  , 'version|V'         => \$version
  , 'help|h'            => \$help
+ , 'template|t=s'      => \$template  # pattern in ::Template
  , 'verbose=i'         => \$mode
  , 'v+'                => \$mode
  , 'mode=s'            => \$mode
@@ -47,9 +43,11 @@ __HELP
    exit 0;
 }
 
+# all output to stderr
 dispatcher FILE => stderr => to => \*STDERR, mode => $mode;
+dispatcher close => 'default';
 
-$lang eq 'perl'
+$template || $lang eq 'perl'
     or mistake __x"programming language {lang} not supported", lang => $lang;
 
 defined $output
@@ -58,25 +56,55 @@ defined $output
 -d $output or mkdir $output
     or fault __x"cannot create output directory {dir}", dir => $output;
 
-#
-### process the pm files
-#
+my @filenames;
+if(defined $from)
+{   !@ARGV
+        or error __x"do not combine command-line filenames with --files-from";
 
-my $ppi = Log::Report::Extract::PerlPPI->new
- ( lexicon => $output
- , charset => $char_out
- );
+    open FILENAMES, '<:raw', $from
+        or fault __x"cannot read filename list from {fn}", fn => $from;
 
-open FILENAMES, '<', $from
-    or fault "cannot read filename list from {filename}", filename => $from;
-
-while( my $filename = <FILENAMES> )
-{   chomp $filename;
-    next unless $filename =~ m/\.pm$/;
-
-    $ppi->process($filename, charset => $char_in);
+    @filenames = <FILENAMES>;
+    close FILENAMES;
+    chomp(@filenames);
+}
+elsif(@ARGV)
+{   find sub{push @filenames, $File::Find::name if -f}, @ARGV;
 }
 
-$ppi->showStats;
+my $extr;
 
-$ppi->write;
+if($template)
+{   # process from template
+    eval "require Log::Report::Extract::Template";
+    panic $@ if $@;
+
+    $domain
+        or error __x"specify a text-domain (-d) for the templates";
+
+    $extr = Log::Report::Extract::Template->new
+      ( lexicon => $output
+      , charset => $char_out
+      , domain  => $domain
+      , pattern => 'TT2-loc'
+      );
+
+    $extr->process($_, charset => $char_in)
+        for @filenames;
+}
+else
+{   # process the pm files
+    eval "require Log::Report::Extract::PerlPPI";
+    panic $@ if $@;
+
+    $extr = Log::Report::Extract::PerlPPI->new
+      ( lexicon => $output
+      , charset => $char_out
+      );
+
+    $extr->process($_, charset => $char_in)
+        for @filenames;
+}
+
+$extr->showStats;
+$extr->write;

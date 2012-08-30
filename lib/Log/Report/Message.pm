@@ -95,8 +95,8 @@ M<Log::Report::Dispatcher::Try::wasFatal(class)>, you can check the
 category of the message.
 
 One message can be part of multiple classes.  The STRING is used as
-comma- and/or blank seperated list of class tokens, the ARRAY lists all
-tokens seperately. See M<classes()>.
+comma- and/or blank separated list of class tokens, the ARRAY lists all
+tokens separately. See M<classes()>.
 
 =option  _classes STRING|ARRAY
 =default _classes []

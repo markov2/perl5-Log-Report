@@ -1,9 +1,8 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 # Try Lexicon PO modifications
 
 use warnings;
 use strict;
-use lib 'lib', '../lib';
 use utf8;
 
 use Test::More tests => 29;

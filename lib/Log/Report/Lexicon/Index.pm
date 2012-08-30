@@ -168,7 +168,7 @@ belong to a certain DOMAIN are listed.
 The EXTENSION filter can be used to reduce the filenames further, for
 instance to select only C<po> or only C<mo> files, and ignore readme's.
 Use an string, without dot and interpreted case-insensitive, or a
-regular expresion.
+regular expression.
 
 =example
   my @l = $index->list('my-domain');
@@ -181,11 +181,7 @@ sub list($;$)
     my $domain = lc shift;
     my $filter = shift;
     my $index  = $self->index;
-
-    my @list   =
-        map { $index->{$_} }
-            grep { m! \b\Q$domain\E\b !x }
-                keys %$index;
+    my @list   = map $index->{$_}, grep m!\b\Q$domain\E\b!, keys %$index;
 
     defined $filter
         or return @list;
@@ -193,7 +189,7 @@ sub list($;$)
     $filter    = qr/\.\Q$filter\E$/i
         if defined $filter && ref $filter ne 'Regexp';
 
-    grep { $_ =~ $filter } @list;
+    grep $_ =~ $filter, @list;
 }
 
 =chapter DETAILS

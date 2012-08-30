@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 # Try Lexicon POTcompact
 # Structure of parsed result has also been checked manually, using
 # Data::Dumper (MO 2007/05/11)

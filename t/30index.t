@@ -1,9 +1,8 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 # test the lexicon index.
 
 use warnings;
 use strict;
-use lib 'lib', '../lib';
 
 use Test::More;
 

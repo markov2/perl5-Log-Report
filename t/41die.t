@@ -1,9 +1,9 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 # Convert die into report
 
 use warnings;
 use strict;
-use lib 'lib', '../lib', 't';
+use lib 't';
 
 use POSIX;
 

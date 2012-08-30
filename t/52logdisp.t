@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 # Test Log::Dispatch (only very simple tests)
 
 use warnings;

@@ -1,9 +1,8 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 use warnings;
 use strict;
-use lib 'lib', '../lib';
 
-use Test::More tests => 16;
+use Test::More tests => 18;
 
 # The versions of the following packages are reported to help understanding
 # the environment in which the tests are run.  This is certainly not a
@@ -37,6 +36,8 @@ use_ok('Log::Report::Dispatcher::Try');
 use_ok('Log::Report::Dispatcher::Perl');
 use_ok('Log::Report::Dispatcher::Callback');
 use_ok('Log::Report::Exception');
+use_ok('Log::Report::Extract');
+use_ok('Log::Report::Extract::Template');
 use_ok('Log::Report::Lexicon::Index');
 use_ok('Log::Report::Lexicon::PO');
 use_ok('Log::Report::Lexicon::POT');

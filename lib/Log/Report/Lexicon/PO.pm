@@ -46,7 +46,7 @@ See M<fuzzy()>.
 
 =option   automatic PARAGRAPH
 =default  automatic ""
-Automaticly added comments.
+Automatically added comments.
 See M<addAutomatic()>.
 
 =option   references STRING|ARRAY-OF-LOCATIONS

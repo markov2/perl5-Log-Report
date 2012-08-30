@@ -1,12 +1,10 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 # Test syslog, but only mildly
 
 use warnings;
 use strict;
-use lib 'lib', '../lib';
 
 use Test::More;
-
 use Log::Report undef, syntax => 'SHORT';
 
 BEGIN

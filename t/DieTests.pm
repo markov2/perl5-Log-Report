@@ -3,7 +3,7 @@ use warnings;
 use strict;
 
 use Log::Report::Die qw/die_decode/;
-use Log::Report      qw/try/;
+use Log::Report      qw/log-report/;
 use Carp;
 
 use Test::More tests => 27;

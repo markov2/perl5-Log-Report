@@ -11,7 +11,7 @@ Log::Report::Dispatcher::Callback - call a code-ref for each log-line
 
 =chapter SYNOPSIS
  sub cb($$$)
- {   my ($options, $reason, $message) = @_;
+ {   my ($disp, $options, $reason, $message) = @_;
      ...
  }
 

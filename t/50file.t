@@ -1,9 +1,8 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 # test the file back-end, without translations
 
 use warnings;
 use strict;
-use lib 'lib', '../lib';
 
 use Test::More tests => 38;
 

@@ -27,7 +27,7 @@ Log::Report::Translator - base implementation for translating messages
 
 =chapter DESCRIPTION
 A module (or distribution) has a certain way of translating messages,
-usually C<gettext>.  The translator is based on the C<textdomain>
+usually C<gettext>.  The translator is based on some C<textdomain>
 for the message, which can be specified as option per text element,
 but usually is package scoped.
 

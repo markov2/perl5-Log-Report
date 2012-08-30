@@ -8,7 +8,7 @@ use base 'Exporter';
 our @EXPORT = qw/@reasons %reason_code
   parse_locale expand_reasons escape_chars unescape_chars/;
 
-use Log::Report 'log-report', syntax => 'SHORT';
+use Log::Report 'log-report';
 
 # ordered!
 our @reasons = N__w('TRACE ASSERT INFO NOTICE WARNING

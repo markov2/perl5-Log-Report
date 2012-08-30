@@ -1,9 +1,8 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 # Test try()
 
 use warnings;
 use strict;
-use lib 'lib', '../lib';
 
 use Test::More tests => 49;
 
@@ -130,7 +129,7 @@ isa_ok($@, 'Log::Report::Dispatcher::Try');
 my $die_ex = $@->wasFatal;
 isa_ok($die_ex, 'Log::Report::Exception');
 is($die_ex->reason, 'ERROR');
-like("$@", qr[^try-block stopped with ERROR: oops at t/54try\.t line \d+$] );
+like("$@", qr[^try-block stopped with ERROR: oops at ] );
 
 my $croak = try { croak "oops" };
 ok(ref $@, 'caught croak');
@@ -138,7 +137,7 @@ isa_ok($@, 'Log::Report::Dispatcher::Try');
 my $croak_ex = $@->wasFatal;
 isa_ok($croak_ex, 'Log::Report::Exception');
 is($croak_ex->reason, 'ERROR');
-like("$@", qr[^try-block stopped with ERROR: oops at lib/Log/Report.pm line \d+$] );
+like("$@", qr[^try-block stopped with ERROR: oops at ] );
 
 my $confess = try { confess "oops" };
 ok(ref $@, 'caught confess');
@@ -146,4 +145,4 @@ isa_ok($@, 'Log::Report::Dispatcher::Try');
 my $confess_ex = $@->wasFatal;
 isa_ok($confess_ex, 'Log::Report::Exception');
 is($confess_ex->reason, 'PANIC');
-like("$@", qr[^try-block stopped with PANIC: oops at t/54try\.t line \d+$] );
+like("$@", qr[^try-block stopped with PANIC: oops at ] );

@@ -1,9 +1,8 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 # Try Extract PPI
 
 use warnings;
 use strict;
-use lib 'lib', '../lib';
 
 use File::Temp   qw/tempdir/;
 use Test::More;

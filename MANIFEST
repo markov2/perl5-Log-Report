@@ -14,7 +14,9 @@ lib/Log/Report/Dispatcher/Perl.pm
 lib/Log/Report/Dispatcher/Syslog.pm
 lib/Log/Report/Dispatcher/Try.pm
 lib/Log/Report/Exception.pm
+lib/Log/Report/Extract.pm
 lib/Log/Report/Extract/PerlPPI.pm
+lib/Log/Report/Extract/Template.pm
 lib/Log/Report/Lexicon/Index.pm
 lib/Log/Report/Lexicon/PO.pm
 lib/Log/Report/Lexicon/POT.pm
@@ -39,11 +41,12 @@ t/30index.t
 t/31stack.t
 t/40ppi.t
 t/41die.t
+t/42templ.t
 t/50file.t
 t/51syslog.t
 t/52logdisp.t
 t/53log4perl.t
 t/54try.t
-t/99pod.t
 t/DieTests.pm
 t/hello-world-slovak.po
+xt/99pod.t

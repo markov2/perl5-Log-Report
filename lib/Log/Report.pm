@@ -53,28 +53,36 @@ __PACKAGE__->_setting('rescue', translator => Log::Report::Translator->new);
 dispatcher PERL => 'default', accept => 'NOTICE-';
 
 =chapter NAME
-Log::Report - report a problem, pluggable handlers and language support
+Log::Report - report a problem, with exceptions and language support
 
 =chapter SYNOPSIS
- # Read section "The Reason for the report" first!!!
+ # Invocation with mode helps debugging
+ use Log::Report mode => 'DEBUG';
 
- # In each package, declare a name-space.  Different packages
- # used by one program can have different translation tables.
+ -f $config or panic "Help!"; # alert/error/fault/info/...more
+ error "oops";                # like die(), no translation
+
+ # Provide a name-space to use translation tables.  Like Locale::TextDomain
  use Log::Report 'my-domain';
+ error __x"Help!";            # __x() handles translation
+ print __x"my name is {name}", name => $fullname;
+ print __x'Hello World';      # ERROR!!  ' is alternative for ::
 
- # Many destinations in parallel possible. Log::Report::Dispatcher
- dispatcher PERL => 'default'
-   , reasons => 'NOTICE-';   # this disp. is automatically added
+ # Many destinations for message in parallel possible.
+ dispatcher PERL => 'default' # See Log::Report::Dispatcher: use die/warn
+   , reasons => 'NOTICE-';    # this disp. is already present at start
 
- dispatcher SYSLOG => 'syslog'
-   , charset => 'iso-8859-1' # explicit conversions
-   , locale => 'en_US';      # overrule user's locale
+ dispatcher SYSLOG => 'syslog'# also send to syslog
+   , charset => 'iso-8859-1'  # explicit character conversions
+   , locale => 'en_US';       # overrule user's locale
 
- # Produce an error, long syntax
+ dispatcher close => 'PERL';  # stop dispatching to die/warn
+
+ # Produce an error, long syntax (rarely used)
  report ERROR => __x('gettext string', param => $param, ...)
      if $condition;
 
- # when syntax=SHORT (default since 0.26), many useful functions
+ # When syntax=SHORT (default since 0.26)
  error __x('gettext string', param => $param, ...)
      if $condition;
 
@@ -85,9 +93,8 @@ Log::Report - report a problem, pluggable handlers and language support
  report {to => 'syslog', errno => ENOMEM}
    , FAULT => __x"cannot allocate {size} bytes", size => $size;
 
- # avoid messages without report level for daemons
+ # Avoid messages without report level for daemons
  print __"Hello World", "\n";  # only translation, no exception
- print __'Hello World';  # ERROR!!  ' is alternative for ::
 
  # fill-in values, like Locale::TextDomain and gettext
  # See Log::Report::Message section DETAILS
@@ -102,13 +109,13 @@ Log::Report - report a problem, pluggable handlers and language support
  if($@) {...}      # $@ isa Log::Report::Dispatcher::Try
 
  # Language translations at the IO/layer
- use POSIX ':locale_h';
+ use POSIX::1003::Locale qw/setlocale LC_ALL/;
  setlocale(LC_ALL, 'nl_NL');
- info __"Hello World!";  # in Dutch, if translation table found
+ info __"Hello World!";      # in Dutch, if translation table found
 
  # Exception classes, see Log::Report::Exception
- my $msg = __x"something", _class => 'local,mine';
- if($msg->inClass('local')) ...
+ my $msg = __x"something", _class => 'parsing,schema';
+ if($msg->inClass('parsing')) ...
 
 =chapter DESCRIPTION 
 Handling messages to users can be a hassle, certainly when the same
@@ -266,7 +273,7 @@ sub report($@)
     }
     else
     {   # untranslated message into object
-        @_%2 and error __x"odd length parameter list with '$message'";
+        @_%2 and error __x"odd length parameter list with '{msg}'", msg => $message;
         $message = Log::Report::Message->new(_prepend => $message, @_);
     }
 
@@ -790,7 +797,7 @@ polute your namespace with the useful abbrev functions.
 =option  translator Log::Report::Translator
 =default translator <rescue>
 Without explicit translator, a dummy translator is used for the domain
-which will use the untranslated message-id .
+which will use the untranslated message-id.
 
 =option  native_language CODESET 
 =default native_language 'en_US'
@@ -811,9 +818,10 @@ also selectively change the output mode, like
  use Log::Report 'my-domain';   # in each package producing messages
 
  use Log::Report 'my-domain'    # in one package, top of distr
-  , translator => Log::Report::Translator::POT->new
-     ( lexicon  => '/home/me/locale'  # bindtextdomain
-     , charset  => 'UTF-8'            # codeset
+  , mode            => 'VERBOSE'
+  , translator      => Log::Report::Translator::POT->new
+     ( lexicon => '/home/me/locale'  # bindtextdomain
+     , charset => 'UTF-8'            # codeset
      )
   , native_language => 'nl_NL'  # untranslated msgs are Dutch
   , syntax          => 'REPORT';# report ERROR, not error()
@@ -852,7 +860,9 @@ sub import(@)
 
     my @export = (@functions, @make_msg);
 
-    if($syntax eq 'SHORT') { push @export, @reason_functions }
+    if($syntax eq 'SHORT')
+    {   push @export, @reason_functions
+    }
     elsif($syntax ne 'REPORT' && $syntax ne 'LONG')
     {   error __x"syntax flag must be either SHORT or REPORT, not `{syntax}'"
           , syntax => $syntax;

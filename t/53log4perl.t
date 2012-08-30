@@ -1,9 +1,8 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 # Test Log::Log4perl (only very simple tests)
 
 use warnings;
 use strict;
-use lib 'lib', '../lib';
 
 use File::Temp   qw/tempfile/;
 use Test::More;
