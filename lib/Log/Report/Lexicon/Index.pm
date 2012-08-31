@@ -192,6 +192,8 @@ sub list($;$)
     grep $_ =~ $filter, @list;
 }
 
+#-------------------------------------
+
 =chapter DETAILS
 
 It's always complicated to find the lexicon files, because the perl

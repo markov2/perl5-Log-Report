@@ -30,7 +30,7 @@ Log::Report::Translator::POT - translation based on POT files
 
  print Log::Report::Translator::POT
     ->new(lexicon => ...)
-    ->translate('nl-BE', $msg);
+    ->translate($msg, 'nl-BE');
 
  # normal use (end-users view)
  use Log::Report 'my-domain'
@@ -49,12 +49,12 @@ in a compact way, much more compact than M<Log::Report::Lexicon::PO> does.
 =c_method new OPTIONS
 =cut
 
-sub translate($)
-{   my ($self, $msg) = @_;
+sub translate($;$)
+{   my ($self, $msg, $lang) = @_;
 
     my $domain = $msg->{_domain};
-    my $locale = setlocale(LC_MESSAGES)
-        or return $self->SUPER::translate($msg);
+    my $locale = $lang || setlocale(LC_MESSAGES)
+        or return $self->SUPER::translate($msg, $lang);
 
     my $pot
       = exists $self->{pots}{$locale}
@@ -62,10 +62,10 @@ sub translate($)
       : $self->load($domain, $locale);
 
     defined $pot
-        or return $self->SUPER::translate($msg);
+        or return $self->SUPER::translate($msg, $lang);
 
        $pot->msgstr($msg->{_msgid}, $msg->{_count})
-    || $self->SUPER::translate($msg);   # default translation is 'none'
+    || $self->SUPER::translate($msg, $lang);   # default translation is 'none'
 }
 
 sub load($$)

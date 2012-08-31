@@ -357,8 +357,8 @@ simplify your coding.  The useful names are:
 =item _msgid
 The MSGID as provided with M<Log::Report::__()> and M<Log::Report::__x()>
 
-=item _msgid, _plural, _count
-The single MSGID and PLURAL MSGIDs, respectively the COUNT as used with
+=item _plural, _count
+The PLURAL MSGIDs, respectively the COUNT as used with
 M<Log::Report::__n()> and M<Log::Report::__nx()>
 
 =item _textdomain
@@ -406,19 +406,19 @@ specified like this:
 
 For interpolating, the following rules apply:
 =over 4
-=item .
+=item *
 Simple scalar values are interpolated "as is"
-=item .
+=item *
 References to SCALARs will collect the value on the moment that the
 output is made.  The C<Log::Report::Message> object which is created with
 the C<__xn> can be seen as a closure.  The translation can be reused.
 See example below.
-=item .
+=item *
 Code references can be used to create the data "under fly".  The
 C<Log::Report::Message> object which is being handled is passed as
 only argument.  This is a hash in which all OPTIONS and VARIABLES
 can be found.
-=item .
+=item *
 When the value is an ARRAY, all members will be interpolated with C<$">
 between the elements.
 =back

@@ -1,7 +1,23 @@
 
 ==== version history of Log::Report
 
-version 0.95:
+version 0.96: Fri Aug 31 16:43:31 CEST 2012
+
+	Fixes:
+
+	- scan templates for msgid containing white-space.
+
+	- ::Translate::translate() was documented to accept a language
+	  parameter.  Fixed the docs and implemented it ;-)
+
+	Improvements:
+
+	- support for plural forms in templates.
+
+	- explanation/support method how to integrate the translations
+	  with Template::Toolkit.
+
+version 0.95: Thu Aug 30 23:15:50 CEST 2012
 
 	Changes:
 

@@ -12,7 +12,7 @@ use Log::Report;  # mode => 'DEBUG';
 use Log::Report::Lexicon::POT;
 use Log::Report::Extract::Template;
 
-use constant MSGIDS => 5;
+use constant MSGIDS => 7;
 
 # see after __END__
 my @expect_pos = split /\n/, <<'_EXPECT';
@@ -21,6 +21,8 @@ second
 third
 fourth
 fifth
+six six six
+%d seven
 _EXPECT
 
 chomp $expect_pos[-1];
@@ -55,8 +57,6 @@ ok(defined $potfn);
 ok(-s $potfn, "produced file $potfn has size");
 
 #system "cat $potfn";
-
-#
 
 my $pot = Log::Report::Lexicon::POT->read($potfn, charset => 'utf-8');
 ok(defined $pot, 'read translation table');
@@ -93,3 +93,5 @@ Here, the example template starts
    )
    %]
 [%xloc('not found')%]
+[%loc('six six six')%]
+[% loc('%d seven|%d sevens', 7) %]

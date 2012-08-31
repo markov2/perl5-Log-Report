@@ -105,7 +105,7 @@ sub process($@)
     # Split the whole file on the pattern in four fragments per match:
     #       (text, leading, needed trailing, text, leading, ...)
     # f.i.  ('', '[% loc("', 'some-msgid', '", params) %]', ' more text')
-    my @frags  = split $pattern, $text;
+    my @frags      = split $pattern, $text;
 
     my $linenr     = 1;
     my $msgs_found = 0;
@@ -114,7 +114,8 @@ sub process($@)
     {   $linenr += ($frags[0] =~ tr/\n//)   # text
                 +  ($frags[1] =~ tr/\n//);  # leading
         (my $msgid = $frags[2]) =~ s/^(['"]*)(.*?)\1/$2/;
-        $self->store($domain, $fn, $linenr, $msgid);
+        my $plural = $msgid =~ s/\|(.*)// ? $1 : undef;
+        $self->store($domain, $fn, $linenr, $msgid, $plural);
         $msgs_found++;
         $linenr += ($frags[2] =~ tr/\n//)
                 +  ($frags[3] =~ tr/\n//);
@@ -128,10 +129,12 @@ sub process($@)
 =chapter DETAILS
 
 =section Scan Patterns
+
 Various template systems use different conventions for denoting strings
 to be translated.
 
 =subsection Your own regular expression
+
 If you do not have a format which is predefined, then you can pass-in
 your own regular expression.  Be sure it captures three components:
 the beginning of the markup, the msgid to be included in the translation
@@ -149,7 +152,12 @@ The markup compenents must contain all allowed white-spacing, to be able
 to produce the correct line-numbers.  Enclosing single and double quotes
 aroung the msgid will get removed, if still present after the match.
 
+This example is simplifying too much: your syntax should support parameters
+and messages which can be in singular or plural form.  The next section
+shows a sufficiently powerful syntax.
+
 =subsection Predefined for Template::Toolkit
+
 There is not a single convertion for translations in M<Template::Toolkit>,
 so you need to specify which version you use and which function you want
 to run.
@@ -160,10 +168,41 @@ For instance
 
 will scan for
 
-   [% loc("msgid", params) %]
+   [% loc("msgid", key => value, ...) %]
+   [% loc("msgid|plural", count, key => value, ...) %]
 
 For TT1, the brackets can either be '[%...%]' or '%%...%%'.  The function
 name is treated case-sensitive.  Some people prefer 'l()'.
+
+The code needed
+
+   ... during initiation of the webserver
+   my $lexicons   = 'some-directory-for-translation-tables';
+   my $translator = Log::Report::Translator::POT->new(lexicons => $lexicons);
+
+   ... your template driver
+   sub handler {
+      ...
+      my $fill_in     = { ...all kinds of values... };
+      $fill_in->{loc} = \&translate;    # this is extra
+
+      my $output      = '';
+      my $templater   = Template->new(...);
+      $templater->process($template_fn, $fill_in, \$output);
+      print $output;
+   }
+
+   ... anywhere in the same file
+   sub translate {
+       my $textdomain = ...;   # specified with xgettext-perl
+       my $lang       = ...;   # how do you figure that out?
+       $translator->TemplateToolkit($textdomain, $lang, @_);
+   }
+
+   ... to generate the pod tables, run in the shell something like
+   xgettext-perl -p $lexicons --template TT2-loc \
+      --domain $textdomain  templates/
+
 =cut
 
 sub _pattern($)
@@ -178,7 +217,7 @@ sub _pattern($)
          my ($open, $close) = $level==1 ? ('[\[%]%', '%[\]%]') : ('\[%', '%\]');
 
          return qr/( $open \s* \Q$function\E \s* \( \s* ) # leading
-                   ( "[^"\s]*" | '[^']*' )                # msgid
+                   ( "[^"\n]*" | '[^'\n]*' )              # msgid
                    ( .*?                                  # params
                      $close )                             # ending
                   /xs;

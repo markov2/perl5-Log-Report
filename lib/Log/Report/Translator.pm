@@ -8,6 +8,7 @@ use File::Spec ();
 use Log::Report 'log-report', syntax => 'SHORT';
 
 use Log::Report::Lexicon::Index ();
+use Log::Report::Message;
 
 my %lexicons;
 
@@ -108,7 +109,7 @@ sub charset() {shift->{charset}}
 
 =section Translating
 
-=method translate MESSAGE
+=method translate MESSAGE, [LANGUAGE]
 Returns the translation of the MESSAGE, a C<Log::Report::Message> object,
 based on the current locale.
 
@@ -133,5 +134,31 @@ data must be cached.
 =cut
 
 sub load($@) { undef }
+
+=method TemplateToolkit DOMAIN, LANGUAGE, MSGID, PARAMS
+See M<Log::Report::Extract::Template> on the details how to integrate
+Log::Report translations with Template::Toolkit (version 1 and 2)
+=cut
+
+sub TemplateToolkit($$$;$@)
+{   my ($self, $domain, $lang, $msgid) = splice @_, 0, 4;
+    my $plural = $msgid =~ s/\|(.*)// ? $1 : undef;
+    my $args   = @_ && ref $_[-1] eq 'HASH' ? pop : {};
+
+    my $count;
+    if(defined $plural)
+    {   @_==1 or $msgid .= " (ERROR: missing count for plural)";
+        $count = shift;
+    }
+    else
+    {   @_==0 or $msgid .= " (ERROR: only named parameters expected)";
+    }
+
+    my $msg = Log::Report::Message->new
+        ( _msgid => $msgid, _plural => $plural, _count => $count
+        , %$args, _expand => 1, _domain => $domain);
+
+    $self->translate($msg, $lang);
+}
 
 1;

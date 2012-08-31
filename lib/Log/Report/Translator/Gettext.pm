@@ -27,7 +27,7 @@ Log::Report::Translator::Gettext - the GNU gettext infrastructure
    );
 
  print Log::Report::Translator::Gettext->new
-     ->translate('nl-BE', $msg);
+     ->translate($msg, 'nl-BE');
 
 =chapter DESCRIPTION
 UNTESTED!!!  PLEASE CONTRIBUTE!!!
@@ -45,9 +45,10 @@ also only available on certain systems.
 =chapter METHODS
 =cut
 
-sub translate($)
-{   my ($msg) = @_;
+sub translate($;$)
+{   my ($msg, $lang) = @_;
 
+#XXX MO: how to use $lang when specified?
     my $domain = $msg->{_textdomain};
     load_domain $domain;
 
