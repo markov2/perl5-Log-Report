@@ -169,6 +169,7 @@ For instance
 will scan for
 
    [% loc("msgid", key => value, ...) %]
+   [% loc('msgid', key => value, ...) %]
    [% loc("msgid|plural", count, key => value, ...) %]
 
 For TT1, the brackets can either be '[%...%]' or '%%...%%'.  The function
@@ -179,6 +180,7 @@ The code needed
    ... during initiation of the webserver
    my $lexicons   = 'some-directory-for-translation-tables';
    my $translator = Log::Report::Translator::POT->new(lexicons => $lexicons);
+   Log::Report->translator($textdomain => $translator);
 
    ... your template driver
    sub handler {
@@ -196,7 +198,8 @@ The code needed
    sub translate {
        my $textdomain = ...;   # specified with xgettext-perl
        my $lang       = ...;   # how do you figure that out?
-       $translator->TemplateToolkit($textdomain, $lang, @_);
+       my $msg = Log::Report::Message->fromTemplateToolkit($textdomain, @_);
+       $msg->toString($lang);
    }
 
    ... to generate the pod tables, run in the shell something like

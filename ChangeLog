@@ -1,6 +1,18 @@
 
 ==== version history of Log::Report
 
+version 0.97: Mon Sep  3 15:54:04 CEST 2012
+
+	Changes:
+
+	- repair mistake of 0.96: Log::Report::Translate::TemplateToolkit()
+	  must have been Log::Report::Message::fromTemplateToolkit()
+
+	Improvements:
+
+	- count for message with plural can be ARRAY or HASH, which
+	  get numified automatically.
+
 version 0.96: Fri Aug 31 16:43:31 CEST 2012
 
 	Fixes:

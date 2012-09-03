@@ -633,10 +633,10 @@ sub _default_domain(@)
 }
 
 sub __($)
-{  Log::Report::Message->new
-    ( _msgid  => shift
-    , _domain => _default_domain(caller)
-    );
+{   Log::Report::Message->new
+      ( _msgid  => shift
+      , _domain => _default_domain(caller)
+      );
 } 
 
 =function __x MSGID, OPTIONS, VARIABLES
@@ -670,11 +670,21 @@ However, some languages have more complex schemes than English.
 OPTIONS are explained in M<Log::Report::Message::new()>.
 M<Locale::TextDomain::__n()> does not have OPTIONS, but they mix
 with variables.
+
 =examples how to use __n()
  print __n "one", "more", $a;
  print __n("one", "more", $a), "\n";
  print +(__n "one", "more", $a), "\n";
+
+ # new-lines are ignore at lookup, but printed.
  print __n "one\n", "more\n", $a;
+
+ # count is in scalar context
+ # the value is also available as _count
+ print __n "found one\n", "found {_count}\n", @r;
+
+ # ARRAYs and HASHes are counted
+ print __n "one", "more", \@r;
 =cut
 
 sub __n($$$@)

@@ -61,9 +61,11 @@ Indicates whether variables are filled-in.
 =default _domain from C<use>
 The textdomain in which this msgid is defined.
 
-=option  _count INTEGER
+=option  _count INTEGER|ARRAY|HASH
 =default _count C<undef>
-When defined, then C<_plural> need to be defined as well.
+When defined, then C<_plural> need to be defined as well.  When an
+ARRAY is provided, the lenght of the ARRAY is taken.  When a HASH
+is given, the number of keys in the HASH is used.
 
 =option  _plural MSGID
 =default _plural C<undef>
@@ -108,7 +110,15 @@ Specify the NAME of a dispatcher as destination explicitly. Short
 for  C<< report {to => NAME}, ... >>  See M<to()>
 =cut
 
-sub new($@) { my $class = shift; bless {@_}, $class }
+sub new($@)
+{   my $class = shift;
+    my $self  = bless {@_}, $class;
+    if(ref $self->{_count})
+    {   my $c = $self->{_count};
+        $self->{_count} = ref $c eq 'ARRAY' ? @$c : keys %$c;
+    }
+    $self;
+}
 
 =method clone OPTIONS, VARIABLES
 Returns a new object which copies info from original, and updates it
@@ -126,6 +136,31 @@ cached translations are shared between the objects.
 sub clone(@)
 {   my $self = shift;
     (ref $self)->new(%$self, @_);
+}
+
+=c_method fromTemplateToolkit DOMAIN, MSGID, PARAMS
+See M<Log::Report::Extract::Template> on the details how to integrate
+Log::Report translations with Template::Toolkit (version 1 and 2)
+=cut
+
+sub fromTemplateToolkit($$;@)
+{   my ($class, $domain, $msgid) = splice @_, 0, 3;
+    my $plural = $msgid =~ s/\|(.*)// ? $1 : undef;
+    my $args   = @_ && ref $_[-1] eq 'HASH' ? pop : {};
+
+    my $count;
+    if(defined $plural)
+    {   @_==1 or $msgid .= " (ERROR: missing count for plural)";
+        $count = shift || 0;
+        $count = @$count if ref $count eq 'ARRAY';
+    }
+    else
+    {   @_==0 or $msgid .= " (ERROR: only named parameters expected)";
+    }
+
+    $class->new
+      ( _msgid => $msgid, _plural => $plural, _count => $count
+      , %$args, _expand => 1, _domain => $domain);
 }
 
 =section Accessors
@@ -225,7 +260,8 @@ sub toString(;$)
                 . (defined $self->{_append}  ? $self->{_append}  : '');
 
     # create a translation
-    my $text = Log::Report->translator($self->{_domain})->translate($self);
+    my $text = Log::Report->translator($self->{_domain})
+                          ->translate($self, $locale);
     defined $text or return ();
 
     my $loc  = defined $locale ? setlocale(LC_ALL, $locale) : undef;
