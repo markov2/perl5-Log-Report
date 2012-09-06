@@ -12,10 +12,10 @@ Log::Report::Extract::Template - Collect translatable strings from templates
 
 =chapter SYNOPSIS
  my $extr = Log::Report::Extract::Template->new
-  ( lexicon => '/usr/share/locale'
-  , domain  => 'my-web-site'
-  , pattern => 'TT2-loc'
-  );
+   ( lexicon => '/usr/share/locale'
+   , domain  => 'my-web-site'
+   , pattern => 'TT2-loc'
+   );
  $extr->process('website/page.html');  # many times
  $extr->showStats;
  $extr->write;
@@ -42,7 +42,7 @@ one C<textdomain/xx.po> file will be created.
 There is no syntax for specifying domains in templates (yet), so you
 must be explicit about the collection we are making now.
 
-=option  pattern PREDEFINED|REGEX
+=option  pattern PREDEFINED|CODE
 =default pattern <undef>
 See the DETAILS section below for a detailed explenation.
 =cut
@@ -53,7 +53,7 @@ sub init($)
     $self->{LRET_domain}  = $args->{domain}
         or error "template extract requires explicit domain";
 
-    $self->{LRET_pattern} = $self->_pattern($args->{pattern});
+    $self->{LRET_pattern} = $args->{pattern};
     $self;
 }
 
@@ -76,7 +76,7 @@ all files where processed.
 =default charset 'utf-8'
 The character encoding used in this template file.
 
-=option  pattern PREDEFINED|REGEX
+=option  pattern PREDEFINED|CODE
 =default pattern <from new(pattern)>
 Read the DETAILS section about this.
 =cut
@@ -86,6 +86,9 @@ sub process($@)
 
     my $charset = $opts{charset} || 'utf-8';
     info __x"processing file {fn} in {charset}", fn=> $fn, charset => $charset;
+
+    my $pattern = $opts{pattern} || $self->pattern
+        or error __"need pattern to scan for, either via new() or process()";
 
     # Slurp the whole file
     local *IN;
@@ -99,28 +102,50 @@ sub process($@)
     my $domain  = $self->domain;
     $self->_reset($domain, $fn);
 
-    my $pattern = $self->_pattern($opts{pattern}) || $self->pattern
-        or error __"need pattern to scan for, either via new() or process()";
+    if(ref $pattern eq 'CODE')
+    {   return $pattern->($fn, \$text);
+    }
+    elsif($pattern =~ m/^TT([12])-(\w+)$/)
+    {   return $self->scanTemplateToolkit($1, $2, $fn, \$text);
+    }
+    else
+    {   error __x"unknown pattern {pattern}", pattern => $pattern;
+    }
+    ();
+}
+
+sub scanTemplateToolkit($$$$)
+{   my ($self, $version, $function, $fn, $textref) = @_;
 
     # Split the whole file on the pattern in four fragments per match:
     #       (text, leading, needed trailing, text, leading, ...)
     # f.i.  ('', '[% loc("', 'some-msgid', '", params) %]', ' more text')
-    my @frags      = split $pattern, $text;
+    my @frags
+      = $version==1 ? split(/[\[%]%(.*?)%[%\]]/s, $$textref)
+      :               split(/\[%(.*?)%\]/s, $$textref);
+
+    my $getcall    = qr/(\b$function\s*\(\s*)(["'])([^\r\n]+?)\2/s;
+    my $domain     = $self->domain;
 
     my $linenr     = 1;
     my $msgs_found = 0;
 
-    while(@frags > 4)
-    {   $linenr += ($frags[0] =~ tr/\n//)   # text
-                +  ($frags[1] =~ tr/\n//);  # leading
-        (my $msgid = $frags[2]) =~ s/^(['"]*)(.*?)\1/$2/;
-        my $plural = $msgid =~ s/\|(.*)// ? $1 : undef;
-        $self->store($domain, $fn, $linenr, $msgid, $plural);
-        $msgs_found++;
-        $linenr += ($frags[2] =~ tr/\n//)
-                +  ($frags[3] =~ tr/\n//);
-        splice @frags, 0, 4;
+    while(@frags > 2)
+    {   $linenr += (shift @frags) =~ tr/\n//;   # text
+        my @markup = split $getcall, shift @frags;
+
+        while(@markup > 4)    # quads with text, call, quote, msgid
+        {   $linenr   += ($markup[0] =~ tr/\n//)
+                      +  ($markup[1] =~ tr/\n//);
+            my $msgid  = $markup[3];
+            my $plural = $msgid =~ s/\|(.*)// ? $1 : undef;
+            $self->store($domain, $fn, $linenr, $msgid, $plural);
+            $msgs_found++;
+            splice @markup, 0, 4;
+        }
+        $linenr += $markup[-1] =~ tr/\n//; # rest of container
     }
+#   $linenr += $frags[-1] =~ tr/\n//;      # last not needed
 
     $msgs_found;
 }
@@ -132,29 +157,6 @@ sub process($@)
 
 Various template systems use different conventions for denoting strings
 to be translated.
-
-=subsection Your own regular expression
-
-If you do not have a format which is predefined, then you can pass-in
-your own regular expression.  Be sure it captures three components:
-the beginning of the markup, the msgid to be included in the translation
-table, and the ending of the markup.
-
-Example:
-
-   pattern => qr/(<")(.*?)(">)/
-
-This would match
-
-   <"Hello, World">
-
-The markup compenents must contain all allowed white-spacing, to be able
-to produce the correct line-numbers.  Enclosing single and double quotes
-aroung the msgid will get removed, if still present after the match.
-
-This example is simplifying too much: your syntax should support parameters
-and messages which can be in singular or plural form.  The next section
-shows a sufficiently powerful syntax.
 
 =subsection Predefined for Template::Toolkit
 
@@ -171,6 +173,9 @@ will scan for
    [% loc("msgid", key => value, ...) %]
    [% loc('msgid', key => value, ...) %]
    [% loc("msgid|plural", count, key => value, ...) %]
+   [% INCLUDE
+        title = loc('something')
+    %]
 
 For TT1, the brackets can either be '[%...%]' or '%%...%%'.  The function
 name is treated case-sensitive.  Some people prefer 'l()'.
@@ -206,27 +211,18 @@ The code needed
    xgettext-perl -p $lexicons --template TT2-loc \
       --domain $textdomain  templates/
 
+If you want to implement your own extractor --to avoid C<xgettext-perl>--
+you need to run something like this:
+
+  my $extr = Log::Report::Extract::Template->new
+    ( lexicon => $output
+    , charset => 'utf-8'
+    , domain  => $domain
+    , pattern => 'TT2-loc'
+    );
+  $extr->process($_) for @filenames;
+  $extr->write;
+
 =cut
-
-sub _pattern($)
-{   my ($self, $pattern) = @_;
-
-    return $pattern
-        if !defined $pattern || ref $pattern eq 'Regexp';
-
-    if($pattern =~ m/^TT([12])-(\w+)$/)
-    {    # Recognized is Template::Toolkit 2
-         my ($level, $function) = ($1, $2);
-         my ($open, $close) = $level==1 ? ('[\[%]%', '%[\]%]') : ('\[%', '%\]');
-
-         return qr/( $open \s* \Q$function\E \s* \( \s* ) # leading
-                   ( "[^"\n]*" | '[^'\n]*' )              # msgid
-                   ( .*?                                  # params
-                     $close )                             # ending
-                  /xs;
-    }
-
-    error __x"scan pattern `{pattern}' not recognized", pattern => $pattern;
-}
 
 1;

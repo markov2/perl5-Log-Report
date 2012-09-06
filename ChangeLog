@@ -1,6 +1,29 @@
 
 ==== version history of Log::Report
 
+version 0.98: Thu Sep  6 14:46:52 CEST 2012
+
+	Changes:
+
+	- rewrote message-id extractor in ::Extract::Template to
+	  support more TemplateToolkit features.
+
+	- print __x("who am i\n") is now interpreted as
+	  print __x("who am i"), "\n";
+	  So: no trailing newlines in the PO-tables.
+
+	Fixes:
+
+	- PO file parse errors reported on the wrong location.
+
+	- ::Message::toString() uses $" when an ARRAY of elements gets
+	  inlined.  This should be the $" on the moment of message's
+	  definition, not the $" when it gets stringified.
+
+	Improvements:
+
+	- new option ::Message::new(_join)
+
 version 0.97: Mon Sep  3 15:54:04 CEST 2012
 
 	Changes:

@@ -13,6 +13,8 @@ use POSIX       qw/strftime/;
 use IO::File;
 use List::Util  qw/sum/;
 
+use constant    MSGID_HEADER => '';
+
 =chapter NAME
 Log::Report::Lexicon::POT - manage PO files
 
@@ -24,7 +26,7 @@ Log::Report::Lexicon::POT - manage PO files
     ->read('po/nl.po', charset => 'utf-8')
         or die;
 
- my $po = $pot->msgid('');
+ my $po = $pot->msgid('msgid');
  print $pot->nrPlurals;
  print $pot->msgstr('msgid', 3);
  $pot->write;
@@ -146,13 +148,16 @@ sub read($@)
         or fault __x"cannot read in {cs} from file {fn}"
              , cs => $charset, fn => $fn;
 
-    local $/ = "\n\n";
+    local $/   = "\n\n";
+    my $linenr = 1;  # $/ frustrates $fh->input_line_number
     while(1)
-    {   my $location = "$fn line ".$fh->input_line_number;
+    {   my $location = "$fn line $linenr";
         my $block    = <$fh>;
         defined $block or last;
 
-        $block =~ s/\s+\z//s;
+        $linenr += $block =~ tr/\n//;
+
+        $block   =~ s/\s+\z//s;
         length $block or last;
 
         my $po = Log::Report::Lexicon::PO->fromText($block, $location);
@@ -197,10 +202,10 @@ sub write($@)
                     , fn => $file, layers => $layers;
     }
 
-    $fh->print($self->msgid("")->toString(@opt));
+    $fh->print($self->msgid(MSGID_HEADER)->toString(@opt));
     my $index = $self->index;
     foreach my $msgid (sort keys %$index)
-    {   next if $msgid eq '';
+    {   next if $msgid eq MSGID_HEADER;
 
         my $po = $index->{$msgid};
         next if $po->unused;
@@ -323,7 +328,7 @@ sub _now() { strftime "%Y-%m-%d %H:%M%z", localtime }
 
 sub header($;$)
 {   my ($self, $field) = (shift, shift);
-    my $header = $self->msgid('')
+    my $header = $self->msgid(MSGID_HEADER)
         or error __x"no header defined in POT for file {fn}"
                    , fn => $self->filename;
 
@@ -367,7 +372,7 @@ sub _createHeader(%)
     my $date   = $args{date} || _now;
 
     my $header = Log::Report::Lexicon::PO->new
-     (  msgid  => '', msgstr => <<__CONFIG);
+     (  msgid  => MSGID_HEADER, msgstr => <<__CONFIG);
 Project-Id-Version: $args{project}
 Report-Msgid-Bugs-To:
 POT-Creation-Date: $date
@@ -383,7 +388,7 @@ __CONFIG
     my $version = $Log::Report::VERSION || '0.0';
     $header->addAutomatic("Header generated with ".__PACKAGE__." $version\n");
 
-    $self->index->{''} = $header
+    $self->index->{&MSGID_HEADER} = $header
         if $header;
 
     $header;
@@ -407,7 +412,7 @@ sub stats()
 {   my $self  = shift;
     my %stats = (msgids => 0, fuzzy => 0, inactive => 0);
     foreach my $po ($self->translations)
-    {   next if $po->msgid eq '';
+    {   next if $po->msgid eq MSGID_HEADER;
         $stats{msgids}++;
         $stats{fuzzy}++    if $po->fuzzy;
         $stats{inactive}++ if !$po->isActive && !$po->unused;

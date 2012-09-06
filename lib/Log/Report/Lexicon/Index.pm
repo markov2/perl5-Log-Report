@@ -284,7 +284,7 @@ In order of attempts:
   my-domain/nl-NL.po
   my-domain/nl.po
 
-Filenames may get mutilated by the platform (which we will try to hide
+Filenames may get mutulated by the platform (which we will try to hide
 from you [please help improve this]), and are treated case-INsensitive!
 =cut
 

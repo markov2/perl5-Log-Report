@@ -12,6 +12,25 @@ Log::Report::Message - a piece of text to be translated
 
 =chapter SYNOPSIS
  # Created by Log::Report's __ functions
+ # Full feature description in the DETAILS section
+
+ # no interpolation
+ __"Hello, World";
+
+ # with interpolation
+ __x"age {years}", age => 12;
+
+ # interpolation for one or many
+ my $nr_files = @files;
+ __nx"one file", "{_count} files", $nr_files;
+ __nx"one file", "{_count} files", \@files;
+
+ # interpolation of arrays
+ __x"price-list: {prices%.2f}", prices => \@prices, _join => ', ';
+
+ # white-spacing on msgid preserved
+ print __x"\tCongratulations,\n";
+ print "\t", __x("Congratulations,"), "\n";  # same
 
 =chapter DESCRIPTION
 Any used of a translation function, like M<Log::Report::__()> or 
@@ -74,11 +93,17 @@ the message is used to simplify translation, and as fallback when no
 translations are possible: therefore, this can best resemble an English
 message.
 
+White-space at the beginning and end of the string are stripped off.
+The white-space provided by the C<_msgid> will be used.
+
 =option  _msgid MSGID
 =default _msgid C<undef>
-The message label, which refers to some translation information.  Usually
-a string which is close the English version of the error message.  This
-will also be used if there is no translation possible
+The message label, which refers to some translation information.
+Usually a string which is close the English version of the message.
+This will also be used if there is no translation possible/known.
+
+Leading white-space C<\s> will be added to C<_prepend>.  Trailing
+white-space will be added before C<_append>.
 
 =option  _category INTEGER
 =default _category C<undef>
@@ -108,16 +133,28 @@ Alternative for C<_class>, which cannot be used at the same time.
 =default _to <undef>
 Specify the NAME of a dispatcher as destination explicitly. Short
 for  C<< report {to => NAME}, ... >>  See M<to()>
+
+=option  _join STRING
+=default _join C<$">  C<$LIST_SEPARATOR>
+Which string to be used then an ARRAY is being filled-in.
 =cut
 
 sub new($@)
-{   my $class = shift;
-    my $self  = bless {@_}, $class;
-    if(ref $self->{_count})
-    {   my $c = $self->{_count};
-        $self->{_count} = ref $c eq 'ARRAY' ? @$c : keys %$c;
+{   my ($class, %s) = @_;
+    if(ref $s{_count})
+    {   my $c = $s{_count};
+        $s{_count} = ref $c eq 'ARRAY' ? @$c : keys %$c;
     }
-    $self;
+    $s{_join} = $" unless exists $s{_join};
+    if($s{_msgid})
+    {   $s{_append}  = defined $s{_append}  ? $1.$s{_append}  : $1
+            if $s{_msgid} =~ s/(\s+)$//;
+        $s{_prepend} .= $1 if $s{_msgid} =~ s/^(\s+)//;
+    }
+    if($s{_plural})
+    {   s/\s+$//, s/^\s+// for $s{_plural};
+    }
+    bless \%s, $class;
 }
 
 =method clone OPTIONS, VARIABLES
@@ -297,8 +334,8 @@ sub _expand($$)
     {   my @values = map {defined $_ ? $_ : 'undef'} @$value;
         @values or return '(none)';
         return $format
-             ? join($", map {sprintf $format, $_} @values)
-             : join($", @values);
+             ? join($self->{_join}, map {sprintf $format, $_} @values)
+             : join($self->{_join}, @values);
     }
 
       $format
@@ -358,6 +395,56 @@ translated MSGID string.  The translation can contain the VARIABLE
 and OPTION names between curly brackets.  Text between curly brackets
 which is not a known parameter will be left untouched.
 
+ fault __x"cannot open open {filename}", filename => $fn;
+
+ print __xn"directory {dir} contains one file"
+          ,"directory {dir} contains {nr_files} files"
+          , scalar(@files)   # (1) (2)
+          , nr_files => scalar @files
+          , dir      => $dir;
+
+(1) this required third parameter is used to switch between the different
+plural forms.  English has only two forms, but some languages have many
+more.  See below for the C<_count> OPTIONS, to see how the C<nr_files>
+parameter can disappear.
+
+(2) the "scalar" keyword is not needed, because the third parameter is
+in SCALAR context.  You may also pass C< \@files > there, because ARRAYs
+will be converted into their length.  A HASH will be converted into the
+number of keys in the HASH.
+
+=subsection Interpolation of VARIABLES
+
+There is no way of checking beforehand whether you have provided all required
+values, to be interpolated in the translated string.
+
+For interpolating, the following rules apply:
+=over 4
+=item *
+Simple scalar values are interpolated "as is"
+=item *
+References to SCALARs will collect the value on the moment that the
+output is made.  The C<Log::Report::Message> object which is created with
+the C<__xn> can be seen as a closure.  The translation can be reused.
+See example below.
+=item *
+Code references can be used to create the data "under fly".  The
+C<Log::Report::Message> object which is being handled is passed as
+only argument.  This is a hash in which all OPTIONS and VARIABLES
+can be found.
+=item *
+When the value is an ARRAY, all members will be interpolated with C<$">
+between the elements.  Alternatively (maybe nicer), you can pass an
+interpolation parameter via the C<_join> OPTION.
+=back
+
+ local $" = ', ';
+ error __x"matching files: {files}", files => \@files;
+
+ error __x"matching files: {files}", files => \@files, _join => ', ';
+
+=subsection Interpolating formatted
+
 Next to the name, you can specify a format code.  With C<gettext()>,
 you often see this:
 
@@ -386,6 +473,7 @@ comparable length strings.  Now, the translators can take care that
 the layout of tables is optimal.
 
 =subsection Interpolation of OPTIONS
+
 You are permitted the interpolate OPTION values in your string.  This may
 simplify your coding.  The useful names are:
 
@@ -428,36 +516,28 @@ Of course, you need to be aware that the name used to reference the
 counter is fixed to C<_count>.  The first example works as well, but
 is more verbose.
 
-=subsection Interpolation of VARIABLES
-There is no way of checking beforehand whether you have provided all required
-values, to be interpolated in the translated string.  A translation could be
-specified like this:
+=subsection Handling white-spaces
 
- my @files = @ARGV;
- local $"  = ', ';
- my $s = __nx "One file specified ({files})"
-            , "{_count} files specified ({files})"
-            , scalar @files     # actually, 'scalar' is not needed
-            , files => \@files;
+In above examples, the msgid and plural form have a trailing new-line.
+In general, it is much easier to write
 
-For interpolating, the following rules apply:
-=over 4
-=item *
-Simple scalar values are interpolated "as is"
-=item *
-References to SCALARs will collect the value on the moment that the
-output is made.  The C<Log::Report::Message> object which is created with
-the C<__xn> can be seen as a closure.  The translation can be reused.
-See example below.
-=item *
-Code references can be used to create the data "under fly".  The
-C<Log::Report::Message> object which is being handled is passed as
-only argument.  This is a hash in which all OPTIONS and VARIABLES
-can be found.
-=item *
-When the value is an ARRAY, all members will be interpolated with C<$">
-between the elements.
-=back
+   print __x"Hello, World!\n";
+
+than
+
+   print __x("Hello, World!") . "\n";
+
+For the translation tables, however, that trailing new-line is "over
+information"; it is an layout issue, not a translation issue.
+
+Therefore, the first form will automatically be translated into the
+second.  All leading and trailing white-space (blanks, new-lines, tabs,
+...) are removed from the msgid befor the look-up, and then added to
+the translated string.
+
+Leading and trailing white-space on the plural form will also be
+removed.  However, after translation the spacing of the msgid will
+be used.
 
 =subsection Avoiding repetative translations
 
@@ -465,7 +545,7 @@ This way of translating is somewhat expensive, because an object to
 handle the C<__x()> is created each time.
 
  for my $i (1..100_000)
- {   print __x "Hello World {i}\n", $i;
+ {   print __x "Hello World {i}\n", i => $i;
  }
 
 The suggestion that M<Locale::TextDomain> makes to improve performance,
@@ -480,20 +560,21 @@ interpolation:
  }
 
 Oops, not what you mean.
-With Log::Report, you can do
+With Log::Report, you can do it.
 
  use Log::Report;
  my $i;
- my $s = __x("Hello World {i}", i => \$i);
+ my $s = __x("Hello World {i}\n", i => \$i);
  foreach $i (1..100_000)
  {   print $s;
  }
 
-Mind you not to write: C<for my $i> in this case!!!!
+Mind you not to write: C<for my $i> in above case!!!!
+
 You can also write an incomplete translation:
 
  use Log::Report;
- my $s = __x "Hello World {i}";
+ my $s = __x "Hello World {i}\n";
  foreach my $i (1..100_000)
  {   print $s->(i => $i);
  }

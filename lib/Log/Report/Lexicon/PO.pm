@@ -367,8 +367,8 @@ sub fromText($$)
         }
     }
 
-    warning __x"no msgid in block {where}", where => $where
-        unless defined $self->{msgid};
+    defined $self->{msgid}
+        or warning __x"no msgid in block {where}", where => $where;
 
     $self;
 }

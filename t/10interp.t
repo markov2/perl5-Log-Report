@@ -5,7 +5,7 @@ use warnings;
 use strict;
 use lib 'lib', '../lib';
 
-use Test::More tests => 63;
+use Test::More tests => 69;
 
 use Log::Report;   # no domains, no translator
 use Scalar::Util qw/reftype/;
@@ -96,7 +96,8 @@ ol_is(__nx("single {_count}", "multi {_count}", 2), 'multi 2');
 {
   local $" = ', ';
   my @one = 'rabbit';
-  ol_is((__x "files: {f}", f => \@files), "files: monkey, donkey");
+  ol_is((__x "files: {f}", f => \@files), "files: monkey, donkey",
+     'check join on $"');
   ol_is((__xn "one file: {f}", "{_count} files: {f}", @files, f => \@files),
       "2 files: monkey, donkey");
   ol_is((__x  "files: {f}", f => \@one), "files: rabbit");
@@ -104,6 +105,12 @@ ol_is(__nx("single {_count}", "multi {_count}", 2), 'multi 2');
       "one file: rabbit");
 } 
 
+{  local $" = '#';
+   ol_is((__x "files: {f}", f => \@files), "files: monkey#donkey");
+   ol_is((__x "files: {f}", f => \@files, _join => ', ')
+     , "files: monkey, donkey", 'check _join');
+}
+   
 #
 # clone
 #
@@ -141,4 +148,18 @@ ol_is((__x "{perms} {links%2d} {user%-8s} {size%8d} {fn}"
          , perms => '-rw-r--r--', links => 1, user => 'superman'
          , size => '1234567', fn => '/etc/profile')
   , '-rw-r--r--  1 superman  1234567 /etc/profile');
+
+
+#
+# trailing newline
+#
+
+my $msg1 = __x"who am i\n \n ";
+is($msg1->msgid, 'who am i', 'ignore white-space at the end');
+is($msg1->append, "\n \n ");
+
+my $msg2 = __x"\n \t who am i";
+is($msg2->msgid, 'who am i', 'ignore white-space before ');
+is($msg2->prepend, "\n \t ");
+
 
