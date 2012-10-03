@@ -461,11 +461,11 @@ sub stackTraceParam($$$)
     defined $param
         or return 'undef';
 
+    $param = overload::StrVal($param)
+        if ref $param;
+
     return $param   # int or float
         if $param =~ /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/;
-
-    return overload::StrVal($param)
-        if ref $param;
 
     '"' . escape_chars($param) . '"';
 }

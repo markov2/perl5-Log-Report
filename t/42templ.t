@@ -59,7 +59,7 @@ my $potfn = shift @potfns;
 ok(defined $potfn);
 ok(-s $potfn, "produced file $potfn has size");
 
-system "cat $potfn";
+#system "cat $potfn";
 
 my $pot = Log::Report::Lexicon::POT->read($potfn, charset => 'utf-8');
 ok(defined $pot, 'read translation table');

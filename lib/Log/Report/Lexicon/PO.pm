@@ -316,7 +316,7 @@ sub fromText($$)
 
     my $last;
     foreach (@lines)
-    {   chomp;
+    {   s/\r?\n$//;
         if( s/^\#(.)\s?// )
         {      if($1 =~ /\s/) { $self->addComment($_)    }
             elsif($1 eq '.' ) { $self->addAutomatic($_)  }

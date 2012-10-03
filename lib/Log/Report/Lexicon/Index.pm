@@ -42,7 +42,11 @@ created.
 
 =c_method new DIRECTORY, OPTIONS
 Create an index for a certain directory.  If the directory does not
-exist, then the object will still be created.
+exist, then the object will still be created.  All files the DIRECTORY
+tree which end with ".po" or ".PO" will be indexed.
+
+[0.99] Files which are in directories which start with a dot (hidden
+directories) and files which start with a dot (hidden files) are skipped.
 =cut
 
 sub new($;@)
@@ -77,14 +81,14 @@ sub index()
     $self->{index} = {};
     File::Find::find
     ( +{ wanted   => sub
-           { -f or return 1;
+           { -f && m/\.po$/i && !m[/\.] or return 1;
              (my $key = $_) =~ s/$strip_dir//;
              $self->addFile($key, $_);
              1;
            }
-         , follow      => 1
-         , no_chdir    => 1
-         , follow_skip => 2
+       , follow      => 1
+       , no_chdir    => 1
+       , follow_skip => 2
        } , $dir
     );
 
