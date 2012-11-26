@@ -480,10 +480,15 @@ The OPTIONS are passed to the constructor of the try-dispatcher, see
 M<Log::Report::Dispatcher::Try::new()>.  For instance, you may like to
 add C<< mode => 'DEBUG' >>, or C<< accept => 'ERROR-' >>.
 
-Be warned that the parameter to C<try> is a CODE reference.  This means
+B<Be warned> that the parameter to C<try> is a CODE reference.  This means
 that you shall not use a comma after the block when there are OPTIONS
 specified.  On the other hand, you shall use a semi-colon after the
 block if there are no arguments.
+
+B<Be warned> that the {} are interpreted as subroutine, which means that,
+for instance, it has its own C<@_>.  The manual-page of M<Try::Tiny>
+lists a few more side-effects of this.
+
 =examples
  try { ... };       # mind the ';' !!
  if($@) {           # signals something went wrong

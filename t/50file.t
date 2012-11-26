@@ -26,7 +26,7 @@ cmp_ok(scalar(@disp), '==', 2);
 
 ok(defined $d, 'created file dispatcher');
 isa_ok($d, 'Log::Report::Dispatcher::File');
-cmp_ok($d, '==', $disp[0]);
+ok($d==$disp[0] || $d==$disp[1], 'in disp list');
 ok(!$d->isDisabled);
 is($d->name, 'file1');
 
