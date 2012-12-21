@@ -1,23 +1,14 @@
+package Log::Report::Lexicon::POTcompact;
+use base 'Log::Report::Lexicon::Table';
 
 use warnings;
 use strict;
 
-package Log::Report::Lexicon::POTcompact;
-use base 'Exporter';
-
-# permit "mixins", not for end-users
-our @EXPORT_OK = qw/_plural_algorithm _nr_plurals _escape _unescape/;
-
-use IO::Handle;
-use IO::File;
-use List::Util  qw/sum/;
-
-use Log::Report 'log-report', syntax => 'SHORT';
+use Log::Report        'log-report';
 use Log::Report::Util  qw/escape_chars unescape_chars/;
 
-sub _plural_algorithm($);
-sub _nr_plurals($);
 sub _unescape($$);
+sub _escape($$);
 
 =chapter NAME
 Log::Report::Lexicon::POTcompact - use translations from a POT file
@@ -70,7 +61,7 @@ sub read($@)
              , cs => $charset, fn => $fn;
 
     # Speed!
-    my ($last, $msgid, @msgstr);
+    my ($last, $msgctxt, $msgid, @msgstr);
  LINE:
     while(my $line = $fh->getline)
     {   next if substr($line, 0, 1) eq '#';
@@ -83,7 +74,10 @@ sub read($@)
             next LINE;
         }
 
-        if($line =~ s/^msgid\s+//)
+        if($line =~ s/^msgctxt\s+//)
+        {   undef $last;   # ignore context records
+        }
+        elsif($line =~ s/^msgid\s+//)
         {   $msgid  = _unescape $line, $fn;
             $last   = \$msgid;
         }
@@ -106,10 +100,7 @@ sub read($@)
         or failure __x"failed reading from file {fn}", fn => $fn;
 
     $self->{filename} = $fn;
-
-    my $forms          = $self->header('Plural-Forms');
-    $self->{algo}      = _plural_algorithm $forms;
-    $self->{nrplurals} = _nr_plurals $forms;
+    $self->setupPluralAlgorithm;
     $self;
 }
 
@@ -122,13 +113,10 @@ to avoid using this: use M<msgid()> for lookup.
 =method filename
 Returns the name of the source file for this data.
 
-=method nrPlurals
 =cut
 
 sub index()     {shift->{index}}
 sub filename()  {shift->{filename}}
-sub nrPlurals() {shift->{nrplurals}}
-sub algorithm() {shift->{algo}}
 
 =section Managing PO's
 
@@ -157,37 +145,9 @@ sub msgstr($;$)
     || $po->[$_[0]->{algo}->(1)];
 }
 
-=method header FIELD
-The translation of a blank MSGID is used to store a MIME header, which
-contains meta-data.  The FIELD content is returned.
-
-=cut
-
-sub header($)
-{   my ($self, $field) = @_;
-    my $header = $self->msgid('') or return;
-    $header =~ m/^\Q$field\E\:\s*([^\n]*?)\;?\s*$/im ? $1 : undef;
-}
-
 #
 ### internal helper routines, shared with ::PO.pm and ::POT.pm
 #
-
-# extract algoritm from forms string
-sub _plural_algorithm($)
-{   my $forms = shift || '';
-    my $alg   = $forms =~ m/plural\=([n%!=><\s\d|&?:()]+)/ ? $1 : "n!=1";
-    $alg =~ s/\bn\b/(\$_[0])/g;
-    my $code  = eval "sub(\$) {$alg}";
-    $@ and error __x"invalid plural-form algorithm '{alg}'", alg => $alg;
-    $code;
-}
-
-# extract number of plural versions in the language from forms string
-sub _nr_plurals($) 
-{   my $forms = shift || '';
-    $forms =~ m/\bnplurals\=(\d+)/ ? $1 : 2;
-}
 
 sub _unescape($$)
 {   unless( $_[0] =~ m/^\s*\"(.*)\"\s*$/ )

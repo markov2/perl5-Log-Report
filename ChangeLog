@@ -1,6 +1,19 @@
 
 ==== version history of Log::Report
 
+Connect to Message::Passing
+
+version 0.992:
+
+	Improvements:
+	- add support for msgctxt in po-files to Log::Report::Lexicon::POT*
+	- new option Log::Report::Lexicon::PO::new(plural_forms)
+	- new generic base-class  Log::Report::Lexicon::Table for
+	  Log::Report::Lexicon::POT*
+	- ::POT.pm ignores any index when the msgid has no plural form. This
+	  results in a smaller memory foot-print.
+	- support for MO files, in  Log::Report::Lexicon::MOTcompact
+
 version 0.991: Mon Nov 26 09:27:08 CET 2012
 
 	Fixes:

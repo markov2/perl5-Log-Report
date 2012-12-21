@@ -1,16 +1,13 @@
+package Log::Report::Lexicon::POT;
+use base 'Log::Report::Lexicon::Table';
 
 use warnings;
 use strict;
 
-package Log::Report::Lexicon::POT;
-
-use Log::Report 'log-report', syntax => 'SHORT';
-
-use Log::Report::Lexicon::PO;
-use Log::Report::Lexicon::POTcompact qw/_plural_algorithm _nr_plurals/;
+use Log::Report 'log-report';
+use Log::Report::Lexicon::PO  ();
 
 use POSIX       qw/strftime/;
-use IO::File;
 use List::Util  qw/sum/;
 
 use constant    MSGID_HEADER => '';
@@ -48,7 +45,7 @@ more efficient M<Log::Report::Lexicon::POTcompact>.
 
 The code is loosely based on M<Locale::PO>, by Alan Schwartz.  The coding
 style is a bit off the rest of C<Log::Report>, and there was a need to
-sincere simplification.  Each PO object will be represented by a
+sincere simplification.  Each PO record will be represented by a
 M<Log::Report::Lexicon::PO>.
 
 =chapter METHODS
@@ -66,17 +63,22 @@ The character-set which is used for the output.
 The package name, used in the directory structure to store the
 PO files.
 
-=option   version STRING
-=default  version C<undef>
+=option  version STRING
+=default version C<undef>
 
-=option   nr_plurals INTEGER
-=default  nr_plurals 2
+=option  nr_plurals INTEGER
+=default nr_plurals 2
 The number of translations each of the translation with plural form
 need to have.
 
-=option   plural_alg EXPRESSION
-=default  plural_alg C<n!=1>
+=option  plural_alg EXPRESSION
+=default plural_alg C<n!=1>
 The algorithm to be used to calculate which translated msgstr to use.
+
+=option  plural_forms RULE
+=default plural_forms <constructed from nr_plurals and plural_alg>
+[0.992] When this option is used, it overrules C<nr_plurals> and
+C<plural_alg>.  The RULE should be a full "Plural-Forms" field.
 
 =option  index HASH
 =default index {}
@@ -96,11 +98,6 @@ M<write()> is called.
 =error textdomain parameter is required
 =cut
 
-sub new(@)
-{   my $class = shift;
-    (bless {}, $class)->init( {@_} );
-}
-
 sub init($)
 {   my ($self, $args) = @_;
 
@@ -113,18 +110,22 @@ sub init($)
     my $domain     = $args->{textdomain}
        or error __"textdomain parameter is required";
 
-    my $nplurals   = $self->{nplurals} = $args->{nr_plurals} || 2;
-    my $algo       = $args->{plural_alg} || 'n!=1';
-    $self->{alg}   = _plural_algorithm $algo;
+    my $forms      = $args->{plural_forms};
+    unless($forms)
+    {   my $nrplurals = $args->{nr_plurals} || 2;
+        my $algo      = $args->{plural_alg} || 'n!=1';
+        $forms        = "nplurals=$nrplurals; plural=($algo);";
+    }
 
     $self->{index} = $args->{index} || {};
     $self->_createHeader
      ( project => $domain . (defined $version ? " $version" : '')
-     , forms   => "nplurals=$nplurals; plural=($algo);"
+     , forms   => $forms
      , charset => $args->{charset}
      , date    => $args->{date}
      );
 
+    $self->setupPluralAlgorithm;
     $self;
 }
 
@@ -168,6 +169,7 @@ sub read($@)
         or failure __x"failed reading from file {fn}", fn => $fn;
 
     $self->{filename} = $fn;
+    $self->setupPluralAlgorithm;
     $self;
 }
 
@@ -219,6 +221,7 @@ sub write($@)
     $self;
 }
 
+#-----------------------
 =section Attributes
 
 =method charset
@@ -239,6 +242,7 @@ sub charset()  {shift->{charset}}
 sub index()    {shift->{index}}
 sub filename() {shift->{filename}}
 
+#-----------------------
 =section Managing PO's
 
 =method msgid STRING
@@ -250,7 +254,8 @@ when not defined.
 sub msgid($) { $_[0]->{index}{$_[1]} }
 
 =method msgstr MSGID, [COUNT]
-Returns the translated string for MSGID.  When not specified, COUNT is 1.
+Returns the translated string for MSGID.  When COUNT is not specified, the
+translation string related to "1" is returned.
 =cut
 
 sub msgstr($;$)
@@ -258,7 +263,7 @@ sub msgstr($;$)
     my $po   = $self->msgid(shift)
         or return undef;
 
-    $po->msgstr(defined $_[0] ? $self->pluralIndex($_[0]) : 0);
+    $po->msgstr($self->pluralIndex(defined $_[0] ? $_[0] : 1));
 }
 
 =method add PO
@@ -292,26 +297,6 @@ sub translations(;$)
         if $_[0] ne 'ACTIVE';
 
     grep { $_->isActive } $self->translations;
-}
-
-=method pluralIndex COUNT
-Returns the msgstr index used to translate a value of COUNT.
-=cut
-
-sub pluralIndex($)
-{   my ($self, $count) = @_;
-    my $alg = $self->{alg}
-          ||= _plural_algorithm($self->header('Plural-Forms'));
-    $alg->($count);
-}
-
-=method nrPlurals
-Returns the number of plurals, when not known then '2'.
-=cut
-
-sub nrPlurals()
-{   my $self = shift;
-    $self->{nplurals} ||= _nr_plurals($self->header('Plural-Forms'));
 }
 
 =method header [FIELD, [CONTENT]]

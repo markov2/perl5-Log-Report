@@ -38,9 +38,10 @@ Log::Report::Translator::POT - translation based on POT files
  print __"Hello World\n";
 
 =chapter DESCRIPTION
-Translate a message by directly accessing POT files.  The files will
-load lazily (unless forced).  To module attempts to administer the PO's
-in a compact way, much more compact than M<Log::Report::Lexicon::PO> does.
+Translate a message by directly accessing POT files.  The files will load
+lazily (unless forced).  This module accesses the PO's in a compact way,
+using M<Log::Report::Lexicon::POTcompact>, which is much more efficient
+than M<Log::Report::Lexicon::PO>.
 
 =chapter METHODS
 

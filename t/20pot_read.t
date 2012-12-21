@@ -73,7 +73,7 @@ is($refs[3], 'hello-2.pl.in:13');
 
 is($po->msgstr, "Pozdravljen, svet!");
 is($po->msgstr(0), "Pozdravljen, svet!");
-ok(!defined $po->msgstr(1));
+is($po->msgstr(1), "Pozdravljen, svet!");  # index gets ignored
 
 is($pot->msgstr("Hello, world!"), "Pozdravljen, svet!");
 is($pot->msgstr("Hello, world!", 0), "Pozdravljen, svet!");

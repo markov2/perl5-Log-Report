@@ -21,6 +21,7 @@ lib/Log/Report/Lexicon/Index.pm
 lib/Log/Report/Lexicon/PO.pm
 lib/Log/Report/Lexicon/POT.pm
 lib/Log/Report/Lexicon/POTcompact.pm
+lib/Log/Report/Lexicon/Table.pm
 lib/Log/Report/Message.pm
 lib/Log/Report/Translator.pm
 lib/Log/Report/Translator/Gettext.pm

@@ -2,7 +2,7 @@ use ExtUtils::MakeMaker;
 
 use 5.008;
 
-my $version = '0.991';
+my $version = '0.992';
 
 my %prereq  =
   ( Test::More   =>  0.86
@@ -37,7 +37,7 @@ SKIP_LINKS	= XML::LibXML
 FIRST_YEAR      = 2007
 EMAIL           = perl@overmeer.net
 WEBSITE         = http://perl.overmeer.net/log-report/
-EXTENDS		= ../TextCatalog
+EXTENDS		= 
 
 # for OODoc's oodist, HTML
 HTML_OUTPUT     = ../public_html/log-report/html
