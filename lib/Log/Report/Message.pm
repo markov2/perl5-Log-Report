@@ -18,7 +18,7 @@ Log::Report::Message - a piece of text to be translated
  __"Hello, World";
 
  # with interpolation
- __x"age {years}", age => 12;
+ __x"age {years}", years => 12;
 
  # interpolation for one or many
  my $nr_files = @files;
@@ -29,19 +29,20 @@ Log::Report::Message - a piece of text to be translated
  __x"price-list: {prices%.2f}", prices => \@prices, _join => ', ';
 
  # white-spacing on msgid preserved
- print __x"\tCongratulations,\n";
- print "\t", __x("Congratulations,"), "\n";  # same
+ print __"\tCongratulations,\n";
+ print "\t", __("Congratulations,"), "\n";  # same
 
 =chapter DESCRIPTION
-Any used of a translation function, like M<Log::Report::__()> or 
-M<Log::Report::__x()> will result in this object.  It will capture
+Any use of a translation function exported by M<Log::Report>, like
+C<__()> (the function is named underscore-underscore) or C<__x()>
+(underscore-underscore-x) will result in this object.  It will capture
 some environmental information, and delay the translation until it
 is needed.
 
-Creating an object first, and translating it later, is slower than
+Creating an object first and translating it later, is slower than
 translating it immediately.  However, on the location where the message
-is produced, we do not yet know to what language to translate: that
-depends on the front-end, the log dispatcher.
+is produced, we do not yet know in what language to translate it to:
+that depends on the front-end, the log dispatcher.
 
 =chapter OVERLOADING
 
@@ -68,30 +69,33 @@ use overload
 =chapter METHODS
 
 =section Constructors
-=c_method new OPTIONS, VARIABLES
-B<Do not use this method directly>, but use M<Log::Report::__()> and
-friends.
+
+=c_method new OPTIONS
+B<End-users: do not use this method directly>, but use M<Log::Report::__()>
+and friends.  The OPTIONS is a mixed list of object initiation parameters
+(all with a leading underscore) and variables to be filled in into the
+translated C<_msgid> string.
 
 =option  _expand BOOLEAN
 =default _expand C<false>
-Indicates whether variables are filled-in.
+Indicates whether variables are to be filled-in.
 
 =option  _domain STRING
 =default _domain from C<use>
-The textdomain in which this msgid is defined.
+The text-domain (translation table) to which this C<_msgid> belongs.
 
 =option  _count INTEGER|ARRAY|HASH
 =default _count C<undef>
-When defined, then C<_plural> need to be defined as well.  When an
-ARRAY is provided, the lenght of the ARRAY is taken.  When a HASH
+When defined, the C<_plural> need to be defined as well.  When an
+ARRAY is provided, the length of the ARRAY is taken.  When a HASH
 is given, the number of keys in the HASH is used.
 
 =option  _plural MSGID
 =default _plural C<undef>
-Can be specified when a C<_count> is specified.  This plural form of
-the message is used to simplify translation, and as fallback when no
-translations are possible: therefore, this can best resemble an English
-message.
+Can be used together with C<_count>.  This plural form of the C<_msgid>
+text is used to simplify the work of translators, and as fallback when
+no translation is possible: therefore, this can best resemble an
+English message.
 
 White-space at the beginning and end of the string are stripped off.
 The white-space provided by the C<_msgid> will be used.
@@ -107,12 +111,18 @@ white-space will be added before C<_append>.
 
 =option  _category INTEGER
 =default _category C<undef>
+The category when the real gettext library is used, for instance
+LC_MESSAGES.
 
-=option  _prepend STRING
+=option  _prepend STRING|MESSAGE
 =default _prepend C<undef>
+Text as STRING or MESSAGE object to be displayed before the display
+of this message.
 
-=option  _append  STRING
+=option  _append  STRING|MESSAGE
 =default _append  C<undef>
+Text as STRING or MESSAGE object to be displayed after the display
+of this message.
 
 =option  _class   STRING|ARRAY
 =default _class   []
@@ -122,8 +132,8 @@ M<Log::Report::Dispatcher::Try::wasFatal(class)>, you can check the
 category of the message.
 
 One message can be part of multiple classes.  The STRING is used as
-comma- and/or blank separated list of class tokens, the ARRAY lists all
-tokens separately. See M<classes()>.
+comma- and/or blank separated list of class tokens (barewords), the
+ARRAY lists all tokens separately. See M<classes()>.
 
 =option  _classes STRING|ARRAY
 =default _classes []
@@ -136,20 +146,26 @@ for  C<< report {to => NAME}, ... >>  See M<to()>
 
 =option  _join STRING
 =default _join C<$">  C<$LIST_SEPARATOR>
-Which string to be used then an ARRAY is being filled-in.
+Which STRING to be used then an ARRAY is being filled-in.
 =cut
 
 sub new($@)
 {   my ($class, %s) = @_;
+
     if(ref $s{_count})
-    {   my $c = $s{_count};
-        $s{_count} = ref $c eq 'ARRAY' ? @$c : keys %$c;
+    {   my $c        = $s{_count};
+        $s{_count}   = ref $c eq 'ARRAY' ? @$c : keys %$c;
     }
-    $s{_join} = $" unless exists $s{_join};
+
+    defined $s{_join}
+        or $s{_join} = $";
+
     if($s{_msgid})
-    {   $s{_append}  = defined $s{_append}  ? $1.$s{_append}  : $1
+    {   $s{_append}  = defined $s{_append} ? $1.$s{_append} : $1
             if $s{_msgid} =~ s/(\s+)$//;
-        $s{_prepend} .= $1 if $s{_msgid} =~ s/^(\s+)//;
+
+        $s{_prepend}.= $1
+            if $s{_msgid} =~ s/^(\s+)//;
     }
     if($s{_plural})
     {   s/\s+$//, s/^\s+// for $s{_plural};
@@ -249,23 +265,39 @@ sub to(;$)
 
 =method valueOf PARAMETER
 Lookup the named PARAMETER for the message.  All pre-defined names
-have their own method, and should be used with preference.
+have their own method which should be used with preference.
 
 =example
 When the message was produced with
+
   my @files = qw/one two three/;
-  my $msg = __xn "found one file: {files}"
-               , "found {_count} files: {files}"
-               , scalar @files, files => \@files
-               , _class => 'IO, files';
+  my $msg = __xn "found one file: {file}"
+               , "found {nrfiles} files: {files}"
+               , scalar @files
+               , file    => $files[0]
+               , files   => \@files
+               , nrfiles => @files+0
+               , _class  => 'IO, files'
+               , _join   => ', ';
 
 then the values can be takes from the produced message as
+
   my $files = $msg->valueOf('files');  # returns ARRAY reference
   print @$files;              # 3
   my $count = $msg->count;    # 3
   my @class = $msg->classes;  # 'IO', 'files'
   if($msg->inClass('files'))  # true
-  
+
+Simplified, the above example can also be written as:
+
+  local $" = ', ';
+  my $msg  = __xn "found one file: {files}"
+                , "found {_count} files: {files}"
+                , @files      # has scalar context
+                , files   => \@files
+                , _class  => 'IO, files';
+
+
 =cut
 
 sub valueOf($) { $_[0]->{$_[1]} }
@@ -334,7 +366,7 @@ sub _expand($$)
     {   my @values = map {defined $_ ? $_ : 'undef'} @$value;
         @values or return '(none)';
         return $format
-             ? join($self->{_join}, map {sprintf $format, $_} @values)
+             ? join($self->{_join}, map sprintf($format, $_), @values)
              : join($self->{_join}, @values);
     }
 
@@ -399,19 +431,23 @@ which is not a known parameter will be left untouched.
 
  print __xn"directory {dir} contains one file"
           ,"directory {dir} contains {nr_files} files"
-          , scalar(@files)   # (1) (2)
-          , nr_files => scalar @files
+          , scalar(@files)            # (1) (2)
+          , nr_files => scalar @files # (3)
           , dir      => $dir;
 
 (1) this required third parameter is used to switch between the different
 plural forms.  English has only two forms, but some languages have many
-more.  See below for the C<_count> OPTIONS, to see how the C<nr_files>
-parameter can disappear.
+more.
 
 (2) the "scalar" keyword is not needed, because the third parameter is
 in SCALAR context.  You may also pass C< \@files > there, because ARRAYs
 will be converted into their length.  A HASH will be converted into the
 number of keys in the HASH.
+
+(3) the C<scalar> keyword is required here, because it is LIST context:
+otherwise all filenames will be filled-in as parameters to C<__xn()>.
+See below for the available C<_count> valure, to see how the C<nr_files>
+parameter can disappear.
 
 =subsection Interpolation of VARIABLES
 

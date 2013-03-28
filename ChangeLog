@@ -3,7 +3,23 @@
 
 Connect to Message::Passing
 
-version 0.992:
+version 0.993: Thu Mar 28 10:59:27 CET 2013
+
+	Fixes:
+	- filename/linenumber caller-depth in Log4Perl.
+	  rt.cpan.org#83736 [Dominik Jarmulowicz]
+	- actually try to use existing mo files.
+
+	Improvements:
+	- use Devel::GlobalDestruction
+	  rt.cpan.org#80612 [Riba Sushi]
+	- ::Template extractor of translatable strings now understands
+	  [%|loc%]$msgid[%END%] and [%'$msgid'| loc %]
+	- improvements on documentation.
+	- move t/30index.t towards xt/30index.t, because the test is
+	  too sensitive for the actual environment.
+
+version 0.992: Fri Dec 21 11:59:55 CET 2012
 
 	Improvements:
 	- add support for msgctxt in po-files to Log::Report::Lexicon::POT*

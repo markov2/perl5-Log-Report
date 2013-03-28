@@ -9,6 +9,14 @@ use File::Find  ();
 use Log::Report 'log-report', syntax => 'SHORT';
 use Log::Report::Util  qw/parse_locale/;
 
+# The next two need extension when other lexicon formats are added
+sub _understand_file_format($) { $_[0] =~ qr/\.[mp]o$/i }
+
+sub _find($$)
+{   my ($index, $name) = (shift, lc shift);
+    $index->{"$name.mo"} || $index->{"$name.po"};  # prefer mo
+}
+
 # On windows, other locale names are used.  They will get translated
 # into the Linux (ISO) convensions.
 
@@ -42,8 +50,15 @@ created.
 
 =c_method new DIRECTORY, OPTIONS
 Create an index for a certain directory.  If the directory does not
-exist, then the object will still be created.  All files the DIRECTORY
-tree which end with ".po" or ".PO" will be indexed.
+exist or is empty, then the object will still be created.
+
+All files the DIRECTORY tree which are recognized as an translation table
+format which is understood will be listed.  Momentarily, those are:
+
+=over
+=item . files with extension "po", see M<Log::Report::Lexicon::POTcompact>
+=item . [0.993] files with extension "mo", see M<Log::Report::Lexicon::MOTcompact>
+=back
 
 [0.99] Files which are in directories which start with a dot (hidden
 directories) and files which start with a dot (hidden files) are skipped.
@@ -81,7 +96,7 @@ sub index()
     $self->{index} = {};
     File::Find::find
     ( +{ wanted   => sub
-           { -f && m/\.po$/i && !m[/\.] or return 1;
+           { -f && !m[/\.] && _understand_file_format($_) or return 1;
              (my $key = $_) =~ s/$strip_dir//;
              $self->addFile($key, $_);
              1;
@@ -115,10 +130,6 @@ in chapter L</DETAILS>, below.
 Returned is a filename, or C<undef> if nothing is defined for the
 LOCALE (there is no default on this level).
 =cut
-
-# location to work-around platform dependent mutulations.
-# may be extended with mo files as well.
-sub _find($$) { $_[0]->{lc($_[1]). '.po'} }
 
 sub find($$)
 {   my $self   = shift;

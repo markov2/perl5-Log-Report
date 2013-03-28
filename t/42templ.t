@@ -12,7 +12,7 @@ use Log::Report;  # mode => 'DEBUG';
 use Log::Report::Lexicon::POT;
 use Log::Report::Extract::Template;
 
-use constant MSGIDS => 10;
+use constant MSGIDS => 12;
 
 # see after __END__
 my @expect_pos = split /\n/, <<'_EXPECT';
@@ -26,6 +26,8 @@ six six six
 eight
 nine
 tenth
+{a} eleven
+twelve {b}
 _EXPECT
 
 chomp $expect_pos[-1];
@@ -102,3 +104,6 @@ Here, the example template starts
    title = loc("eight") loc  ('nine'  )
    css   =loc( 'tenth' )
 %]
+
+[% '{a} eleven' | loc(a => 3) %]
+[%| loc(b=>4) %]twelve {b}[%END%]

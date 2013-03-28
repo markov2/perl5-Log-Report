@@ -18,6 +18,7 @@ lib/Log/Report/Extract.pm
 lib/Log/Report/Extract/PerlPPI.pm
 lib/Log/Report/Extract/Template.pm
 lib/Log/Report/Lexicon/Index.pm
+lib/Log/Report/Lexicon/MOTcompact.pm
 lib/Log/Report/Lexicon/PO.pm
 lib/Log/Report/Lexicon/POT.pm
 lib/Log/Report/Lexicon/POTcompact.pm
@@ -38,7 +39,6 @@ t/11concat.t
 t/20pot_read.t
 t/21pot_modif.t
 t/22compact.t
-t/30index.t
 t/31stack.t
 t/40ppi.t
 t/41die.t
@@ -50,4 +50,5 @@ t/53log4perl.t
 t/54try.t
 t/DieTests.pm
 t/hello-world-slovak.po
+xt/30index.t
 xt/99pod.t

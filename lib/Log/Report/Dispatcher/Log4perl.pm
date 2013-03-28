@@ -147,6 +147,9 @@ sub log($$$$)
     my $text  = $self->SUPER::translate(@_) or return;
     my $level = $self->reasonToLevel($_[1]);
 
+    local $Log::Log4perl::caller_depth
+              = $Log::Log4perl::caller_depth + 3;
+
     $self->appender->log($level, $text);
     $self;
 }

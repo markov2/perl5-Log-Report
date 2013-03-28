@@ -73,21 +73,29 @@ sub load($$)
 {   my ($self, $domain, $locale) = @_;
 
     foreach my $lex ($self->lexicons)
-    {   my $potfn = $lex->find($domain, $locale);
+    {   my $fn = $lex->find($domain, $locale);
 
-        !$potfn && $lex->list($domain)
+        !$fn && $lex->list($domain)
             and last; # there are tables for domain, but not our lang
 
-        $potfn or next;
+        $fn or next;
 
-        my $po = Log::Report::Lexicon::POTcompact
-           ->read($potfn, charset => $self->charset);
+        my ($ext) = lc($fn) =~ m/\.(\w+)$/;
+        my $class
+          = $ext eq 'mo' ? 'Log::Report::Lexicon::MOTcompact'
+          : $ext eq 'po' ? 'Log::Report::Lexicon::POTcompact'
+          : error __x"unknown translation table extension '{ext}' in {filename}"
+              , ext => $ext, filename => $fn;
 
-        info __x "read pot-file {filename} for {domain} in {locale}"
-          , filename => $potfn, domain => $domain, locale => $locale
+        info __x"read table {filename} as {class} for {domain} in {locale}"
+          , filename => $fn, class => $class, domain => $domain
+          , locale => $locale
               if $domain ne 'log-report';  # avoid recursion
 
-        return $self->{pots}{$locale} = $po;
+        eval "require $class" or panic $@;
+ 
+        return $self->{pots}{$locale}
+          = $class->read($fn, charset => $self->charset);
     }
 
     $self->{pots}{$locale} = undef;

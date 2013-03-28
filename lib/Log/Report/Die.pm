@@ -89,4 +89,4 @@ sub die_decode($)
     ($dietxt, \%opt, $reason, $msg);
 }
 
-1;
+"to die or not to die, that's the question";

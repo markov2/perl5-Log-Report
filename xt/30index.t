@@ -38,8 +38,8 @@ my $v = Log::Report::Lexicon::Index->new($mailman_po);
 ok(defined $v, 'create mailman index');
 isa_ok($v, 'Log::Report::Lexicon::Index');
 ok(defined $v->index);
-is($v->find('mailman', 'nl_NL.utf-8@test'), $mailman_po.'/nl/LC_MESSAGES/mailman.po');
-is($v->find('mailman', 'pt_BR'), $mailman_po.'/pt_BR/LC_MESSAGES/mailman.po');
+is($v->find('mailman', 'nl_NL.utf-8@test'), $mailman_po.'/nl/LC_MESSAGES/mailman.mo');
+is($v->find('mailman', 'pt_BR'), $mailman_po.'/pt_BR/LC_MESSAGES/mailman.mo');
 ok(!defined $v->find('mailman', 'xx_XX.ISO-8859-1@modif'));
 
 #use Data::Dumper;

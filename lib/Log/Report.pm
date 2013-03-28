@@ -53,20 +53,20 @@ __PACKAGE__->_setting('rescue', translator => Log::Report::Translator->new);
 dispatcher PERL => 'default', accept => 'NOTICE-';
 
 =chapter NAME
-Log::Report - report a problem, with exceptions and language support
+Log::Report - report a problem, with exceptions and translation support
 
 =chapter SYNOPSIS
  # Invocation with mode helps debugging
  use Log::Report mode => 'DEBUG';
 
- -f $config or panic "Help!"; # alert/error/fault/info/...more
  error "oops";                # like die(), no translation
+ -f $config or panic "Help!"; # alert/error/fault/info/...more
 
  # Provide a name-space to use translation tables.  Like Locale::TextDomain
  use Log::Report 'my-domain';
  error __x"Help!";            # __x() handles translation
  print __x"my name is {name}", name => $fullname;
- print __x'Hello World';      # ERROR!!  ' is alternative for ::
+ print __x'Hello World';      # SYNTAX ERROR!!  ' is alternative for ::
 
  # Many destinations for message in parallel possible.
  dispatcher PERL => 'default' # See Log::Report::Dispatcher: use die/warn
@@ -102,6 +102,7 @@ Log::Report - report a problem, with exceptions and language support
  fault "cannot allocate $size bytes";      # no translation
  fault __x "cannot allocate $size bytes";  # wrong, not static
 
+ # translation depends on count.
  print __xn("found one file", "found {_count} files", @files), "\n";
 
  # catch errors (implements hidden eval/die)
@@ -118,40 +119,25 @@ Log::Report - report a problem, with exceptions and language support
  if($msg->inClass('parsing')) ...
 
 =chapter DESCRIPTION 
-Handling messages to users can be a hassle, certainly when the same
-module is used for command-line and in a graphical interfaces, and
-has to cope with internationalization at the same time; this set of
-modules tries to simplify this.  Log::Report combines C<gettext> features
-with M<Log::Dispatch>-like features.  However, you can also use this
-module to do only translations or only message dispatching.
+Handling messages directed to users can be a hassle, certainly when the
+same software is used for command-line and in a graphical interfaces (you
+may not now how it is used), or has to cope with internationalization;
+this modules tries to simplify this.
 
-Read more about how and why in the L</DETAILS> section, below.  Especially,
-you should B<read about the REASON parameter>.
-
-Content of the whole C<Log::Report> package:
-
+Log::Report combines
 =over 4
-=item . Log::Report
-Exports the functions to end-users.  To avoid the need to pass around
-an logger-object to all end-user packages, the singleton object is
-wrapped in functions.
-
-=item . Translating
-You can use the GNU gettext infrastructure (via MO files handled by
-M<Log::Report::Translator::Gettext>), or extract strings via PPI
-(M<Log::Report::Extract::PerlPPI>) into PO files which can be
-used directly (M<Log::Report::Lexicon::POTcompact>).
-
-=item . Dispatching
-Multiple dispatchers in parallel can be active. M<Log::Report::Dispatcher>
-takes care that the back-end gets the messages of the severity it needs,
-translated and in the right character-set.
-
-=item . Exception handling
-A simple exception system is implemented via M<try()> and
-M<Log::Report::Dispatcher::Try>.
-
+=item . exceptions (like error and info), with
+=item . logging (like Log::Log4Perl and syslog), and
+=item . translations (like gettext and Locale::TextDomain)
 =back
+You do not need to use it for all three reasons: pick what you need
+now, maybe extend the usage later.  Read more about how and why in the
+L</DETAILS> section, below.  Especially, you should B<read about the
+REASON parameter>.
+
+Also, you can study this module swiftly via the article published in
+the German Perl $foo-magazine.  English version:
+F<http://perl.overmeer.net/log-report/papers/201308-PerlMagazine-article-en.html>
 
 =chapter FUNCTIONS
 
@@ -159,22 +145,22 @@ M<Log::Report::Dispatcher::Try>.
 
 =function report [HASH-of-OPTIONS], REASON, MESSAGE|(STRING,PARAMS), 
 
-Produce a report for certain REASON.  The MESSAGE is a
-M<Log::Report::Message> object (which are created with the
-special translation syntax like M<__x()>).  A not-translated message
-is B<ONE> string with optional parameters.  The HASH is an optional
-first parameter, which can be used to influence the dispatchers.  The
-HASH contains any combination of the OPTIONS listed below.
+The 'report' function is sending (for some REASON) a MESSAGE to be
+displayed or logged by a dispatcher.  This function is the core for
+use M<error()>, M<info()> etc functions which are nicer names for
+this exception throwing: better use those short names.
 
-When C<syntax => 'SHORT'> is configured (the default), you will also have
-abbreviations available, where the REASON is the name of the function.
-See for instance M<info()>. In that case, you loose the chance for
-OPTIONS.
+The REASON is a string like 'ERROR'.  The MESSAGE is a
+M<Log::Report::Message> object (which are created with the special
+translation syntax like M<__x()>).  The MESSAGE may also be a plain
+string or an M<Log::Report::Exception> object. The optional first
+parameter is a HASH which can be used to influence the dispatchers.
+The HASH contains any combination of the OPTIONS listed below.
 
-Returns is the LIST of dispatchers used to log the MESSAGE.  When
-empty, no back-end has accepted it so the MESSAGE was "lost".  Even when
-no back-end need the message, it program will still exit when there is
-REASON to.
+This function returns the LIST of dispatchers which accepted the MESSAGE.
+When empty, no back-end has accepted it so the MESSAGE was "lost".
+Even when no back-end need the message, it program will still exit when
+there is REASON to die.
 
 =option  to NAME|ARRAY-of-NAMEs
 =default to C<undef>
@@ -213,13 +199,15 @@ M<try()>), redispatch it to syslog, but without it killing the main
 program.
 
 =examples for use of M<report()>
+ # long syntax example
  report TRACE => "start processing now";
  report INFO  => '500: ' . __'Internal Server Error';
 
+ # explicit dispatcher, no translation
  report {to => 'syslog'}, NOTICE => "started process $$";
- notice "started process $$", _to => 'syslog'; #same
+ notice "started process $$", _to => 'syslog';   # same
 
- # with syntax SHORT
+ # short syntax examples
  trace "start processing now";
  warning  __x'Disk {percent%.2f}% full', percent => $p
      if $p > 97;
@@ -328,11 +316,12 @@ sub report($@)
 =function dispatcher (TYPE, NAME, OPTIONS)|(COMMAND => NAME, [NAMEs])
 
 The C<dispatcher> function controls access to dispatchers: the back-ends
-which do the actual logging. Dispatchers are global entities, address by
-a symbolic free to chose NAME.
+which process messages, do the logging.  Dispatchers are global entities,
+addressed by a symbolic NAME.  Please read M<Log::Report::Dispatcher> as
+well.
 
 The C<Log::Report> suite has its own dispatcher TYPES, but also connects
-to external dispatching frame-works. Each need some (minor) conversions,
+to external dispatching frameworks.  Each need some (minor) conversions,
 especially with respect to translation of REASONS of the reports
 into log-levels as the back-end understands.
 
@@ -367,14 +356,14 @@ context with only one name, the one object is returned.
 
  dispatcher close => 'mylog';            # cleanup
  my $obj = dispatcher find => 'mylog'; 
- my @obj = dispatcher list;
+ my @obj = dispatcher 'list';
  dispatcher disable => 'syslog';
  dispatcher enable => 'mylog', 'syslog'; # more at a time
- dispatcher mode => DEBUG => 'mylog';
- dispatcher mode => DEBUG => 'ALL';
+ dispatcher mode => 'DEBUG', 'mylog';
+ dispatcher mode => 'DEBUG', 'ALL';
 
  my @need_info = dispatcher needs => 'INFO';
- if(dispatcher needs => 'INFO') ...
+ if(dispatcher needs => 'INFO') ...      # anyone needs INFO
 
  # Getopt::Long integration: see Log::Report::Dispatcher::mode()
  dispatcher PERL => 'default', mode => 'DEBUG', accept => 'ALL'
@@ -465,12 +454,15 @@ sub _whats_needed()
 }
 
 =function try CODE, OPTIONS
-Execute the CODE, but block all dispatchers as long as it is running.
-When the execution of the CODE is terminated with an report which triggers
-an error, that is captured.  After the C<try>, the C<$@> will contain
-a M<Log::Report::Dispatcher::Try> object, which contains the collected
-error messages.  When there where no errors, the result of the code
+
+Execute the CODE while blocking all dispatchers as long as it is running.
+The exceptions which occur while running the CODE are caught until it
+has finished.  When there where no fatal errors, the result of the CODE
 execution is returned.
+
+After the CODE was tried, the C<$@> will contain a
+M<Log::Report::Dispatcher::Try> object, which contains the collected
+messages.
 
 Run-time errors from Perl and die's, croak's and confess's within the
 program (which shouldn't appear, but you never know) are collected into an
@@ -490,16 +482,20 @@ for instance, it has its own C<@_>.  The manual-page of M<Try::Tiny>
 lists a few more side-effects of this.
 
 =examples
- try { ... };       # mind the ';' !!
- if($@) {           # signals something went wrong
+ my $x = try { 3/$x };  # mind the ';' !!
+ if($@) {               # signals something went wrong
 
- if(try {...}) {    # block ended normally
+ if(try {...}) {        # block ended normally, returns bool
 
- try { ... }        # no comma!!
+ try { ... }            # no comma!!
     mode => 'DEBUG', accept => 'ERROR-';
 
- try sub { ... },   # with comma, also \&function
+ try sub { ... },       # with comma, also \&function
     mode => 'DEBUG', accept => 'ALL';
+
+ my $response = try { $ua->request($request) };
+ if(my $e = $@->wasFatal) ...
+
 =cut
 
 sub try(&@)
@@ -536,10 +532,10 @@ sub try(&@)
 
 =section Abbreviations for report()
 
-The following functions are abbreviations for calls to M<report()>, and
-available when syntax is C<SHORT> (see M<import()>).  You cannot specify
-additional options to influence the behavior of C<report()>, which are
-usually not needed anyway.
+The following functions are all wrappers for calls to M<report()>,
+and available when "syntax is SHORT" (by default, see M<import()>).
+You cannot specify additional options to influence the behavior of
+C<report()>, which are usually not needed anyway.
 
 =function trace MESSAGE
 Short for C<< report TRACE => MESSAGE >>
@@ -580,17 +576,17 @@ sub panic(@)   {report PANIC   => @_}
 =section Language Translations
 
 The language translations are initiate by limited set of functions
-which contain two under-score (C<_>) characters in their name.  Most
+which contain B<two under-scores> (C<__>) in their name.  Most
 of them return a M<Log::Report::Message> object.
 
-BE WARNED(1) that -in general- its considered very bad practice to
-combine multiple translations into one message; translating
-may also affect the order of the translated components. Besides,
-when the translator only sees smaller parts of the text, his or
-her job becomes more complex.  So:
+B<Be warned(1)> that -in general- its considered very bad practice to
+combine multiple translations into one message: translating may also
+affect the order of the translated components. Besides, when the person
+which translates only sees smaller parts of the text, his (or her) job
+becomes more complex.  So:
 
- print __"Hello" . ', ' . __"World!";  # very bad idea!
- print __"Hello, World!";    # yes: complete sentence.
+ print __"Hello" . ', ' . __"World!";  # works, but to be avoided
+ print __"Hello, World!";              # preferred, complete sentence
 
 The the former case, tricks with overloading used by the
 M<Log::Report::Message> objects will still make delayed translations
@@ -601,7 +597,7 @@ values:
 
  print __"the color is {c}", c => __"red";
 
-BE WARNED(2) that using C<< __'Hello' >> will produce a syntax error like
+B<Be warned(2)> that using C<< __'Hello' >> will produce a syntax error like
 "String found where operator expected at .... Can't find string terminator
 "'" anywhere before EOF".  The first quote is the cause of the complaint,
 but the second generates the error.  In the early days of Perl, the single
@@ -611,12 +607,14 @@ as C<< __::Hello ' >>.  Then, there is a trailing single quote which has
 no counterpart.
 
 =function __ MSGID
-This function (name is two under-score characters) will cause the
-MSGID to be replaced by the translations when doing the actual output.
-Returned is one object, which will be used in translation later.
-Translating is invoked when the object gets stringified.
+This function (name is B<two> under-score characters) will cause the MSGID
+to be replaced by the translations when doing the actual output.  Returned
+is a M<Log::Report::Message> object, which will be used in translation
+later.  Translating is invoked when the object gets stringified.  When
+you have no translation tables, the MSGID will be shown untranslated.
 
-If you need OPTIONS, then take M<__x()>.
+If you need options for M<Log::Report::Message::new()> then
+use M<__x()>.
 
 =examples how to use __()
  print __"Hello World";      # translated into user's language
@@ -644,14 +642,13 @@ sub __($)
       );
 } 
 
-=function __x MSGID, OPTIONS, VARIABLES
-Translate the MSGID, and then expand the VARIABLES in that
-string.  Of course, translation and expanding is delayed as long
-as possible.  Both OPTIONS and VARIABLES are key-value pairs.
+=function __x MSGID, PAIRS
+Translate the MSGID and then interpolate the VARIABLES in that string.
+Of course, translation and interpolation is delayed as long as possible.
+Both OPTIONS and VARIABLES are key-value pairs.
 
-OPTIONS and VARIABLES are explained in M<Log::Report::Message::new()>.
-M<Locale::TextDomain::__x()> does not support the OPTIONS, but they
-mix with variables.
+The PAIRS are options for M<Log::Report::Message::new()> and variables
+to be filled in.
 =cut
 
 # label "msgid" added before first argument
@@ -666,15 +663,14 @@ sub __x($@)
      );
 } 
 
-=function __n MSGID, PLURAL_MSGID, COUNT, OPTIONS
+=function __n MSGID, PLURAL_MSGID, COUNT, PAIRS
 It depends on the value of COUNT (and the selected language) which
 text will be displayed.  When translations can not be performed, then
 MSGID will be used when COUNT is 1, and PLURAL_MSGSID in other cases.
 However, some languages have more complex schemes than English.
 
-OPTIONS are explained in M<Log::Report::Message::new()>.
-M<Locale::TextDomain::__n()> does not have OPTIONS, but they mix
-with variables.
+The PAIRS are options for M<Log::Report::Message::new()> and variables
+to be filled in.
 
 =examples how to use __n()
  print __n "one", "more", $a;
@@ -703,14 +699,14 @@ sub __n($$$@)
      );
 }
 
-=function __nx MSGID, PLURAL_MSGID, COUNT, OPTIONS, VARIABLES
+=function __nx MSGID, PLURAL_MSGID, COUNT, PAIRS
 It depends on the value of COUNT (and the selected language) which
 text will be displayed.  See details in M<__n()>.  After translation,
 the VARIABLES will be filled-in.
 
-OPTIONS are explained in M<Log::Report::Message::new()>.
-M<Locale::TextDomain::__nx()> does not support the OPTIONS, but they look
-like variables.
+The PAIRS are options for M<Log::Report::Message::new()> and variables
+to be filled in.
+
 =examples how to use __nx()
  print __nx "one file", "{_count} files", $nr_files;
  print __nx "one file", "{_count} files", @files;
@@ -731,8 +727,8 @@ sub __nx($$$@)
      );
 }
 
-=function __xn SINGLE_MSGID, PLURAL_MSGID, COUNT, OPTIONS, VARIABLES
-Same as M<__xn()>.
+=function __xn SINGLE_MSGID, PLURAL_MSGID, COUNT, PAURS
+Same as M<__nx()>, because we have no preferred order for 'x' and 'n'.
 =cut
 
 sub __xn($$$@)   # repeated for prototype
@@ -751,19 +747,23 @@ sub __xn($$$@)   # repeated for prototype
 Label to indicate that the string is a text which will be translated
 later.  The function itself does nothing.  See also M<N__w()>.
 
+This no-op function is used as label to the xgettext program to build the
+translation tables.
+
 =example how to use N__()
+ # add three msgids to the translation table
  my @colors = (N__"red", N__"green", N__"blue");
  my @colors = N__w "red green blue";   # same
- print __ $colors[1];
+ print __ $colors[1];                  # translate green
 
-Using M<__()>, would work as well
+ # using M<__()>, would work as well
  my @colors = (__"red", __"green", __"blue");
  print $colors[1];
-However: this will always create all M<Log::Report::Message> objects,
-where maybe only one is used.
+ # however: this will always create all M<Log::Report::Message> objects,
+ # where maybe only one is used.
 =cut
 
-sub N__($) {shift}
+sub N__($) { $_[0] }
 
 =function N__n SINGLE_MSGID, PLURAL_MSGID
 Label to indicate that the two MSGIDs are related, the first as
@@ -776,7 +776,7 @@ fragments to be translated.  The function itself does nothing.
 
  # be warned about SCALARs in prototype!
  print __n @save, $nr_files;  # wrong!
- print __n $save[0], $save[1], $nr_files;
+ print __n $save[0], $save[1], @files, %vars;
 =cut
 
 sub N__n($$) {@_}
@@ -1154,6 +1154,10 @@ needs to be informed about the problem.
 Some external cause makes it impossible for this program to continue.
 C<$!> is set, and usually the system administrator wants to be
 informed.  The program will die.
+
+The difference with C<fault> is subtile and not always clear.  A fault
+reports an error returned by an operating system call, where the failure
+would report an operational problem, like a failing mount.
 
 =item . panic (program)
 All above report classes are expected: some predictable situation

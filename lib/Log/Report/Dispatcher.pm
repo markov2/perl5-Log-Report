@@ -10,6 +10,7 @@ use Log::Report::Util qw/parse_locale expand_reasons %reason_code
 use POSIX      qw/strerror/;
 use List::Util qw/sum/;
 use Encode     qw/find_encoding FB_DEFAULT/;
+use Devel::GlobalDestruction qw/in_global_destruction/;
 
 eval { POSIX->import('locale_h') };
 if($@)
@@ -25,7 +26,7 @@ my %predef_dispatchers = map { (uc($_) => __PACKAGE__.'::'.$_) }
    qw/File Perl Syslog Try Callback/;
 
 =chapter NAME
-Log::Report::Dispatcher - manage dispatching
+Log::Report::Dispatcher - manage message dispatching, display or logging
 
 =chapter SYNOPSIS
  use Log::Report;
@@ -41,14 +42,13 @@ Log::Report::Dispatcher - manage dispatching
  dispatcher Log::Report::Dispatch::File => 'stderr'
    , to => \*STDERR, accept => 'NOTICE-';
 
- # Within a "try" block, there is only one dispatcher
- dispatcher TRY => 'try';
-
 =chapter DESCRIPTION
-This base-class handles the creation of dispatchers, plus the
-common filtering rules.  
+In M<Log::Report>, dispatchers are used to handle (exception) messages
+which are created somewhere else.  Those message were produced (thrown)
+by M<Log::Report::error()> and friends.
 
-See the L</DETAILS> section, below.
+This base-class handles the creation of dispatchers, plus the common
+filtering rules.  See the L</DETAILS> section, below.
 
 =chapter METHODS
 
@@ -170,10 +170,7 @@ sub close()
     $self;
 }
 
-# horrible errors on some Perl versions if called during destruction
-my $in_global_destruction = 0;
-END { $in_global_destruction++ }
-sub DESTROY { $in_global_destruction or shift->close }
+sub DESTROY { in_global_destruction or shift->close }
 
 #----------------------------
 
@@ -492,6 +489,10 @@ class or be opened before the dispatcher is created.
 Send messages into the system's syslog infrastructure, using
 M<Sys::Syslog>.
 
+=item M<Log::Report::Dispatcher::Callback> (abbreviation 'CALLBACK')
+Calls any CODE reference on receipt of each selected message, for
+instance to send important message as email or SMS.
+
 =item C<Log::Dispatch::*>
 All of the M<Log::Dispatch::Output> extensions can be used directly.
 The M<Log::Report::Dispatcher::LogDispatch> will wrap around that
@@ -502,8 +503,8 @@ Use the M<Log::Log4perl> main object to write to dispatchers.  This
 infrastructure uses a configuration file.
 
 =item M<Log::Report::Dispatcher::Try> (abbreviation 'TRY')
-Used by M<Log::Report::try()>, it will translate reports into
-exceptions.
+Used by function M<Log::Report::try()>.  It collects the exceptions
+and can produce them on request.
 
 =back
 
@@ -547,7 +548,7 @@ Exactly what will be added depends on the actual mode of the dispatcher
 
  T - usually translated
  E - exception (execution interrupted)
- ! - will include $! text
+ ! - will include $! text at display
  L - include filename and linenumber
  S - show/print when accepted
  C - stack trace (like Carp::confess())
@@ -591,8 +592,8 @@ using concatenation (see M<Log::Report::Message::concat()>.
  }
 
 =example take all mistakes and warnings serious
- dispatch filter => \&take_warns_serious;
- sub take_warns_serious($$$$)
+ dispatch filter => \&take_warns_seriously;
+ sub take_warns_seriously($$$$)
  {   my ($disp, $opts, $reason, $message) = @_;
        $reason eq 'MISTAKE' ? (ERROR   => $message)
      : $reason eq 'WARNING' ? (FAULT   => $message)
