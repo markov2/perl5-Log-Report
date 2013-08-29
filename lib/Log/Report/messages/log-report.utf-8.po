@@ -4,7 +4,7 @@ msgstr ""
 "Project-Id-Version: log-report 0.01\n"
 "Report-Msgid-Bugs-To:\n"
 "POT-Creation-Date: 2007-05-14 17:14+0200\n"
-"PO-Revision-Date: 2012-08-30 21:52+0200\n"
+"PO-Revision-Date: 2013-08-22 16:17+0200\n"
 "Last-Translator:\n"
 "Language-Team:\n"
 "MIME-Version: 1.0\n"
@@ -101,12 +101,12 @@ msgstr ""
 msgid "WARNING"
 msgstr ""
 
-#: lib/Log/Report.pm:268
+#: lib/Log/Report.pm:256
 #, fuzzy
 msgid "a message object is reported with more parameters"
 msgstr ""
 
-#: lib/Log/Report/Dispatcher.pm:303 lib/Log/Report/Dispatcher.pm:313
+#: lib/Log/Report/Dispatcher.pm:299 lib/Log/Report/Dispatcher.pm:309
 #, fuzzy
 msgid "at {filename} line {line}"
 msgstr ""
@@ -116,7 +116,7 @@ msgstr ""
 msgid "cannot create lexicon directory {dir}"
 msgstr ""
 
-#: bin/xgettext-perl:60
+#: bin/xgettext-perl:57
 #, fuzzy
 msgid "cannot create output directory {dir}"
 msgstr ""
@@ -126,7 +126,7 @@ msgstr ""
 msgid "cannot find logger '{name}' in configuration {config}"
 msgstr ""
 
-#: bin/xgettext-perl:68
+#: bin/xgettext-perl:65
 #, fuzzy
 msgid "cannot read filename list from {fn}"
 msgstr ""
@@ -136,14 +136,71 @@ msgstr ""
 msgid "cannot read from file {filename}"
 msgstr ""
 
-#: lib/Log/Report/Lexicon/POT.pm:146 lib/Log/Report/Lexicon/POTcompact.pm:69
+#: lib/Log/Report/Lexicon/MOTcompact.pm:70 lib/Log/Report/Lexicon/POT.pm:149
+#: lib/Log/Report/Lexicon/POTcompact.pm:60
 #, fuzzy
 msgid "cannot read in {cs} from file {fn}"
 msgstr ""
 
-#: lib/Log/Report/Extract/Template.pm:92
+#: lib/Log/Report/Lexicon/MOTcompact.pm:77
+#, fuzzy
+msgid "cannot read magic from {fn}"
+msgstr ""
+
+#: lib/Log/Report/Lexicon/MOTcompact.pm:129
+#, fuzzy
+msgid "cannot read msgids from {fn}, need {size} at {loc}"
+msgstr ""
+
+#: lib/Log/Report/Lexicon/MOTcompact.pm:101
+#, fuzzy
+msgid "cannot read originals from {fn}, need {size} at {loc}"
+msgstr ""
+
+#: lib/Log/Report/Lexicon/MOTcompact.pm:87
+#, fuzzy
+msgid "cannot read superblock from {fn}"
+msgstr ""
+
+#: lib/Log/Report/Extract/Template.pm:98
 #, fuzzy
 msgid "cannot read template from {fn}"
+msgstr ""
+
+#: lib/Log/Report/Lexicon/MOTcompact.pm:208
+#, fuzzy
+msgid "cannot read transl late from {fn}, need {size} at {loc}"
+msgstr ""
+
+#: lib/Log/Report/Lexicon/MOTcompact.pm:112
+#: lib/Log/Report/Lexicon/MOTcompact.pm:140
+#, fuzzy
+msgid "cannot read translations from {fn}, need {size} at {loc}"
+msgstr ""
+
+#: lib/Log/Report/Lexicon/MOTcompact.pm:123
+#, fuzzy
+msgid "cannot seek to {loc} in {fn} for msgid strings"
+msgstr ""
+
+#: lib/Log/Report/Lexicon/MOTcompact.pm:97
+#, fuzzy
+msgid "cannot seek to {loc} in {fn} for originals"
+msgstr ""
+
+#: lib/Log/Report/Lexicon/MOTcompact.pm:134
+#, fuzzy
+msgid "cannot seek to {loc} in {fn} for transl strings"
+msgstr ""
+
+#: lib/Log/Report/Lexicon/MOTcompact.pm:108
+#, fuzzy
+msgid "cannot seek to {loc} in {fn} for translations"
+msgstr ""
+
+#: lib/Log/Report/Lexicon/MOTcompact.pm:203
+#, fuzzy
+msgid "cannot seek to {loc} late in {fn} for transl strings"
 msgstr ""
 
 #: lib/Log/Report/Dispatcher/File.pm:96
@@ -151,17 +208,18 @@ msgstr ""
 msgid "cannot write log into {file} with {binmode}"
 msgstr ""
 
-#: lib/Log/Report/Lexicon/POT.pm:196
+#: lib/Log/Report/Lexicon/POT.pm:203
 #, fuzzy
 msgid "cannot write to file {fn} in {layers}"
 msgstr ""
 
-#: lib/Log/Report/Lexicon/POT.pm:107 lib/Log/Report/Lexicon/POT.pm:143
+#: lib/Log/Report/Lexicon/POT.pm:106 lib/Log/Report/Lexicon/POT.pm:146
 #, fuzzy
 msgid "charset parameter is required for {fn}"
 msgstr ""
 
-#: lib/Log/Report/Lexicon/POTcompact.pm:66
+#: lib/Log/Report/Lexicon/MOTcompact.pm:57
+#: lib/Log/Report/Lexicon/POTcompact.pm:57
 #, fuzzy
 msgid "charset parameter required for {fn}"
 msgstr ""
@@ -176,7 +234,7 @@ msgstr ""
 msgid "dispatcher {name} needs parameter 'to'"
 msgstr ""
 
-#: bin/xgettext-perl:65
+#: bin/xgettext-perl:62
 #, fuzzy
 msgid "do not combine command-line filenames with --files-from"
 msgstr ""
@@ -186,24 +244,24 @@ msgstr ""
 msgid "do not interpolate in msgid (found '{var}' in line {line})"
 msgstr ""
 
-#: lib/Log/Report/Lexicon/PO.pm:348
+#: lib/Log/Report/Lexicon/PO.pm:374
 #, fuzzy
 msgid "do not understand command '{cmd}' at {where}"
 msgstr ""
 
-#: lib/Log/Report/Lexicon/PO.pm:365
+#: lib/Log/Report/Lexicon/PO.pm:391
 #, fuzzy
 msgid ""
 "do not understand line at {where}:\n"
 "  {line}"
 msgstr ""
 
-#: lib/Log/Report.pm:654
+#: lib/Log/Report.pm:656
 #, fuzzy
 msgid "even length parameter list for __x at {where}"
 msgstr ""
 
-#: bin/xgettext-perl:57
+#: bin/xgettext-perl:54
 #, fuzzy
 msgid "explicit output directory (-p) required"
 msgstr ""
@@ -213,7 +271,8 @@ msgstr ""
 msgid "extractions require an explicit lexicon directory"
 msgstr ""
 
-#: lib/Log/Report/Lexicon/POT.pm:163 lib/Log/Report/Lexicon/POTcompact.pm:106
+#: lib/Log/Report/Lexicon/MOTcompact.pm:162 lib/Log/Report/Lexicon/POT.pm:169
+#: lib/Log/Report/Lexicon/POTcompact.pm:100
 #, fuzzy
 msgid "failed reading from file {fn}"
 msgstr ""
@@ -230,7 +289,7 @@ msgstr[1] ""
 msgid "illegal format_reason '{format}' for dispatcher"
 msgstr ""
 
-#: lib/Log/Report/Lexicon/POTcompact.pm:182
+#: lib/Log/Report/Lexicon/Table.pm:98
 #, fuzzy
 msgid "invalid plural-form algorithm '{alg}'"
 msgstr ""
@@ -240,7 +299,7 @@ msgstr ""
 msgid "message() of exception expects Log::Report::Message"
 msgstr ""
 
-#: lib/Log/Report/Extract/Template.pm:102
+#: lib/Log/Report/Extract/Template.pm:93
 #, fuzzy
 msgid "need pattern to scan for, either via new() or process()"
 msgstr ""
@@ -255,22 +314,22 @@ msgstr ""
 msgid "no Perl in file {filename}"
 msgstr ""
 
-#: lib/Log/Report/Lexicon/POT.pm:187
+#: lib/Log/Report/Lexicon/POT.pm:194
 #, fuzzy
 msgid "no filename or file-handle specified for PO"
 msgstr ""
 
-#: lib/Log/Report/Lexicon/POT.pm:327
+#: lib/Log/Report/Lexicon/POT.pm:317
 #, fuzzy
 msgid "no header defined in POT for file {fn}"
 msgstr ""
 
-#: lib/Log/Report/Lexicon/PO.pm:370
+#: lib/Log/Report/Lexicon/PO.pm:397
 #, fuzzy
 msgid "no msgid in block {where}"
 msgstr ""
 
-#: lib/Log/Report/Lexicon/PO.pm:446
+#: lib/Log/Report/Lexicon/PO.pm:476
 #, fuzzy
 msgid "no plurals for '{msgid}'"
 msgstr ""
@@ -280,44 +339,44 @@ msgstr ""
 msgid "no text-domain for translatable at {fn} line {line}"
 msgstr ""
 
-#: lib/Log/Report.pm:505
+#: lib/Log/Report.pm:506
 #, fuzzy
 msgid "odd length parameter list for try(): forgot the terminating ';'?"
 msgstr ""
 
-#: lib/Log/Report.pm:276
+#: lib/Log/Report.pm:264
 #, fuzzy
 msgid "odd length parameter list with '{msg}'"
 msgstr ""
 
-#: lib/Log/Report.pm:432
+#: lib/Log/Report.pm:421
 #, fuzzy
 msgid "only one dispatcher name accepted in SCALAR context"
 msgstr ""
 
-#: lib/Log/Report.pm:939
+#: lib/Log/Report.pm:954
 #, fuzzy
 msgid "only one package can contain configuration; for {domain} already in {pkg} in file {fn} line {line}"
 msgstr ""
 
-#: lib/Log/Report/Extract/PerlPPI.pm:77 lib/Log/Report/Extract/Template.pm:87
+#: lib/Log/Report/Extract/PerlPPI.pm:77 lib/Log/Report/Extract/Template.pm:90
 #, fuzzy
 msgid "processing file {fn} in {charset}"
 msgstr ""
 
-#: bin/xgettext-perl:54
+#: bin/xgettext-perl:51
 #, fuzzy
 msgid "programming language {lang} not supported"
 msgstr ""
 
-#: lib/Log/Report/Lexicon/PO.pm:360
+#: lib/Log/Report/Lexicon/PO.pm:386
 #, fuzzy
 msgid "quoted line is not a continuation at {where}"
 msgstr ""
 
-#: lib/Log/Report/Translator/POT.pm:85
+#: lib/Log/Report/Translator/POT.pm:90
 #, fuzzy
-msgid "read pot-file {filename} for {domain} in {locale}"
+msgid "read table {filename} as {class} for {domain} in {locale}"
 msgstr ""
 
 #: lib/Log/Report/Util.pm:136
@@ -325,9 +384,9 @@ msgstr ""
 msgid "reason '{begin}' more serious than '{end}' in '{reasons}"
 msgstr ""
 
-#: lib/Log/Report/Extract/Template.pm:186
+#: bin/xgettext-perl:83
 #, fuzzy
-msgid "scan pattern `{pattern}' not recognized"
+msgid "specify a text-domain (-d) for the templates"
 msgstr ""
 
 #: lib/Log/Report/Extract.pm:208
@@ -335,7 +394,7 @@ msgstr ""
 msgid "starting new textdomain {domain}, template in {filename}"
 msgstr ""
 
-#: lib/Log/Report/Lexicon/POTcompact.pm:194
+#: lib/Log/Report/Lexicon/POTcompact.pm:154
 #, fuzzy
 msgid "string '{text}' not between quotes at {location}"
 msgstr ""
@@ -345,12 +404,12 @@ msgstr ""
 msgid "string is incorrect at line {line}: {error}"
 msgstr ""
 
-#: lib/Log/Report/Dispatcher.pm:215
+#: lib/Log/Report/Dispatcher.pm:211
 #, fuzzy
 msgid "switching to run mode {mode}, accept {accept}"
 msgstr ""
 
-#: lib/Log/Report.pm:867
+#: lib/Log/Report.pm:882
 #, fuzzy
 msgid "syntax flag must be either SHORT or REPORT, not `{syntax}'"
 msgstr ""
@@ -360,52 +419,62 @@ msgstr ""
 msgid "syslog level '{level}' not understood"
 msgstr ""
 
-#: lib/Log/Report.pm:907
+#: lib/Log/Report/Extract/Template.pm:145
+#, fuzzy
+msgid "template syntax error, no END in {fn} line {line}"
+msgstr ""
+
+#: lib/Log/Report.pm:922
 #, fuzzy
 msgid "textdomain for translator not defined"
 msgstr ""
 
-#: lib/Log/Report/Lexicon/POT.pm:112
+#: lib/Log/Report/Lexicon/POT.pm:111
 #, fuzzy
 msgid "textdomain parameter is required"
 msgstr ""
 
-#: lib/Log/Report.pm:417
+#: lib/Log/Report.pm:406
 #, fuzzy
 msgid "the 'filter' sub-command needs a CODE reference"
 msgstr ""
 
-#: lib/Log/Report.pm:404
+#: lib/Log/Report.pm:393
 #, fuzzy
 msgid "the 'list' sub-command doesn't expect additional parameters"
 msgstr ""
 
-#: lib/Log/Report.pm:410
+#: lib/Log/Report.pm:399
 #, fuzzy
 msgid "the 'needs' sub-command parameter '{reason}' is not a reason"
 msgstr ""
 
-#: lib/Log/Report/Lexicon/POT.pm:286
+#: lib/Log/Report/Lexicon/POT.pm:296
 #, fuzzy
 msgid "the only acceptable parameter is 'ACTIVE', not '{p}'"
 msgstr ""
 
-#: lib/Log/Report.pm:245
+#: lib/Log/Report/Lexicon/Table.pm:93
+#, fuzzy
+msgid "there is no Plural-Forms field in the header"
+msgstr ""
+
+#: lib/Log/Report.pm:233
 #, fuzzy
 msgid "token '{token}' not recognized as reason"
 msgstr ""
 
-#: lib/Log/Report/Lexicon/PO.pm:435
+#: lib/Log/Report/Lexicon/PO.pm:465
 #, fuzzy
 msgid "too many plurals for '{msgid}'"
 msgstr ""
 
-#: lib/Log/Report/Lexicon/POT.pm:269
+#: lib/Log/Report/Lexicon/POT.pm:279
 #, fuzzy
 msgid "translation already exists for '{msgid}'"
 msgstr ""
 
-#: lib/Log/Report.pm:914
+#: lib/Log/Report.pm:929
 #, fuzzy
 msgid "translator must be a Log::Report::Translator object"
 msgstr ""
@@ -415,12 +484,12 @@ msgstr ""
 msgid "try-block stopped with {reason}: {text}"
 msgstr ""
 
-#: lib/Log/Report/Lexicon/PO.pm:326
+#: lib/Log/Report/Lexicon/PO.pm:348
 #, fuzzy
 msgid "unknown comment type '{cmd}' at {where}"
 msgstr ""
 
-#: lib/Log/Report/Lexicon/PO.pm:294
+#: lib/Log/Report/Lexicon/PO.pm:316
 #, fuzzy
 msgid "unknown flag {flag} ignored"
 msgstr ""
@@ -430,27 +499,37 @@ msgstr ""
 msgid "unknown locale language in locale `{locale}'"
 msgstr ""
 
+#: lib/Log/Report/Extract/Template.pm:114
+#, fuzzy
+msgid "unknown pattern {pattern}"
+msgstr ""
+
 #: lib/Log/Report/Util.pm:133 lib/Log/Report/Util.pm:148
 #, fuzzy
 msgid "unknown reason {which} in '{reasons}'"
 msgstr ""
 
-#: lib/Log/Report/Dispatcher.pm:211
+#: lib/Log/Report/Translator/POT.pm:87
 #, fuzzy
-msgid "unknown run mode '{mode}'"
+msgid "unknown translation table extension '{ext}' in {filename}"
 msgstr ""
 
-#: lib/Log/Report/Lexicon/POT.pm:108
+#: lib/Log/Report/Lexicon/POT.pm:107
 #, fuzzy
 msgid "unnamed file"
 msgstr ""
 
-#: lib/Log/Report.pm:944
+#: lib/Log/Report/Lexicon/MOTcompact.pm:82
+#, fuzzy
+msgid "unsupported file type (magic number is {magic%x})"
+msgstr ""
+
+#: lib/Log/Report.pm:959
 #, fuzzy
 msgid "value for {name} specified twice"
 msgstr ""
 
-#: lib/Log/Report/Lexicon/POT.pm:212
+#: lib/Log/Report/Lexicon/POT.pm:219
 #, fuzzy
 msgid "write errors for file {fn}"
 msgstr ""
@@ -474,17 +553,17 @@ msgstr[1] ""
 msgid "{domain}: {fuzzy%3d} fuzzy, {inact%3d} inactive in {filename}"
 msgstr ""
 
-#: lib/Log/Report/Dispatcher.pm:289
+#: lib/Log/Report/Dispatcher.pm:285
 #, fuzzy
 msgid "{message}; {error}"
 msgstr ""
 
-#: lib/Log/Report/Dispatcher.pm:288
+#: lib/Log/Report/Dispatcher.pm:284
 #, fuzzy
 msgid "{reason}: {message}"
 msgstr ""
 
-#: lib/Log/Report/Dispatcher.pm:287
+#: lib/Log/Report/Dispatcher.pm:283
 #, fuzzy
 msgid "{reason}: {message}; {error}"
 msgstr ""

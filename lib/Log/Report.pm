@@ -137,7 +137,7 @@ REASON parameter>.
 
 Also, you can study this module swiftly via the article published in
 the German Perl $foo-magazine.  English version:
-F<http://perl.overmeer.net/log-report/papers/201308-PerlMagazine-article-en.html>
+F<http://perl.overmeer.net/log-report/papers/201306-PerlMagazine-article-en.html>
 
 =chapter FUNCTIONS
 

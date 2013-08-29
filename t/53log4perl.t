@@ -49,15 +49,17 @@ notice "this is a test"; $line_number = __LINE__;
 my $s1 = -s $outfn;
 cmp_ok($s1, '>', 0);
 $log_line = <$out>;
-$expected_msg = " $0 $line_number> notice: this is a test";
-like($log_line, qr/^$date_qr\Q$expected_msg\E$/);
+$log_line =~ s!\\!/!g;  # windows
+$expected_msg = "$line_number> notice: this is a test";
+like($log_line, qr!^$date_qr t[/\\]53log4perl\.t \Q$expected_msg\E$!);
 
 warning "some more"; $line_number = __LINE__;
 my $s2 = -s $outfn;
 cmp_ok($s2, '>', $s1);
 $log_line = do { <$out> };
-$expected_msg = " $0 $line_number> warning: some more";
-like($log_line, qr/^$date_qr\Q$expected_msg\E$/);
+$log_line =~ s!\\!/!g;  # windows
+$expected_msg = "$line_number> warning: some more";
+like($log_line, qr!^$date_qr t[/\\]53log4perl\.t \Q$expected_msg\E$!);
 
 unlink $outfn;
 

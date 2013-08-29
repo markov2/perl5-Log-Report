@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 # implements xgettext for Log::Report only, using Log::Report::Extract::PPI
 # Options like GNU's xgettext
 

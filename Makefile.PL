@@ -2,7 +2,7 @@ use ExtUtils::MakeMaker;
 
 use 5.008;
 
-my $version = '0.993';
+my $version = '0.995';
 
 my %prereq  =
   ( Test::More   =>  0.86
@@ -45,8 +45,9 @@ HTML_OUTPUT     = ../public_html/log-report/html
 HTML_DOCROOT    = /log-report/html
 HTML_PACKAGE    = ../public_html/log-report/htmlpkg
 
-# for Log::Report
-xgettext: $(TO_INST_PM)
-	PERL5LIB=lib bin/xgettext-perl --mode=DEBUG \
-	    -p lib/Log/Report/messages lib bin
 __POSTAMBLE
+
+# for translation tables
+#linkext::
+#	- PERL5LIB="lib:$PERL5LIB" bin/xgettext-perl --mode=VERBOSE \
+#	    -p lib/Log/Report/messages lib bin

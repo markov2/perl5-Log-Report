@@ -6,9 +6,10 @@ use strict;
 use lib 'lib', '../lib';
 use utf8;
 
-use Test::More tests => 43;
+use Test::More tests => 44;
 use File::Basename        qw/dirname/;
 use File::Spec::Functions qw/catfile/;
+use Encode                qw/is_utf8/;
 
 use_ok('Log::Report::Lexicon::PO');
 use_ok('Log::Report::Lexicon::POT');
@@ -110,5 +111,8 @@ is($pot->msgid('Aap')->plural, 'Apen');
 
 my $po2 = $pot->msgid("This program is running as process number {pid}.multi-line\n");
 ok(defined $po2, 'test multi');
-is($po2->msgstr, "Ta program teče kot proces številka {pid}.multi\tline\n");
+
+my $po2t = $po2->msgstr;
+is($po2t, "Ta program teče kot proces številka {pid}.multi\tline\n");
+ok(is_utf8($po2t), 'is utf8');
 
