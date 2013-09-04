@@ -295,7 +295,7 @@ sub report($@)
         }
     }
 
-    if(@last_call)
+    if(@last_call && !$^S)
     {   # the PERL dispatcher may terminate the program
         shift(@last_call)->log(@last_call);
     }

@@ -5,6 +5,15 @@ TODO:
   . connect to Message::Passing framework
   . extract a Log::Report::Optional distribution
 
+version 0.996: Wed Sep  4 17:23:11 CEST 2013
+	Fixes:
+	- you could not share one ::Translator::POT over two domains.
+	  discovered by [Richard Still]
+	- third attempt to fix errors in t/53log4perl.t on Windows
+	  [cpantesters]
+	- remove double reporting of errors which exceptions are caught
+	  with eval().  But better use try().
+
 version 0.995: Thu Aug 29 09:19:13 CEST 2013
 	Fixes:
 	- twice path '\'  in t/53log4perl.t in Windows [cpantesters]
