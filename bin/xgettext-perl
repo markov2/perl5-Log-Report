@@ -102,8 +102,13 @@ else
       , charset => $char_out
       );
 
-    $extr->process($_, charset => $char_in)
-        for @filenames;
+    foreach my $filename (@filenames)
+    {   unless($filename =~ m/\.p[lm]$/i)
+        {   info __x"skipping (not perl) {fn}", fn => $filename;
+            next;
+        }
+        $extr->process($filename, charset => $char_in);
+    }
 }
 
 $extr->showStats;

@@ -613,8 +613,9 @@ is a M<Log::Report::Message> object, which will be used in translation
 later.  Translating is invoked when the object gets stringified.  When
 you have no translation tables, the MSGID will be shown untranslated.
 
-If you need options for M<Log::Report::Message::new()> then
-use M<__x()>.
+If you need options for M<Log::Report::Message::new()> then use M<__x()>;
+the prototype of this function does not permit parameters: it is a
+prefix operator!
 
 =examples how to use __()
  print __"Hello World";      # translated into user's language
@@ -656,10 +657,12 @@ sub __x($@)
 {   @_%2 or error __x"even length parameter list for __x at {where}",
         where => join(' line ', (caller)[1,2]);
 
+    my $msgid = shift;
     Log::Report::Message->new
-     ( _msgid  => @_
+     ( _msgid  => $msgid
      , _expand => 1
      , _domain => _default_domain(caller)
+     , @_
      );
 } 
 
@@ -942,7 +945,7 @@ sub _setting($$;$)
     $domain ||= 'rescue';
 
     defined $value
-        or return $settings{$domain}{$name};
+        or return ($settings{$domain} ? $settings{$domain}{$name} : undef);
 
     # Where is the setting done?
     my ($pkg, $fn, $line) = @_;

@@ -5,6 +5,17 @@ TODO:
   . connect to Message::Passing framework
   . extract a Log::Report::Optional distribution
 
+version 0.997: Fri Sep 27 17:37:11 CEST 2013
+	Fixes:
+	- error about double definedness of settings, dependent on the
+	  order of inclusion of modules.
+	- setlocale does not return the old locale, but the new.
+
+	Improvements:
+	- xgettext-perl: do not PPI files unless they are Perl
+	- xgettext-perl: do warn when ' are used, needs " with __x
+	- __x() now can have a _domain parameter
+
 version 0.996: Wed Sep  4 17:23:11 CEST 2013
 	Fixes:
 	- you could not share one ::Translator::POT over two domains.

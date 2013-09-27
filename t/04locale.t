@@ -28,7 +28,7 @@ BEGIN  {
    defined $alt_locale
        or plan skip_all => "cannot find alternative language for tests";
 
-   plan tests => 11;
+   plan tests => 10;
 }
 
 ok(1, "alt locale: $alt_locale");
@@ -45,13 +45,6 @@ ok(defined $err_posix, $err_posix);  # english
 
 my $change = setlocale LC_ALL, $alt_locale;
 ok(defined $change, "returned change to alternative locale");
-if($change eq $alt_locale)
-{   ok(1, "WARNING: setlocale() returns new locale value, not the previous");
-  warn "*** WARNING: setlocale() returns new locale value, not the previous\n";
-}
-else
-{   ok(1, "result is old value");
-}
 
 is(setlocale(LC_ALL), $alt_locale, "set to $alt_locale successful?");
 $! = 2;

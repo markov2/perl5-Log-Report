@@ -20,6 +20,12 @@ my %msgids =
  , N__w => [1,    0,    0,   0,   1]
  );
 
+my $quote_mistake;
+{   my @q    = map quotemeta, keys %msgids;
+    local $" = '|';
+    $quote_mistake = qr/^(?:@q)\'/;
+}
+
 =chapter NAME
 Log::Report::Extract::PerlPPI - Collect translatable strings from Perl using PPI
 
@@ -66,7 +72,7 @@ sub process($@)
         or error __x"PPI only supports iso-8859-1 (latin-1) on the moment";
 
     my $doc = PPI::Document->new($fn, readonly => 1)
-        or fault __x"cannot read from file {filename}", filename => $fn;
+        or fault __x"cannot read perl from file {filename}", filename => $fn;
 
     my @childs = $doc->schildren;
     if(@childs==1 && ref $childs[0] eq 'PPI::Statement')
@@ -105,38 +111,44 @@ sub process($@)
             $self->_reset($domain, $fn);
         }
 
-        $node->find_any
-         ( sub { # look for the special translation markers
-                 $_[1]->isa('PPI::Token::Word') or return 0;
+        $node->find_any( sub {
+            # look for the special translation markers
+            $_[1]->isa('PPI::Token::Word') or return 0;
 
-                 my $node = $_[1];
-                 my $def  = $msgids{$node->content}  # get __() description
-                     or return 0;
+            my $node = $_[1];
+            my $word = $node->content;
+            if($word =~ $quote_mistake)
+            {   warning __x"use double quotes not single, in {string} on {file} line {line}"
+                  , string => $word, fn => $fn, line => $node->location->[0];
+                return 0;
+            }
 
-                 my @msgids = $self->_get($node, @$def)
-                     or return 0;
+            my $def  = $msgids{$word}  # get __() description
+                or return 0;
 
-                 my $line = $node->location->[0];
-                 unless($domain)
-                 {   mistake __x
-                         "no text-domain for translatable at {fn} line {line}"
-                        , fn => $fn, line => $line;
-                     return 0;
-                 }
+            my @msgids = $self->_get($node, @$def)
+                or return 0;
 
-                 if($def->[4])    # must split?  Bulk conversion strings
-                 {   my @words = map {split} @msgids;
-                     $self->store($domain, $fn, $line, $_) for @words;
-                     $msgs_found += @words;
-                 }
-                 else
-                 {   $self->store($domain, $fn, $line, @msgids);
-                     $msgs_found += 1;
-                 }
+            my $line = $node->location->[0];
+            unless($domain)
+            {   mistake __x
+                    "no text-domain for translatable at {fn} line {line}"
+                  , fn => $fn, line => $line;
+                return 0;
+            }
 
-                 0;  # don't collect
-               }
-         );
+            if($def->[4])    # must split?  Bulk conversion strings
+            {   my @words = map {split} @msgids;
+                $self->store($domain, $fn, $line, $_) for @words;
+                $msgs_found += @words;
+            }
+            else
+            {   $self->store($domain, $fn, $line, @msgids);
+                $msgs_found += 1;
+            }
+
+            0;  # don't collect
+       });
     }
 
     $msgs_found;
