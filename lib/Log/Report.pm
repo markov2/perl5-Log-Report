@@ -23,9 +23,9 @@ require Log::Report::Dispatcher;
 require Log::Report::Dispatcher::Try;
 
 # See section Run modes
-my %is_reason = map {($_=>1)} @Log::Report::Util::reasons;
-my %is_fatal  = map {($_=>1)} qw/ERROR FAULT FAILURE PANIC/;
-my %use_errno = map {($_=>1)} qw/FAULT ALERT FAILURE/;
+my %is_reason = map +($_=>1), @Log::Report::Util::reasons;
+my %is_fatal  = map +($_=>1), qw/ERROR FAULT FAILURE PANIC/;
+my %use_errno = map +($_=>1), qw/FAULT ALERT FAILURE/;
 
 sub _whats_needed(); sub dispatcher($@);
 sub trace(@); sub assert(@); sub info(@); sub notice(@); sub warning(@);
@@ -102,8 +102,11 @@ Log::Report - report a problem, with exceptions and translation support
  fault "cannot allocate $size bytes";      # no translation
  fault __x "cannot allocate $size bytes";  # wrong, not static
 
- # translation depends on count.
+ # translation depends on count
  print __xn("found one file", "found {_count} files", @files), "\n";
+
+ # borrow from an other textdomain (see M<Log::Report::Message>)
+ print __x(+"errors in {line}", _domain => 'global', line => $line);
 
  # catch errors (implements hidden eval/die)
  try { error };
@@ -830,6 +833,12 @@ This sets the default mode for all created dispatchers.  You can
 also selectively change the output mode, like
  dispatcher PERL => 'default', mode => 3
 
+=option  import FUNCTION|ARRAY
+=default import C<undef>
+[0.998] When not specified, the C<syntax> option determines the list
+of functions which are being exported.  With this option, the C<syntax>
+option is ignored and only the specified FUNCTION(s) are imported.
+
 =examples of import
  use Log::Report mode => 3;     # or 'DEBUG'
 
@@ -838,11 +847,13 @@ also selectively change the output mode, like
  use Log::Report 'my-domain'    # in one package, top of distr
   , mode            => 'VERBOSE'
   , translator      => Log::Report::Translator::POT->new
-     ( lexicon => '/home/me/locale'  # bindtextdomain
-     , charset => 'UTF-8'            # codeset
+     ( lexicon => '/home/mine/locale'  # bindtextdomain
+     , charset => 'UTF-8'              # codeset
      )
   , native_language => 'nl_NL'  # untranslated msgs are Dutch
   , syntax          => 'REPORT';# report ERROR, not error()
+
+ use Log::Report import => 'try';      # or ARRAY of functions
 
 =cut
 
@@ -851,7 +862,6 @@ sub import(@)
 
     my $textdomain = @_%2 ? shift : undef;
     my %opts   = @_;
-    my $syntax = delete $opts{syntax} || 'SHORT';
     my ($pkg, $fn, $linenr) = caller;
 
     if(my $trans = delete $opts{translator})
@@ -876,14 +886,21 @@ sub import(@)
 
     push @{$domain_start{$fn}}, [$linenr => $textdomain];
 
-    my @export = (@functions, @make_msg);
-
-    if($syntax eq 'SHORT')
-    {   push @export, @reason_functions
+    my @export;
+    if(my $in = $opts{import})
+    {   push @export, ref $in eq 'ARRAY' ? @$in : $in;
     }
-    elsif($syntax ne 'REPORT' && $syntax ne 'LONG')
-    {   error __x"syntax flag must be either SHORT or REPORT, not `{syntax}'"
-          , syntax => $syntax;
+    else
+    {   push @export, @functions, @make_msg;
+
+        my $syntax = delete $opts{syntax} || 'SHORT';
+        if($syntax eq 'SHORT')
+        {   push @export, @reason_functions
+        }
+        elsif($syntax ne 'REPORT' && $syntax ne 'LONG')
+        {   error __x"syntax flag must be either SHORT or REPORT, not `{flag}'"
+              , flag => $syntax;
+        }
     }
 
     $class->export_to_level(1, undef, @export);

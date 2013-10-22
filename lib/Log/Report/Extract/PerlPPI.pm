@@ -33,18 +33,69 @@ Log::Report::Extract::PerlPPI - Collect translatable strings from Perl using PPI
  my $ppi = Log::Report::Extract::PerlPPI->new
   ( lexicon => '/usr/share/locale'
   );
- $ppi->process('lib/My/Pkg.pm');  # many times
- $ppi->showStats;
+ $ppi->process('lib/My/Pkg.pm');  # call for each .pm file
+ $ppi->showStats;                 # optional
  $ppi->write;
 
  # See script  xgettext-perl
 
 =chapter DESCRIPTION
+
 This module helps maintaining the POT files, updating the list of
 message-ids which are kept in them.  After initiation, the M<process()>
 method needs to be called with all files which changed since last processing
-and the existing PO files will get updated accordingly.  If no translations
-exist yet, one C<textdomain/xx.po> file will be created.
+and the existing PO files will get updated accordingly.
+
+If no translations exist yet, one C<$lexicon/$domain.po> file will be
+created.  If you want to start a translation, copy C<$lexicon/$domain.po>
+to C<$lexicon/$domain/$lang.po> and edit that file.  You may use
+C<poedit> to edit po-files.  Do not forget to add the new po-file to
+your distribution (MANIFEST)
+
+=section The extraction process
+
+All pm-files need to be processed in one go: no incremental processing!
+
+The Perl source is parsed using M<PPI>, which does understand Perl syntax
+quite well, but does not support all features.
+
+Automatically, the textdomain of the translations is discovered, as
+first parameter of C<use Log::Report>.  You may switch textdomain inside
+one pm-file.
+
+When all files have been processed, during the M<write()>, all existing
+po-files for all discovered textdomains will get updated.  Not only the
+C<$lexicon/$domain.po> template, but also all C<$lexicon/$domain/$lang.po>
+will be replaced.  When a msgid has disappeared, existing translations
+will get disabled, not removed.  New msgids will be added and flagged
+"fuzzy".
+
+=subsection What is extracted?
+
+This script will extract the msgids used in C<__()>, C<__x()>, C<__xn()>,
+and C<__n()> (implemented by M<Log::Report>) For instance
+
+  __x"msgid", @more
+  __x'msgid', @more  <--- no!  syntax error!
+  __x("msgid", @more)
+  __x('msgid', @more)
+  __x(msgid => @more)
+
+Besides, there are some helpers which are no-ops in the code, only to fill
+the po-tables: C<N__()>, C<N__n()>, C<N__()>
+
+=subsection What is not extracted?
+
+B<Not> extracted are the usage of anything above, where the first
+parameter is not a simple string.  Not extracted are
+
+  __x($format, @more)
+  __x$format, @more
+  __x(+$format, _domain => 'other domain', @more)
+  __x($first.$second, @more)
+
+In these cases, you have to use C<N__()> functions to declare the possible
+values of C<$format>.
 
 =chapter METHODS
 
@@ -126,18 +177,20 @@ sub process($@)
             my $def  = $msgids{$word}  # get __() description
                 or return 0;
 
-            my @msgids = $self->_get($node, @$def)
+            my @msgids = $self->_get($node, $domain, $word, $def)
                 or return 0;
+
+            my ($nr_msgids, $has_count, $has_opts, $has_vars,$do_split) = @$def;
 
             my $line = $node->location->[0];
             unless($domain)
-            {   mistake __x
-                    "no text-domain for translatable at {fn} line {line}"
+            {   mistake
+                    __x"no text-domain for translatable at {fn} line {line}"
                   , fn => $fn, line => $line;
                 return 0;
             }
 
-            if($def->[4])    # must split?  Bulk conversion strings
+            if($do_split)    #  Bulk conversion strings
             {   my @words = map {split} @msgids;
                 $self->store($domain, $fn, $line, $_) for @words;
                 $msgs_found += @words;
@@ -154,9 +207,10 @@ sub process($@)
     $msgs_found;
 }
 
-sub _get($@)
-{   my ($self, $node, $msgids, $count, $opts, $vars, $split) = @_;
-    my $list_only = ($msgids > 1) || $count || $opts || $vars;
+sub _get($$$$)
+{   my ($self, $node, $domain, $function, $def) = @_;
+    my ($nr_msgids, $has_count, $opts, $vars, $split) = @$def;
+    my $list_only = ($nr_msgids > 1) || $has_count || $opts || $vars;
     my $expand    = $opts || $vars;
 
     my @msgids;
@@ -167,11 +221,12 @@ sub _get($@)
     $first = $first->schild(0)
         if $first->isa('PPI::Statement::Expression');
 
-    while(defined $first && $msgids > @msgids)
+    my $line;
+    while(defined $first && $nr_msgids > @msgids)
     {   my $msgid;
         my $next  = $first->snext_sibling;
         my $sep   = $next && $next->isa('PPI::Token::Operator') ? $next : '';
-        my $line  = $first->location->[0];
+        $line     = $first->location->[0];
 
         if($first->isa('PPI::Token::Quote'))
         {   last if $sep !~ m/^ (?: | \=\> | [,;:] ) $/x;
@@ -201,9 +256,15 @@ sub _get($@)
           , line => $line if $msgid =~ s/(?<!\\)\n$//;
 
         push @msgids, $msgid;
-        last if $msgids==@msgids || !$sep;
+        last if $nr_msgids==@msgids || !$sep;
 
         $first = $sep->snext_sibling;
+    }
+    @msgids or return ();
+    my $next = $first->snext_sibling;
+    if($has_count && !$next)
+    {   error __x"count missing in {function} in line {line}"
+           , function => $function, line => $line;
     }
 
     @msgids;

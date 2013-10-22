@@ -12,23 +12,24 @@ use File::Find   qw/find/;
 my $lang     = 'perl';
 my $version  = 0;
 my $help     = 0;
-my ($from, $output);
+my ($from, $output, $fn_match);
 my ($char_in, $char_out, $domain, $mode, $template);
 
 GetOptions
-   'files-from|f=s'    => \$from
- , 'output-dir|p=s'    => \$output
- , 'domain|d=s'        => \$domain
- , 'language|L=s'      => \$lang
+   'domain|d=s'        => \$domain
+ , 'files-from|f=s'    => \$from      # file with filenames (MANIFEST?) or '-'
+ , 'files-match|m=s'   => \$fn_match  # select filename is dir
  , 'from-code=s'       => \$char_in
- , 'to-code=s'         => \$char_out  # missing in xgettext?
- , 'version|V'         => \$version
  , 'help|h'            => \$help
- , 'template|t=s'      => \$template  # pattern in ::Template
- , 'verbose=i'         => \$mode
- , 'v+'                => \$mode
+ , 'language|L=s'      => \$lang
  , 'mode=s'            => \$mode
-or exit(1);
+ , 'output-dir|p=s'    => \$output
+ , 'template|t=s'      => \$template  # pattern in ::Template
+ , 'to-code=s'         => \$char_out  # missing in xgettext?
+ , 'verbose=i'         => \$mode
+ , 'version|V'         => \$version
+ , 'v+'                => \$mode
+   or exit(1);
 
 if($version)
 {   print "Log::Report $Log::Report::VERSION\n";
@@ -61,11 +62,16 @@ if(defined $from)
 {   !@ARGV
         or error __x"do not combine command-line filenames with --files-from";
 
-    open FILENAMES, '<:raw', $from
-        or fault __x"cannot read filename list from {fn}", fn => $from;
+    if($from eq '-')
+    {   @filenames = <STDIN>;
+    }
+    else
+    {   open FILENAMES, '<:raw', $from
+            or fault __x"cannot read filename list from {fn}", fn => $from;
 
-    @filenames = <FILENAMES>;
-    close FILENAMES;
+        @filenames = <FILENAMES>;
+        close FILENAMES;
+    }
     chomp(@filenames);
 }
 elsif(@ARGV)
@@ -86,11 +92,18 @@ if($template)
       ( lexicon => $output
       , charset => $char_out
       , domain  => $domain
-      , pattern => 'TT2-loc'
+      , pattern => $template
       );
 
-    $extr->process($_, charset => $char_in)
-        for @filenames;
+    $fn_match ||= qr/\.tt2?$/i;
+
+    foreach my $filename (@filenames)
+    {   unless($filename =~ $fn_match)
+        {   info __x"skipping (not a template) {fn}", fn => $filename;
+            next;
+        }
+        $extr->process($_, charset => $char_in)
+    }
 }
 else
 {   # process the pm files
@@ -102,8 +115,9 @@ else
       , charset => $char_out
       );
 
+    $fn_match ||= qr/\.p[lm]$/i;
     foreach my $filename (@filenames)
-    {   unless($filename =~ m/\.p[lm]$/i)
+    {   unless($filename =~ $fn_match)
         {   info __x"skipping (not perl) {fn}", fn => $filename;
             next;
         }

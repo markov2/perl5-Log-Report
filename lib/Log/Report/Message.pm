@@ -81,8 +81,18 @@ translated C<_msgid> string.
 Indicates whether variables are to be filled-in.
 
 =option  _domain STRING
-=default _domain from C<use>
+=default _domain <from "use Log::Report">
 The text-domain (translation table) to which this C<_msgid> belongs.
+
+With this parameter, your can "borrow" translations from other textdomains.
+Be very careful with this (although there are good use-cases)  The xgettext
+msgid extractor may add the used msgid to this namespace as well.  To
+avoid that, add a harmless '+':
+
+  print __x(+"errors", _domain => 'global');
+
+The extractor will not take the msgid when it is an expression.  The '+'
+has no effect on the string at runtime.
 
 =option  _count INTEGER|ARRAY|HASH
 =default _count C<undef>

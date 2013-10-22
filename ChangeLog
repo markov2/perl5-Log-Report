@@ -5,6 +5,17 @@ TODO:
   . connect to Message::Passing framework
   . extract a Log::Report::Optional distribution
 
+version 0.998: Tue Oct 22 09:55:06 CEST 2013
+	Fixes:
+	- xgettext-perl: actually use the provided template pattern
+	- xgettext-perl: only take template from .tt and .tt2 files
+	- xgettext-perl: accept '-' (STDIN) for --from
+
+	Improvements:
+	- more documentation about the PPI extraction process, and how
+	  to use ::Message::new(_domain)
+	- Log::Report import option 'import'
+
 version 0.997: Fri Sep 27 17:37:11 CEST 2013
 	Fixes:
 	- error about double definedness of settings, dependent on the
@@ -13,7 +24,8 @@ version 0.997: Fri Sep 27 17:37:11 CEST 2013
 
 	Improvements:
 	- xgettext-perl: do not PPI files unless they are Perl
-	- xgettext-perl: do warn when ' are used, needs " with __x
+	- xgettext-perl: do warn when ' (single quotes) are used, needs
+	  " (double quote) with __x
 	- __x() now can have a _domain parameter
 
 version 0.996: Wed Sep  4 17:23:11 CEST 2013
