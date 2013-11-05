@@ -157,6 +157,19 @@ for  C<< report {to => NAME}, ... >>  See M<to()>
 =option  _join STRING
 =default _join C<$">  C<$LIST_SEPARATOR>
 Which STRING to be used then an ARRAY is being filled-in.
+
+=option  _lang ISO
+=default _lang <from locale>
+[1.00] Override language setting from locale, for instance because that
+is not configured correctly (yet).  This does not extend to prepended
+or appended translated message object.
+
+=option  _context WORDS|ARRAY
+=default _context C<undef>
+[1.00] Set keywords which can be used to select alternatives
+between translations.  Read the DETAILS section in
+M<Log::Report::Message::Context>
+
 =cut
 
 sub new($@)
@@ -180,6 +193,7 @@ sub new($@)
     if($s{_plural})
     {   s/\s+$//, s/^\s+// for $s{_plural};
     }
+
     bless \%s, $class;
 }
 
@@ -244,6 +258,9 @@ Returns the domain of the first translatable string in the structure.
 =method count
 Returns the count, which is used to select the translation
 alternatives.
+
+=method context
+Returns an HASH if there is a context defined for this message.
 =cut
 
 sub prepend() {shift->{_prepend}}
@@ -251,6 +268,7 @@ sub msgid()   {shift->{_msgid}}
 sub append()  {shift->{_append}}
 sub domain()  {shift->{_domain}}
 sub count()   {shift->{_count}}
+sub context() {shift->{_context}}
 
 =method classes
 Returns the LIST of classes which are defined for this message; message
@@ -340,7 +358,7 @@ sub toString(;$)
 
     # create a translation
     my $text = Log::Report->translator($self->{_domain})
-      ->translate($self, $locale);
+      ->translate($self, $self->{_lang} || $locale, $self->{_context});
   
     defined $text or return ();
 
@@ -632,6 +650,7 @@ You can also write an incomplete translation:
  }
 
 In either case, the translation will be looked-up only once.
+
 =cut
 
 1;

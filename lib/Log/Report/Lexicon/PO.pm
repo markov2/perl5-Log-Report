@@ -76,7 +76,6 @@ sub init($)
     defined($self->{msgid} = delete $args->{msgid})
        or error "no msgid defined for PO";
 
-    $self->{msgctxt}  = delete $args->{msgctxt};
     $self->{plural}   = delete $args->{msgid_plural};
     $self->{msgstr}   = delete $args->{msgstr};
 
@@ -104,7 +103,7 @@ Returns the actual msgid, which cannot be C<undef>.
 Returns the message context, if provided.
 =cut
 
-sub msgid() {shift->{msgid}}
+sub msgid()   {shift->{msgid}}
 sub msgctxt() {shift->{msgctxt}}
 
 =method plural [STRING]

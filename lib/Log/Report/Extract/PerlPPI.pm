@@ -253,7 +253,7 @@ sub _get($$$$)
         else {last}
 
         mistake __x "new-line is added automatically (found in line {line})"
-          , line => $line if $msgid =~ s/(?<!\\)\n$//;
+          , line => $line if !$split && $msgid =~ s/(?<!\\)\n$//;
 
         push @msgids, $msgid;
         last if $nr_msgids==@msgids || !$sep;

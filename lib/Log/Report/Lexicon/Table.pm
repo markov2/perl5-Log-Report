@@ -44,12 +44,12 @@ sub init($) {shift}
 Lookup the M<Log::Report::Lexicon::PO> with the STRING.
 Returns C<undef> when not defined.
 
-=method msgstr MSGID, [COUNT]
+=method msgstr MSGID, [COUNT, CONTEXT]
 Returns the translated string for MSGID.  When not specified, COUNT is 1.
 =cut
 
-sub msgid($)    {panic "not implemented"}
-sub msgstr($;$) {panic "not implemented"}
+sub msgid($)     {panic "not implemented"}
+sub msgstr($;$$) {panic "not implemented"}
 
 #------------------
 =subsection Administration

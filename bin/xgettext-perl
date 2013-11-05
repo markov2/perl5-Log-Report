@@ -45,7 +45,8 @@ __HELP
 }
 
 # all output to stderr
-dispatcher FILE => stderr => to => \*STDERR, mode => $mode;
+dispatcher FILE => stderr => to => \*STDERR
+  , mode => $mode, format => sub {shift};
 dispatcher close => 'default';
 
 $template || $lang eq 'perl'

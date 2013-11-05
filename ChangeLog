@@ -5,6 +5,22 @@ TODO:
   . connect to Message::Passing framework
   . extract a Log::Report::Optional distribution
 
+version 0.999:  (THIS IS THE UNRELEASED VERSION)
+	Changes:
+	- try() immediately passes on all non-fatals to the active
+	  dispatchers.
+
+	Fixes:
+	- do not complain if N__w ends on \n
+
+	Improvements:
+	- add MojoX::Log::Report
+	- ::Dispatcher::File uses locking to permit parallel writes
+	- ::Dispatcher::File::new(format)
+	- ::Dispatcher::File::rotate()
+	- ::Dispatcher::Log4perl more docs
+	- ::Message::new(_lang) overrides language to be used in translation
+
 version 0.998: Tue Oct 22 09:55:06 CEST 2013
 	Fixes:
 	- xgettext-perl: actually use the provided template pattern

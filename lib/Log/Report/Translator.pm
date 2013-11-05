@@ -3,13 +3,12 @@ package Log::Report::Translator;
 use warnings;
 use strict;
 
-use File::Spec ();
-
-use Log::Report 'log-report', syntax => 'SHORT';
+use Log::Report 'log-report';
 
 use Log::Report::Lexicon::Index ();
 use Log::Report::Message;
 
+use File::Spec ();
 my %lexicons;
 
 sub _filename_to_lexicon($);
@@ -41,6 +40,7 @@ language packs are not installed.
 =section Constructors
 
 =c_method new OPTIONS
+
 =option  lexicons DIRECTORY|ARRAY-of-DIRECTORYs
 =default lexicons <see text>
 The DIRECTORY where the translations can be found.  See
@@ -109,7 +109,7 @@ sub charset() {shift->{charset}}
 
 =section Translating
 
-=method translate MESSAGE, [LANGUAGE]
+=method translate MESSAGE, [LANGUAGE, CONTEXT]
 Returns the translation of the MESSAGE, a C<Log::Report::Message> object,
 based on the current locale.
 
@@ -119,7 +119,7 @@ message object, for performance reasons.
 
 # this is called as last resort: if a translator cannot find
 # any lexicon or has no matching language.
-sub translate($)
+sub translate($$)
 {   my $msg = $_[1];
 
       defined $msg->{_count} && $msg->{_count} != 1

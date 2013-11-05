@@ -4,10 +4,10 @@ use strict;
 package Log::Report::Dispatcher::Log4perl;
 use base 'Log::Report::Dispatcher';
 
-use Log::Report 'log-report', syntax => 'SHORT';
-use Log::Report::Util  qw/@reasons expand_reasons/;
+use Log::Report 'log-report';
 
-use Log::Log4perl qw/:levels/;
+use Log::Report::Util qw/@reasons expand_reasons/;
+use Log::Log4perl     qw/:levels/;
 
 my %default_reasonToLevel =
  ( TRACE   => $DEBUG
@@ -23,16 +23,18 @@ my %default_reasonToLevel =
  , PANIC   => $FATAL
  );
 
-@reasons != keys %default_reasonToLevel
-    and panic __"Not all reasons have a default translation";
+@reasons==keys %default_reasonToLevel
+    or panic __"Not all reasons have a default translation";
 
 =chapter NAME
 Log::Report::Dispatcher::Log4perl - send messages to Log::Log4perl back-end
 
 =chapter SYNOPSIS
- dispatcher Log::Log4perl => 'logger', accept => 'NOTICE-'
-   , config => "$ENV{HOME}/.log.conf"
-   , to_level => [ 'ALERT-' => $ERROR ];
+
+ # start using log4perl via a config file
+ dispatcher Log::Log4perl => 'logger'
+   , accept => 'NOTICE-'
+   , config => "$ENV{HOME}/.log.conf";
 
  # disable default dispatcher
  dispatcher close => 'logger';
@@ -54,32 +56,23 @@ Log::Report::Dispatcher::Log4perl - send messages to Log::Log4perl back-end
 This dispatchers produces output tot syslog, based on the C<Sys::Log4perl>
 module (which will not be automatically installed for you).
 
-The REASON for a message often uses names which are quite similar to the
-log-levels used by M<Log::Dispatch>.  However: they have a different
-approach.  The REASON of Log::Report limits the responsibility of the
-programmer to indicate the cause of the message: whether it was able to
-handle a certain situation.  The Log::Dispatch levels are there for the
-user's of the program.  However: the programmer does not known anything
-about the application (in the general case).  This is cause of much of
-the trickery in Perl programs.
+The REASONs for a message in M<Log::Report> are names quite similar to
+the log-levels used by M<Log::Log4perl>.  The default mapping is list
+below.  You can change the mapping using M<new(to_level)>.
 
-The default translation table is list below.  You can change the mapping
-using M<new(to_level)>.  See example in SYNOPSIS.
-
-  TRACE   => $DEBUG  ERROR   => $ERROR
-  ASSERT  => $DEBUG  FAULT   => $ERROR
-  INFO    => $INFO   ALERT   => $FATAL
-  NOTICE  => $INFO   FAILURE => $FATAL
-  WARNING => $WARN   PANIC   => $FATAL
+  TRACE   => $DEBUG    ERROR   => $ERROR
+  ASSERT  => $DEBUG    FAULT   => $ERROR
+  INFO    => $INFO     ALERT   => $FATAL
+  NOTICE  => $INFO     FAILURE => $FATAL
+  WARNING => $WARN     PANIC   => $FATAL
   MISTAKE => $WARN
-
 
 =chapter METHODS
 
 =section Constructors
 
 =c_method new TYPE, NAME, OPTIONS
-The Log::Log4perl infrastructure has all information in a configuration
+The M<Log::Log4perl> infrastructure has all settings in a configuration
 file.  In that file, you should find a category with the NAME.
 
 =option  to_level ARRAY-of-PAIRS
@@ -148,7 +141,7 @@ sub log($$$$)
     my $level = $self->reasonToLevel($_[1]);
 
     local $Log::Log4perl::caller_depth
-              = $Log::Log4perl::caller_depth + 3;
+        = $Log::Log4perl::caller_depth + 3;
 
     $self->appender->log($level, $text);
     $self;
@@ -157,6 +150,16 @@ sub log($$$$)
 =method reasonToLevel REASON
 Returns a level which is understood by Log::Dispatch, based on
 a translation table.  This can be changed with M<new(to_level)>.
+
+=example
+
+ use Log::Log4perl     qw/:levels/;
+
+ # by default, ALERTs are output as $FATAL
+ dispatcher Log::Log4perl => 'logger'
+   , to_level => [ ALERT => $ERROR, ]
+   , ...;
+
 =cut
 
 sub reasonToLevel($) { $_[0]->{level}{$_[1]} }

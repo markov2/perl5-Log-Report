@@ -212,12 +212,12 @@ sub msgid($)
     $self->{index}{$msgid} = @msgstr > 1 ? \@msgstr : $msgstr[0]; 
 }
 
-=method msgstr MSGID, [COUNT]
+=method msgstr MSGID, [COUNT, CONTEXT]
 Returns the translated string for MSGID.  When not specified, COUNT is 1
 (the singular form).
 =cut
 
-sub msgstr($;$)
+sub msgstr($;$$)
 {   my $po   = $_[0]->msgid($_[1])
         or return undef;
 

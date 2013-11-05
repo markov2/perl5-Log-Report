@@ -119,11 +119,11 @@ sub init($)
 
     $self->{index} = $args->{index} || {};
     $self->_createHeader
-     ( project => $domain . (defined $version ? " $version" : '')
-     , forms   => $forms
-     , charset => $args->{charset}
-     , date    => $args->{date}
-     );
+      ( project => $domain . (defined $version ? " $version" : '')
+      , forms   => $forms
+      , charset => $args->{charset}
+      , date    => $args->{date}
+      );
 
     $self->setupPluralAlgorithm;
     $self;
@@ -253,15 +253,24 @@ when not defined.
 
 sub msgid($) { $_[0]->{index}{$_[1]} }
 
-=method msgstr MSGID, [COUNT]
+=method msgstr MSGID, [COUNT, CONTEXT]
 Returns the translated string for MSGID.  When COUNT is not specified, the
 translation string related to "1" is returned.
 =cut
 
-sub msgstr($;$)
+sub msgstr($;$$)
 {   my $self = shift;
     my $po   = $self->msgid(shift)
         or return undef;
+
+    if(ref $po eq 'ARRAY')
+    {   my $use;
+        if(my $ctxt = shift)
+        {   $use = first { $_->contextMatch($ctxt) } @$po;
+        }
+
+        $po      = $use || $po->[0];
+    }
 
     $po->msgstr($self->pluralIndex(defined $_[0] ? $_[0] : 1));
 }

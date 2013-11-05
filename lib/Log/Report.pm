@@ -5,7 +5,8 @@ use strict;
 package Log::Report;
 use base 'Exporter';
 
-use List::Util qw/first/;
+use List::Util   qw/first/;
+use Scalar::Util qw/blessed/;
 
 # domain 'log-report' via work-arounds:
 #     Log::Report cannot do "use Log::Report"
@@ -14,6 +15,7 @@ my @make_msg         = qw/__ __x __n __nx __xn N__ N__n N__w/;
 my @functions        = qw/report dispatcher try/;
 my @reason_functions = qw/trace assert info notice warning
    mistake error fault alert failure panic/;
+my @nested_tries;
 
 our @EXPORT_OK = (@make_msg, @functions, @reason_functions);
 
@@ -228,9 +230,12 @@ sub report($@)
     my $reason = shift;
     my $stop = exists $opts->{is_fatal} ? $opts->{is_fatal} :$is_fatal{$reason};
 
+    my $try  = $nested_tries[-1];
+    my @disp = ($stop && $try) ? () : @{$reporter->{needs}{$reason} || []};
+    push @disp, $try if defined $try && $try->needs($reason);
+
     # return when no-one needs it: skip unused trace() fast!
-    my $disp = $reporter->{needs}{$reason};
-    $disp || $stop or return;
+    @disp || $stop or return;
 
     $is_reason{$reason}
         or error __x"token '{token}' not recognized as reason", token=>$reason;
@@ -241,13 +246,13 @@ sub report($@)
     if(my $to = delete $opts->{to})
     {   # explicit destination, still disp may not need it.
         if(ref $to eq 'ARRAY')
-        {   my %disp = map {$_->name => $_} @$disp;
-            $disp    = [ grep defined, @disp{@$to} ];
+        {   my %disp = map +($_->name => $_), @disp;
+            @disp    = grep defined, @disp{@$to};
         }
         else
-        {   $disp    = [ grep $_->name eq $to, @$disp ];
+        {   @disp    = grep $_->name eq $to, @disp;
         }
-        @$disp || $stop
+        @disp || $stop
             or return;
     }
 
@@ -269,15 +274,15 @@ sub report($@)
     }
 
     if(my $to = $message->to)
-    {   $disp    = [ grep $_->name eq $to, @$disp ];
-        @$disp or return;
+    {   @disp = grep $_->name eq $to, @disp;
+        @disp or return;
     }
 
     my @last_call;     # call Perl dispatcher always last
     if($reporter->{filters})
     {
       DISPATCHER:
-        foreach my $d (@$disp)
+        foreach my $d (@disp)
         {   my ($r, $m) = ($reason, $message);
             foreach my $filter ( @{$reporter->{filters}} )
             {   next if keys %{$filter->[1]} && !$filter->[1]{$d->name};
@@ -291,7 +296,7 @@ sub report($@)
         }
     }
     else
-    {   foreach my $d (@$disp)
+    {   foreach my $d (@disp)
         {   if($d->isa('Log::Report::Dispatcher::Perl'))
                  { @last_call = ($d, { %$opts }, $reason, $message) }
             else { $d->log($opts, $reason, $message) }
@@ -313,7 +318,7 @@ sub report($@)
         die;   # $@->PROPAGATE() will be called, some eval will catch this
     }
 
-    @$disp;
+    @disp;
 }
 
 =function dispatcher (TYPE, NAME, OPTIONS)|(COMMAND => NAME, [NAMEs])
@@ -395,6 +400,7 @@ sub dispatcher($@)
     if($command eq 'list')
     {   mistake __"the 'list' sub-command doesn't expect additional parameters"
            if @_;
+        return $nested_tries[-1] if @nested_tries;
         return values %{$reporter->{dispatchers}};
     }
     if($command eq 'needs')
@@ -508,26 +514,27 @@ sub try(&@)
       and report {location => [caller 0]}, PANIC =>
           __x"odd length parameter list for try(): forgot the terminating ';'?";
 
-    local $reporter->{dispatchers} = undef;
-    local $reporter->{needs};
-
-    my $disp = dispatcher TRY => 'try', @_;
+    my $disp = Log::Report::Dispatcher::Try->new(TRY => 'try', @_);
+    push @nested_tries, $disp;
 
     my ($ret, @ret);
     if(!defined wantarray)  { eval { $code->() } } # VOID   context
     elsif(wantarray) { @ret = eval { $code->() } } # LIST   context
     else             { $ret = eval { $code->() } } # SCALAR context
 
-    my $err = $@;
-    if(   $err
-       && !$disp->wasFatal
-       && !UNIVERSAL::isa($err, 'Log::Report::Exception'))
+    my $err          = $@;
+    pop @nested_tries;
+
+    my $is_exception = blessed $err && $err->isa('Log::Report::Exception');
+    if($err && !$is_exception && !$disp->wasFatal)
     {   eval "require Log::Report::Die"; panic $@ if $@;
         ($err, my($opts, $reason, $text)) = Log::Report::Die::die_decode($err);
         $disp->log($opts, $reason, __$text);
     }
 
-    $disp->died($err);
+    $disp->died($err)
+        if $err && ($is_exception ? $err->isFatal : 1);
+
     $@ = $disp;
 
     wantarray ? @ret : $ret;

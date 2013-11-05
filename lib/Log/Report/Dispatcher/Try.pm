@@ -84,13 +84,14 @@ use overload
 =option  died STRING
 =default died C<undef>
 The exit string ($@) of the eval'ed block.
+
 =cut
 
 sub init($)
 {   my ($self, $args) = @_;
     defined $self->SUPER::init($args) or return;
     $self->{exceptions} = delete $args->{exceptions} || [];
-    $self->{died} = delete $args->{died};
+    $self->{died}       = delete $args->{died};
     $self;
 }
 
@@ -143,12 +144,15 @@ sub log($$$)
     $opts->{stack}    ||= [];
     $opts->{location} ||= '';
 
-    push @{$self->{exceptions}}
-      , Log::Report::Exception->new
-          ( reason      => $reason
-          , report_opts => $opts
-          , message     => $message
-          );
+    my $e = Log::Report::Exception->new
+     ( reason      => $reason
+     , report_opts => $opts
+     , message     => $message
+     );
+
+    my $is_fatal = exists $opts->{is_fatal} ? $opts->{is_fatal} : $e->isFatal;
+
+    push @{$self->{exceptions}}, $e;
 
     # later changed into nice message
     $self->{died} ||= $opts->{is_fatal};

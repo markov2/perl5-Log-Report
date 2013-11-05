@@ -8,7 +8,7 @@ use Log::Report::Util qw/parse_locale expand_reasons %reason_code
   escape_chars/;
 
 use POSIX      qw/strerror/;
-use List::Util qw/sum/;
+use List::Util qw/sum first/;
 use Encode     qw/find_encoding FB_DEFAULT/;
 use Devel::GlobalDestruction qw/in_global_destruction/;
 
@@ -222,13 +222,21 @@ sub _disabled($)
 }
 
 =method isDisabled
-=method needs
+=method needs [REASON]
 Returns the list with all REASONS which are needed to fulfill this
 dispatcher's needs.  When disabled, the list is empty, but not forgotten.
 =cut
 
 sub isDisabled() {shift->{disabled}}
-sub needs() { $_[0]->{disabled} ? () : @{$_[0]->{needs}} }
+sub needs(;$)
+{   my $self = shift;
+    return () if $self->{disabled};
+    my $needs = $self->{needs};
+    @_ or return @$needs;
+
+    my $need = shift;
+    first {$need eq $_} @$needs;
+}
 
 =section Logging
 

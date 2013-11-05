@@ -4,8 +4,9 @@ use strict;
 package Log::Report::Dispatcher::Syslog;
 use base 'Log::Report::Dispatcher';
 
-use Sys::Syslog qw/:standard :extended :macros/;
-use Log::Report 'log-report', syntax => 'SHORT';
+use Log::Report 'log-report';
+
+use Sys::Syslog        qw/:standard :extended :macros/;
 use Log::Report::Util  qw/@reasons expand_reasons/;
 
 use File::Basename qw/basename/;
@@ -24,8 +25,8 @@ my %default_reasonToPrio =
  , PANIC   => LOG_CRIT
  );
 
-@reasons != keys %default_reasonToPrio
-    and panic __"Not all reasons have a default translation";
+@reasons==keys %default_reasonToPrio
+    or panic __"not all reasons have a default translation";
 
 =chapter NAME
 Log::Report::Dispatcher::Syslog - send messages to syslog

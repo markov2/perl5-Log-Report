@@ -50,8 +50,8 @@ than M<Log::Report::Lexicon::PO>.
 =c_method new OPTIONS
 =cut
 
-sub translate($;$)
-{   my ($self, $msg, $lang) = @_;
+sub translate($;$$)
+{   my ($self, $msg, $lang, $context) = @_;
 
     my $domain = $msg->{_domain};
     my $locale = $lang || setlocale(LC_MESSAGES)
@@ -62,11 +62,8 @@ sub translate($;$)
       ? $self->{pots}{$domain}{$locale}
       : $self->load($domain, $locale);
 
-    defined $pot
-        or return $self->SUPER::translate($msg, $lang);
-
-       $pot->msgstr($msg->{_msgid}, $msg->{_count})
-    || $self->SUPER::translate($msg, $lang);   # default translation is 'none'
+       ($pot ? $pot->msgstr($msg->{_msgid}, $msg->{_count}, $context) : undef)
+    || $self->SUPER::translate($msg, $lang, $context);
 }
 
 sub load($$)

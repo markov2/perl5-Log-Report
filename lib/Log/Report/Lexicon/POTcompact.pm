@@ -128,13 +128,13 @@ Returns C<undef> when the translation is not defined.
 
 sub msgid($) { $_[0]->{index}{$_[1]} }
 
-=method msgstr MSGID, [COUNT]
+=method msgstr MSGID, [COUNT, CONTEXT]
 Returns the translated string for MSGID.  When not specified, COUNT is 1
 (the single form).
 =cut
 
 # speed!!!
-sub msgstr($;$)
+sub msgstr($;$$)
 {   my $po   = $_[0]->{index}{$_[1]}
         or return undef;
 
