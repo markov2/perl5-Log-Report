@@ -46,11 +46,11 @@ for simple things this will do.
 =c_method new TYPE, NAME, OPTIONS
 
 =requires callback CODE
-Your C<callback> is called with four parameters: this dispatcher object,
+Your C<callback> is called with five parameters: this dispatcher object,
 the options, a reason and a message.  The C<options> are the first
 parameter of M<Log::Report::report()> (read over there).  The C<reason>
-is a capitized string like C<ERROR>. Finally, the C<message> is a
-M<Log::Report::Message>.
+is a capitized string like C<ERROR>. Then, the C<message> (is a
+M<Log::Report::Message>).  Finally the text-domain of the message.
 
 =cut
 
@@ -75,7 +75,7 @@ sub callback() {shift->{callback}}
 =section Logging
 =cut
 
-sub log($$$)
+sub log($$$$)
 {   my $self = shift;
     $self->{callback}->($self, @_);
 }

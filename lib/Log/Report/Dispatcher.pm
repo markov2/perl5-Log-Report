@@ -3,7 +3,7 @@ use strict;
 
 package Log::Report::Dispatcher;
 
-use Log::Report 'log-report', syntax => 'SHORT';
+use Log::Report 'log-report';
 use Log::Report::Util qw/parse_locale expand_reasons %reason_code
   escape_chars/;
 
@@ -21,9 +21,10 @@ if($@)
 my %modes = (NORMAL => 0, VERBOSE => 1, ASSERT => 2, DEBUG => 3
   , 0 => 0, 1 => 1, 2 => 2, 3 => 3);
 my @default_accept = ('NOTICE-', 'INFO-', 'ASSERT-', 'ALL');
+my %always_loc = map +($_ => 1), qw/ASSERT ALERT FAILURE PANIC/;
 
 my %predef_dispatchers = map { (uc($_) => __PACKAGE__.'::'.$_) }
-   qw/File Perl Syslog Try Callback/;
+   qw/File Perl Syslog Try Callback Log4perl/;
 
 =chapter NAME
 Log::Report::Dispatcher - manage message dispatching, display or logging
@@ -73,9 +74,9 @@ See M<Log::Report::Util::expand_reasons()> for possible values.  If
 the initial mode for this dispatcher does not need verbose or debug
 information, then those levels will not be accepted.
 
-When the mode equals C<NORMAL> (the default) then C<accept>'s default
-is C<NOTICE->.  In case of C<VERBOSE> it will be C<INFO->, C<ASSERT>
-results in C<ASSERT->, and C<DEBUG> in C<ALL>.
+When the mode equals "NORMAL" (the default) then C<accept>'s default
+is C<NOTICE->.  In case of "VERBOSE"> it will be C<INFO->, C<ASSERT>
+results in C<ASSERT->, and "DEBUG" in C<ALL>.
 
 =option  locale LOCALE
 =default locale <system locale>
@@ -110,10 +111,10 @@ be determined automatically.
 sub new(@)
 {   my ($class, $type, $name, %args) = @_;
 
+    # $type is a class name or predefined name.
     my $backend
       = $predef_dispatchers{$type}          ? $predef_dispatchers{$type}
       : $type->isa('Log::Dispatch::Output') ? __PACKAGE__.'::LogDispatch'
-      : $type->isa('Log::Log4perl')         ? __PACKAGE__.'::Log4perl'
       : $type;
 
     eval "require $backend";
@@ -208,7 +209,7 @@ sub _set_mode($)
 
     $self->{needs} = [ expand_reasons $default_accept[$mode] ];
 
-    info __x"switching to run mode {mode}, accept {accept}"
+    trace __x"switching to run mode {mode}, accept {accept}"
        , mode => $mode, accept => $default_accept[$mode];
 
     $mode;
@@ -222,15 +223,22 @@ sub _disabled($)
 }
 
 =method isDisabled
-=method needs [REASON]
-Returns the list with all REASONS which are needed to fulfill this
-dispatcher's needs.  When disabled, the list is empty, but not forgotten.
 =cut
 
 sub isDisabled() {shift->{disabled}}
+
+=method needs [REASON]
+Returns the list with all REASONS which are needed to fulfill this
+dispatcher's needs.  When disabled, the list is empty, but not forgotten.
+
+[0.999] when only one REASON is specified, it is returned if in the
+list.
+=cut
+
 sub needs(;$)
 {   my $self = shift;
     return () if $self->{disabled};
+
     my $needs = $self->{needs};
     @_ or return @$needs;
 
@@ -240,13 +248,13 @@ sub needs(;$)
 
 =section Logging
 
-=method log HASH-of-OPTIONS, REASON, MESSAGE
+=method log HASH-of-OPTIONS, REASON, MESSAGE, DOMAIN
 This method is called by M<Log::Report::report()> and should not be called
 directly.  Internally, it will call M<translate()>, which does most of
 the work.
 =cut
 
-sub log($$$)
+sub log($$$$)
 {   panic "method log() must be extended per back-end";
 }
 
@@ -256,7 +264,6 @@ this method.  A string is returned, which ends on a new-line, and
 may be multi-line (in case a stack trace is produced).
 =cut
 
-my %always_loc = map +($_ => 1), qw/ASSERT PANIC/;
 sub translate($$$)
 {   my ($self, $opts, $reason, $msg) = @_;
 
@@ -277,12 +284,11 @@ sub translate($$$)
     my $locale
       = defined $msg->msgid
       ? ($opts->{locale} || $self->{locale})      # translate whole
-      : Log::Report->_setting($msg->domain, 'native_language');
+      : (textdomain $msg->domain)->nativeLanguage;
 
-    # not all implementations of setlocale() return the old value
-    my $oldloc = setlocale(&LC_ALL);
-    #setlocale(&LC_ALL, $locale || 'en_US');
-    setlocale(&LC_ALL, $locale) if $locale;
+    my $oldloc = setlocale(&LC_ALL) // "";
+    setlocale(&LC_ALL, $locale)
+        if $locale && $locale ne $oldloc;
 
     my $r = $self->{format_reason}->((__$reason)->toString);
     my $e = $opts->{errno} ? strerror($opts->{errno}) : undef;
@@ -293,11 +299,11 @@ sub translate($$$)
       : $e       ? N__"{message}; {error}"
       :            undef;
 
-    my $text = defined $format
-      ? __x($format, message => $msg->toString, reason => $r, error => $e
-           )->toString
-      : $msg->toString;
-    $text .= "\n";
+    my $text
+      = ( defined $format
+        ? __x($format, message => $msg->toString , reason => $r, error => $e)
+        : $msg
+        )->toString . "\n";
 
     if($show_loc)
     {   if(my $loc = $opts->{location} || $self->collectLocation)
@@ -321,7 +327,7 @@ sub translate($$$)
     }
 
     setlocale(&LC_ALL, $oldloc)
-        if defined $oldloc;
+        if $locale && $locale ne $oldloc;
 
     $self->{charset_enc}->($text);
 }
@@ -549,8 +555,8 @@ Exactly what will be added depends on the actual mode of the dispatcher
  warning  program  T..  S    S    SL   SL
  error    user     TE.  S    S    SL   SC
  fault    system   TE!  S    S    SL   SC
- alert    system   T.!  S    S    SC   SC
- failure  system   TE!  S    S    SC   SC
+ alert    system   T.!  SL   SL   SC   SC
+ failure  system   TE!  SL   SL   SC   SC
  panic    program  .E.  SC   SC   SC   SC
 
  T - usually translated

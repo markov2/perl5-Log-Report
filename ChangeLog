@@ -1,25 +1,56 @@
 
 ==== version history of Log::Report
 
+Unless noted otherwise, these changes where initiated and applied by
+Mark Overmeer.
+
 TODO:
   . connect to Message::Passing framework
-  . extract a Log::Report::Optional distribution
 
-version 0.999:  (THIS IS THE UNRELEASED VERSION)
+version 1.00: Sun Jan  5 17:23:44 CET 2014
+	Split into four components, adding
+	- String::Print for formatting, permits positionals now
+	- Log::Report::Optional as base, super lightweight
+	- Log::Report::Lexicon when you need translations
+
 	Changes:
-	- try() immediately passes on all non-fatals to the active
-	  dispatchers.
+	- configuration from ::translator() into ::Domain::configure()
+	- domains are package bound, not line based.
+	- removed isValidReason() and isFatal(), there are function in ::Util
+	- dispatchers(list) inside try() also lists outside dispatchers
+	- ::Dispatcher::Log4perl::new(accept) defaults to 'ALL', because the
+	  log4perl configuration will select what to log.
+	- exceptions which get re-thrown with an other reason get rewritten.
+	- alert and failure messages will always show their location
+	- "switching to mode" message from level info to trace
 
 	Fixes:
-	- do not complain if N__w ends on \n
+	- do not complain when N__w ends on \n
+	- incorrect initialization of log4perl dispatcher
+	- try inside BEGIN did not catch but died.
+	  rt.cpan.org#91671 [Kenney Westerhof]
 
 	Improvements:
-	- add MojoX::Log::Report
 	- ::Dispatcher::File uses locking to permit parallel writes
 	- ::Dispatcher::File::new(format)
 	- ::Dispatcher::File::rotate()
 	- ::Dispatcher::Log4perl more docs
+	- explain why Log::Log4perl::caller_depth concept is broken
+	- ::Dispatcher::Log4perl support for categories
+	- ::Dispatcher::Syslog::new(include_domain)
+	- ::Dispatcher::Syslog::new(charset)
+	- ::Dispatcher::*::log() knows about textdomain of msg
 	- ::Message::new(_lang) overrides language to be used in translation
+	- add MojoX::Log::Report
+	- new ::Domain, move all domain specific config from ::import() into
+	  that module (and/or ::Minimal::Domain)
+	- ::textdomain()
+	- ::Message overload fallback
+	- remove "syntax => 'SHORT'" from examples: is the default
+	- export level on Log::Report::import()
+
+version 0.999:
+	Not (yet) released
 
 version 0.998: Tue Oct 22 09:55:06 CEST 2013
 	Fixes:

@@ -6,7 +6,7 @@ use strict;
 
 use Test::More tests => 38;
 
-use Log::Report undef, syntax => 'SHORT';
+use Log::Report;
 use POSIX 'locale_h';
 
 setlocale(LC_ALL, 'en_US');

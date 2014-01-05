@@ -5,52 +5,47 @@ use strict;
 package Log::Report;
 use base 'Exporter';
 
-use List::Util   qw/first/;
-use Scalar::Util qw/blessed/;
+use List::Util         qw/first/;
+use Scalar::Util       qw/blessed/;
 
-# domain 'log-report' via work-arounds:
-#     Log::Report cannot do "use Log::Report"
+use Log::Report::Util;
 
+### if you change anything here, you also have to change Log::Report::Minimal
 my @make_msg         = qw/__ __x __n __nx __xn N__ N__n N__w/;
-my @functions        = qw/report dispatcher try/;
+my @functions        = qw/report dispatcher try textdomain/;
 my @reason_functions = qw/trace assert info notice warning
    mistake error fault alert failure panic/;
-my @nested_tries;
 
 our @EXPORT_OK = (@make_msg, @functions, @reason_functions);
 
-require Log::Report::Util;
-require Log::Report::Message;
-require Log::Report::Dispatcher;
-require Log::Report::Dispatcher::Try;
-
-# See section Run modes
-my %is_reason = map +($_=>1), @Log::Report::Util::reasons;
-my %is_fatal  = map +($_=>1), qw/ERROR FAULT FAILURE PANIC/;
-my %use_errno = map +($_=>1), qw/FAULT ALERT FAILURE/;
-
-sub _whats_needed(); sub dispatcher($@);
+sub _whats_needed(); sub dispatcher($@); sub textdomain(@);
 sub trace(@); sub assert(@); sub info(@); sub notice(@); sub warning(@);
 sub mistake(@); sub error(@); sub fault(@); sub alert(@); sub failure(@);
 sub panic(@);
 sub __($); sub __x($@); sub __n($$$@); sub __nx($$$@); sub __xn($$$@);
 sub N__($); sub N__n($$); sub N__w(@);
 
-require Log::Report::Translator::POT;
-
-my $reporter;
-my %domain_start;
-my %settings;
-my $default_mode = 0;
-
 #
 # Some initiations
 #
 
-__PACKAGE__->_setting('log-report', translator =>
-    Log::Report::Translator::POT->new(charset => 'utf-8'));
+my $reporter     = {};
+my $default_mode = 0;
+my @nested_tries;
 
-__PACKAGE__->_setting('rescue', translator => Log::Report::Translator->new);
+# we can only load these after Log::Report has compiled, because
+# the use this module themselves.
+
+require Log::Report::Die;
+require Log::Report::Domain;
+require Log::Report::Message;
+require Log::Report::Exception;
+require Log::Report::Dispatcher;
+require Log::Report::Dispatcher::Try;
+
+#eval "require Log::Report::Translator::POT"; panic $@ if $@;
+#, translator => Log::Report::Translator::POT->new(charset => 'utf-8');
+textdomain 'log-report';
 
 dispatcher PERL => 'default', accept => 'NOTICE-';
 
@@ -58,90 +53,90 @@ dispatcher PERL => 'default', accept => 'NOTICE-';
 Log::Report - report a problem, with exceptions and translation support
 
 =chapter SYNOPSIS
- # Invocation with mode helps debugging
+ # Invocation with 'mode' to get trace and verbose messages
  use Log::Report mode => 'DEBUG';
 
- error "oops";                # like die(), no translation
- -f $config or panic "Help!"; # alert/error/fault/info/...more
+ # Usually invoked with a domain, which groups packages
+ use Log::Report 'my-domain', %options;
 
- # Provide a name-space to use translation tables.  Like Locale::TextDomain
- use Log::Report 'my-domain';
- error __x"Help!";            # __x() handles translation
- print __x"my name is {name}", name => $fullname;
+ # Interpolation syntax via String::Print
+ # First step to translations, once you need it.
+ print __x"my name is {name}", name => $n;  # print, so no exception
+ print __"Hello World\n";     # (optional) translation, no interpolation
  print __x'Hello World';      # SYNTAX ERROR!!  ' is alternative for ::
 
- # Many destinations for message in parallel possible.
- dispatcher PERL => 'default' # See Log::Report::Dispatcher: use die/warn
-   , reasons => 'NOTICE-';    # this disp. is already present at start
+ # Functions replacing die/warn/carp, casting exceptions.
+ error "oops";                # exception like die(), no translation
+ -f $config or panic "Help!"; # alert/error/fault/info/...more
+
+ # Combined exception, interpolation, and optional translation
+ error __x"Help!";            # __x() creates ::Message object
+ error __x('gettext msgid', param => $value, ...)
+     if $condition;
+
+ # Also non fatal "exceptions" find their way to dispatchers
+ info __x"started {pid}", pid => $$;   # translatable
+ debug "$i was here!";        # you probably do not want to translate debug
+ panic "arrghhh";             # like Carp::Confess
+
+ # Many destinations for an exception message (may exist in parallel)
+ dispatcher PERL => 'default' # see Log::Report::Dispatcher: use die/warn
+   , reasons => 'NOTICE-';    # this dispatcher is already present at start
 
  dispatcher SYSLOG => 'syslog'# also send to syslog
    , charset => 'iso-8859-1'  # explicit character conversions
    , locale => 'en_US';       # overrule user's locale
 
- dispatcher close => 'PERL';  # stop dispatching to die/warn
+ dispatcher close => 'default';  # stop default die/warn dispatcher
 
- # Produce an error, long syntax (rarely used)
- report ERROR => __x('gettext string', param => $param, ...)
-     if $condition;
-
- # When syntax=SHORT (default since 0.26)
- error __x('gettext string', param => $param, ...)
-     if $condition;
-
- # Overrule standard behavior for single message with HASH as
- # first parameter.  Only long syntax
- use Errno qw/ENOMEM/;
- use Log::Report syntax => 'REPORT';
- report {to => 'syslog', errno => ENOMEM}
-   , FAULT => __x"cannot allocate {size} bytes", size => $size;
-
- # Avoid messages without report level for daemons
- print __"Hello World", "\n";  # only translation, no exception
-
- # fill-in values, like Locale::TextDomain and gettext
+ # Fill-in values, like Locale::TextDomain and gettext
  # See Log::Report::Message section DETAILS
- fault __x "cannot allocate {size} bytes", size => $size;
- fault "cannot allocate $size bytes";      # no translation
- fault __x "cannot allocate $size bytes";  # wrong, not static
+ fault __x"cannot allocate {size} bytes", size => $size;
+ fault "cannot allocate $size bytes";     # no translation, ok
+ fault __x"cannot allocate $size bytes";  # not translatable, wrong
 
- # translation depends on count
- print __xn("found one file", "found {_count} files", @files), "\n";
+ # Translation depending on count
+ # Leading and trailing whitespace stay magically outside translation
+ # tables.  @files in scalar context.  Special parameter with _
+ print __xn"found one file\n", "found {_count} files", @files;
 
- # borrow from an other textdomain (see M<Log::Report::Message>)
+ # Borrow from an other text-domain (see M<Log::Report::Message>)
  print __x(+"errors in {line}", _domain => 'global', line => $line);
 
  # catch errors (implements hidden eval/die)
  try { error };
  if($@) {...}      # $@ isa Log::Report::Dispatcher::Try
+ if(my $exception = $@->wasFatal)         # ::Exception object
 
- # Language translations at the IO/layer
+ # Language translations at the output component
+ # Translation management via Log::Report::Lexicon
  use POSIX::1003::Locale qw/setlocale LC_ALL/;
  setlocale(LC_ALL, 'nl_NL');
  info __"Hello World!";      # in Dutch, if translation table found
 
  # Exception classes, see Log::Report::Exception
- my $msg = __x"something", _class => 'parsing,schema';
- if($msg->inClass('parsing')) ...
+ try { error __x"something", _class => 'parsing,schema' };
+ if($@->wasFatal->inClass('parsing')) ...
 
 =chapter DESCRIPTION 
 Handling messages directed to users can be a hassle, certainly when the
-same software is used for command-line and in a graphical interfaces (you
-may not now how it is used), or has to cope with internationalization;
-this modules tries to simplify this.
+same software is used for command-line and in a graphical interfaces
+(you may not now how it is used, writing an abstract module), or has to
+cope with internationalization; this modules tries to simplify this.
 
-Log::Report combines
+C<Log::Report> combines
 =over 4
 =item . exceptions (like error and info), with
-=item . logging (like Log::Log4Perl and syslog), and
-=item . translations (like gettext and Locale::TextDomain)
+=item . logging (like L<Log::Log4Perl> and syslog), and
+=item . translations (like C<gettext> and L<Locale::TextDomain>)
 =back
-You do not need to use it for all three reasons: pick what you need
-now, maybe extend the usage later.  Read more about how and why in the
-L</DETAILS> section, below.  Especially, you should B<read about the
-REASON parameter>.
+You B<do not need> to use this module for all three reasons: pick what
+you need now, maybe extend the usage later.  Read more about how and
+why in the L</DETAILS> section, below.  Especially, you should B<read
+about the REASON parameter>.
 
 Also, you can study this module swiftly via the article published in
-the German Perl $foo-magazine.  English version:
+the German Perl C<$foo-magazine>.  English version:
 F<http://perl.overmeer.net/log-report/papers/201306-PerlMagazine-article-en.html>
 
 =chapter FUNCTIONS
@@ -150,36 +145,36 @@ F<http://perl.overmeer.net/log-report/papers/201306-PerlMagazine-article-en.html
 
 =function report [HASH-of-OPTIONS], REASON, MESSAGE|(STRING,PARAMS), 
 
-The 'report' function is sending (for some REASON) a MESSAGE to be
-displayed or logged by a dispatcher.  This function is the core for
-use M<error()>, M<info()> etc functions which are nicer names for
-this exception throwing: better use those short names.
+The C<report> function is sending (for some REASON) a MESSAGE to be
+displayed or logged (by a `dispatcher').  This function is the core
+for M<error()>, M<info()> etc functions, which are nicer names for this
+exception throwing: better use those short names.
 
-The REASON is a string like 'ERROR'.  The MESSAGE is a
-M<Log::Report::Message> object (which are created with the special
-translation syntax like M<__x()>).  The MESSAGE may also be a plain
-string or an M<Log::Report::Exception> object. The optional first
-parameter is a HASH which can be used to influence the dispatchers.
+The REASON is a string like 'ERROR' (for function C<error()>).
+The MESSAGE is a M<Log::Report::Message> object (which are created with
+the special translation syntax like M<__x()>).  The MESSAGE may also
+be a plain string, or an M<Log::Report::Exception> object. The optional
+first parameter is a HASH which can be used to influence the dispatchers.
 The HASH contains any combination of the OPTIONS listed below.
 
 This function returns the LIST of dispatchers which accepted the MESSAGE.
 When empty, no back-end has accepted it so the MESSAGE was "lost".
-Even when no back-end need the message, it program will still exit when
-there is REASON to die.
+Even when no back-end needs the message, the program will still exit
+when there is a REASON to C<die()>.
 
 =option  to NAME|ARRAY-of-NAMEs
 =default to C<undef>
-Sent the MESSAGE only to the NAMEd dispatchers.  Ignore unknown NAMEs.
+Sent the MESSAGE only to the NAME'd dispatchers.  Ignore unknown NAMEs.
 Still, the dispatcher needs to be enabled and accept the REASONs.
 
 =option  errno INTEGER
 =default errno C<$!> or C<1>
 When the REASON includes the error text (See L</Run modes>), you can
 overrule the error code kept in C<$!>.  In other cases, the return code
-default to C<1> (historical UNIX behavior). When the message REASON
+defaults to C<1> (historical UNIX behavior). When the message REASON
 (combined with the run-mode) is severe enough to stop the program,
-this value as return code.  The use of this option itself will not
-trigger an C<die()>.
+this value as return code of the program.  The use of this option itself
+will not trigger an C<die()>.
 
 =option  stack ARRAY
 =default stack C<undef>
@@ -223,12 +218,10 @@ program.
  
 =cut
 
-# $^S = $EXCEPTIONS_BEING_CAUGHT; parse: undef, eval: 1, else 0
-
 sub report($@)
-{   my $opts   = ref $_[0] eq 'HASH' ? +{ %{ (shift) } } : {};
+{   my $opts = ref $_[0] eq 'HASH' ? +{ %{ (shift) } } : {};
     my $reason = shift;
-    my $stop = exists $opts->{is_fatal} ? $opts->{is_fatal} :$is_fatal{$reason};
+    my $stop = exists $opts->{is_fatal} ? $opts->{is_fatal} : is_fatal $reason;
 
     my $try  = $nested_tries[-1];
     my @disp = ($stop && $try) ? () : @{$reporter->{needs}{$reason} || []};
@@ -237,11 +230,11 @@ sub report($@)
     # return when no-one needs it: skip unused trace() fast!
     @disp || $stop or return;
 
-    $is_reason{$reason}
+    is_reason $reason
         or error __x"token '{token}' not recognized as reason", token=>$reason;
 
     $opts->{errno} ||= $!+0 || $? || 1
-        if $use_errno{$reason} && !defined $opts->{errno};
+        if use_errno($reason) && !defined $opts->{errno};
 
     if(my $to = delete $opts->{to})
     {   # explicit destination, still disp may not need it.
@@ -256,9 +249,14 @@ sub report($@)
             or return;
     }
 
+    my $message = shift;
+
+    unless(Log::Report::Dispatcher->can('collectLocation'))
+    {   # internal Log::Report error can result in "deep recursions".
+        eval "require Carp"; Carp::confess($message);
+    }
     $opts->{location} ||= Log::Report::Dispatcher->collectLocation;
 
-    my $message = shift;
     my $exception;
     if(UNIVERSAL::isa($message, 'Log::Report::Message'))
     {   @_==0 or error __x"a message object is reported with more parameters";
@@ -278,28 +276,29 @@ sub report($@)
         @disp or return;
     }
 
-    my @last_call;     # call Perl dispatcher always last
-    if($reporter->{filters})
+    my @last_call;  # call Perl dispatcher always last, it calls real die
+    my $domain = $message->domain;
+    if(my $filters = $reporter->{filters})
     {
       DISPATCHER:
         foreach my $d (@disp)
         {   my ($r, $m) = ($reason, $message);
-            foreach my $filter ( @{$reporter->{filters}} )
+            foreach my $filter (@$filters)
             {   next if keys %{$filter->[1]} && !$filter->[1]{$d->name};
-                ($r, $m) = $filter->[0]->($d, $opts, $r, $m);
+                ($r, $m) = $filter->[0]->($d, $opts, $r, $m, $domain);
                 $r or next DISPATCHER;
             }
 
             if($d->isa('Log::Report::Dispatcher::Perl'))
-                 { @last_call = ($d, { %$opts }, $r, $m) }
-            else { $d->log($opts, $r, $m) }
+                 { @last_call = ($d, { %$opts }, $r, $m, $domain) }
+            else { $d->log($opts, $r, $m, $domain) }
         }
     }
     else
     {   foreach my $d (@disp)
         {   if($d->isa('Log::Report::Dispatcher::Perl'))
-                 { @last_call = ($d, { %$opts }, $reason, $message) }
-            else { $d->log($opts, $reason, $message) }
+                 { @last_call = ($d, { %$opts }, $reason, $message, $domain) }
+            else { $d->log($opts, $reason, $message, $domain) }
         }
     }
 
@@ -309,8 +308,8 @@ sub report($@)
     }
 
     if($stop)
-    {   # ^S = EXCEPTIONS_BEING_CAUGHT, within eval or try
-        $^S or exit($opts->{errno} || 0);
+    {   # $^S = $EXCEPTIONS_BEING_CAUGHT; parse: undef, eval: 1, else 0
+        (defined($^S) ? $^S : 1) or exit($opts->{errno} || 0);
 
         $! = $opts->{errno} || 0;
         $@ = $exception || Log::Report::Exception->new(report_opts => $opts
@@ -400,13 +399,14 @@ sub dispatcher($@)
     if($command eq 'list')
     {   mistake __"the 'list' sub-command doesn't expect additional parameters"
            if @_;
-        return $nested_tries[-1] if @nested_tries;
-        return values %{$reporter->{dispatchers}};
+        my @disp = values %{$reporter->{dispatchers}};
+        push @disp, $nested_tries[-1] if @nested_tries;
+        return @disp;
     }
     if($command eq 'needs')
     {   my $reason = shift || 'undef';
         error __"the 'needs' sub-command parameter '{reason}' is not a reason"
-            unless $is_reason{$reason};
+            unless is_reason $reason;
         my $disp = $reporter->{needs}{$reason};
         return $disp ? @$disp : ();
     }
@@ -522,13 +522,12 @@ sub try(&@)
     elsif(wantarray) { @ret = eval { $code->() } } # LIST   context
     else             { $ret = eval { $code->() } } # SCALAR context
 
-    my $err          = $@;
+    my $err  = $@;
     pop @nested_tries;
 
     my $is_exception = blessed $err && $err->isa('Log::Report::Exception');
     if($err && !$is_exception && !$disp->wasFatal)
-    {   eval "require Log::Report::Die"; panic $@ if $@;
-        ($err, my($opts, $reason, $text)) = Log::Report::Die::die_decode($err);
+    {   ($err, my($opts, $reason, $text)) = Log::Report::Die::die_decode($err);
         $disp->log($opts, $reason, __$text);
     }
 
@@ -639,12 +638,7 @@ prefix operator!
  print $s->toString('fr');   # ok, forced into French
 =cut
 
-sub _default_domain(@)
-{   my $f = $domain_start{$_[1]} or return undef;
-    my $domain;
-    do { $domain = $_->[1] if $_->[0] < $_[2] } for @$f;
-    $domain;
-}
+sub _default_domain(@) { pkg2domain $_[0] }
 
 sub __($)
 {   Log::Report::Message->new
@@ -809,11 +803,30 @@ sub N__w(@) {split " ", $_[0]}
 
 =section Configuration
 
-=method import [DOMAIN], OPTIONS
+=method import [LEVEL,][DOMAIN], OPTIONS
 The import is automatically called when the package is compiled.  For all
 packages but one in your distribution, it will only contain the name of
-the DOMAIN.  For one package, it will contain configuration information.
-These OPTIONS are used for all packages which use the same DOMAIN.
+the DOMAIN.
+
+For one package, the import list may additionally contain textdomain
+configuration OPTIONS.  These OPTIONS are used for all packages which
+use the same DOMAIN.  These are alternatives:
+
+  use Log::Report 'my-domain', %config, %domain_config;
+
+  use Log::Report 'my-domain', %config;
+  textdomain 'my-domain', %domain_config;
+
+The latter syntax has major advantages, when the configuration of the
+domain is determined at run-time.  It is probably also easier to understand.
+
+See M<Log::Report::Domain::configure()>, for the B<list of OPTIONS>
+for the domain configuration.  Here, we only list the options which are
+related to the normal import behavior.
+
+The export LEVEL is a plus (+) followed by a number, for instance C<+1>,
+to indicate to on which caller level we need to work.  This is used
+in M<Log::Report::Optional>.  It defaults to '0': my direct caller.
 
 =option  syntax 'REPORT'|'SHORT'|'LONG'
 =default syntax 'SHORT'
@@ -821,18 +834,6 @@ The SHORT syntax will add the report abbreviations (like function
 M<error()>) to your name-space.  Otherwise, each message must be produced
 with M<report()>. C<LONG> is an alternative to C<REPORT>: both do not
 polute your namespace with the useful abbrev functions.
-
-=option  translator Log::Report::Translator
-=default translator <rescue>
-Without explicit translator, a dummy translator is used for the domain
-which will use the untranslated message-id.
-
-=option  native_language CODESET 
-=default native_language 'en_US'
-This is the language which you have used to write the translatable and
-the non-translatable messages in.  In case no translation is needed,
-you still wish the system error messages to be in the same language
-as the report.  Of course, each textdomain can define its own.
 
 =option  mode LEVEL
 =default mode 'NORMAL'
@@ -847,18 +848,18 @@ of functions which are being exported.  With this option, the C<syntax>
 option is ignored and only the specified FUNCTION(s) are imported.
 
 =examples of import
- use Log::Report mode => 3;     # or 'DEBUG'
+ use Log::Report mode => 3;     # '3' or 'DEBUG'
 
  use Log::Report 'my-domain';   # in each package producing messages
 
  use Log::Report 'my-domain'    # in one package, top of distr
   , mode            => 'VERBOSE'
+  , syntax          => 'REPORT' # report ERROR, not error()
   , translator      => Log::Report::Translator::POT->new
      ( lexicon => '/home/mine/locale'  # bindtextdomain
      , charset => 'UTF-8'              # codeset
      )
-  , native_language => 'nl_NL'  # untranslated msgs are Dutch
-  , syntax          => 'REPORT';# report ERROR, not error()
+  , native_language => 'nl_NL'; # untranslated msgs are Dutch
 
  use Log::Report import => 'try';      # or ARRAY of functions
 
@@ -867,23 +868,19 @@ option is ignored and only the specified FUNCTION(s) are imported.
 sub import(@)
 {   my $class = shift;
 
+    my $to_level   = ($_[0] && $_[0] =~ m/^\+\d+$/ ? shift : undef) || 0;
     my $textdomain = @_%2 ? shift : undef;
-    my %opts   = @_;
-    my ($pkg, $fn, $linenr) = caller;
+    my %opts       = @_;
 
-    if(my $trans = delete $opts{translator})
-    {   $class->translator($textdomain, $trans, $pkg, $fn, $linenr);
+    my ($pkg, $fn, $linenr) = caller $to_level;
+    my $domain;
+
+    if(defined $textdomain)
+    {   pkg2domain $pkg, $textdomain, $fn, $linenr;
+        $domain = textdomain $textdomain;
     }
 
-    if(my $native = delete $opts{native_language})
-    {   my ($lang) = parse_locale $native;
-
-        error "the specified native_language '{locale}' is not a valid locale"
-          , locale => $native unless defined $lang;
-
-        $class->_setting($textdomain, native_language => $native
-          , $pkg, $fn, $linenr);
-    }
+    ### Log::Report options
 
     if(exists $opts{mode})
     {   $default_mode = delete $opts{mode} || 0;
@@ -891,10 +888,8 @@ sub import(@)
         dispatcher mode => $default_mode, 'ALL';
     }
 
-    push @{$domain_start{$fn}}, [$linenr => $textdomain];
-
     my @export;
-    if(my $in = $opts{import})
+    if(my $in = delete $opts{import})
     {   push @export, ref $in eq 'ARRAY' ? @$in : $in;
     }
     else
@@ -905,104 +900,71 @@ sub import(@)
         {   push @export, @reason_functions
         }
         elsif($syntax ne 'REPORT' && $syntax ne 'LONG')
-        {   error __x"syntax flag must be either SHORT or REPORT, not `{flag}'"
-              , flag => $syntax;
+        {   error __x"syntax flag must be either SHORT or REPORT, not `{flag}' in {fn} line {line}"
+              , flag => $syntax, fn => $fn, line => $linenr;
         }
     }
 
-    $class->export_to_level(1, undef, @export);
+    $class->export_to_level(1+$to_level, undef, @export);
+
+    ### Log::Report::Domain configuration
+
+    if(!%opts) { }
+    elsif($domain)
+    {   $domain->configure(%opts, where => [$pkg, $fn, $linenr ]) }
+    else
+    {   error __x"no domain for configuration options in {fn} line {line}"
+          , fn => $fn, line => $linenr;
+    }
 }
 
-=c_method translator TEXTDOMAIN, [TRANSLATOR]
-Returns the translator configured for the TEXTDOMAIN. By default,
-a translator is configured which does not translate but directly
-uses the gettext message-ids.
-
-When a TRANSLATOR is specified, it will be set to be used for the
-TEXTDOMAIN.  When it is C<undef>, the configuration is removed.
-You can only specify one TRANSLATOR per TEXTDOMAIN.
-
-=examples use if M<translator()>
- # in three steps
- use Log::Report;
- my $gettext = Log::Report::Translator::POT->new(...);
- Log::Report->translator('my-domain', $gettext);
-
- # in two steps
- use Log::Report;
- Log::Report->translator('my-domain'
-   , Log::Report::Translator::POT->new(...));
-
- # in one step
- use Log::Report 'my-domain'
-   , translator => Log::Report::Translator::POT->new(...);
-
-=cut
-
+# deprecated, since we have a ::Domain object in 1.00
 sub translator($;$$$$)
-{   my ($class, $domain) = (shift, shift);
+{   # replaced by (textdomain $domain)->configure
 
-    @_ or return $class->_setting($domain => 'translator')
-              || $class->_setting(rescue  => 'translator');
+    my ($class, $name) = (shift, shift);
+    my $domain = textdomain $name
+        or error __x"textdomain `{domain}' for translator not defined"
+             , domain => $name;
 
-    defined $domain
-        or error __"textdomain for translator not defined";
+    @_ or return $domain->translator;
 
     my ($translator, $pkg, $fn, $line) = @_;
     ($pkg, $fn, $line) = caller    # direct call, not via import
         unless defined $pkg;
 
     $translator->isa('Log::Report::Translator')
-        or error __"translator must be a Log::Report::Translator object";
+        or error __x"translator must be a {pkg} object for {domain}"
+              , pkg => 'Log::Report::Translator', domain => $name;
 
-    $class->_setting($domain, translator => $translator, $pkg, $fn, $line);
+    $domain->configure(translator => $translator, where => [$pkg, $fn, $line]);
 }
 
-# c_method setting TEXTDOMAIN, NAME, [VALUE]
-# When a VALUE is provided (of unknown structure) then it is stored for the
-# NAME related to TEXTDOMAIN.  Otherwise, the value related to the NAME is
-# returned.  The VALUEs may only be set once in your program, and count for
-# all packages in the same TEXTDOMAIN.
+=function textdomain ([DOMAIN], CONFIG) | (DOMAIN, 'DELETE')
+[1.00] Without CONFIGuration, this returns the M<Log::Report::Domain> object
+which administers the DOMAIN, by default the domain effictive in the scope
+of the package.
 
-sub _setting($$;$)
-{   my ($class, $domain, $name, $value) = splice @_, 0, 4;
-    $domain ||= 'rescue';
+A very special case is for "DELETE", which will remove the domain
+configuration.
+=cut
 
-    defined $value
-        or return ($settings{$domain} ? $settings{$domain}{$name} : undef);
+sub textdomain(@)
+{   # used for testing
+    return delete $reporter->{textdomains}{$_[0]}
+        if @_==2 && $_[1] eq 'DELETE';
 
-    # Where is the setting done?
-    my ($pkg, $fn, $line) = @_;
-    ($pkg, $fn, $line) = caller    # direct call, not via import
-         unless defined $pkg;
+    my $name   = (@_%2 ? shift : _default_domain(caller)) || 'default';
+    my $domain = $reporter->{textdomains}{$name}
+        ||= Log::Report::Domain->new(name => $name);
 
-    my $s = $settings{$domain} ||= {_pkg => $pkg, _fn => $fn, _line => $line};
-
-    error __x"only one package can contain configuration; for {domain} already in {pkg} in file {fn} line {line}"
-        , domain => $domain, pkg => $s->{_pkg}
-        , fn => $s->{_fn}, line => $s->{_line}
-           if $s->{_pkg} ne $pkg || $s->{_fn} ne $fn;
-
-    error __x"value for {name} specified twice", name => $name
-        if exists $s->{$name};
-
-    $s->{$name} = $value;
+    $domain->configure(@_, where => [caller]) if @_;
+    $domain;
 }
 
 =section Reasons
 
-=ci_method isValidReason STRING
-Returns true if the STRING is one of the predefined REASONS.
-
-=ci_method isFatal REASON
-Returns true if the REASON is severe enough to cause an exception
-(or program termination).
-=cut
-
-sub isValidReason($) { $is_reason{$_[1]} }
-sub isFatal($)       { $is_fatal{$_[1]} }
-
-=ci_method needs REASON, [REASONS]
+=c_method needs REASON, [REASONS]
 Returns true when the reporter needs any of the REASONS, when any of
 the active dispatchers is collecting messages in the specified level.
 This is useful when the processing of data for the message is relatively
@@ -1027,23 +989,25 @@ sub needs(@)
 
 There are three steps in this story: produce some text on a certain
 condition, translate it to the proper language, and deliver it in some
-way to a user.  Texts are usually produced by commands like C<print>,
+way to a user.  Texts in Perl are produced by commands like C<print>,
 C<die>, C<warn>, C<carp>, or C<croak>, which have no way of configuring
-the way of delivery to the user.  Therefore, they are replaced with a
-single new command: C<report> (with various abbreviations)
+the way they deliver text to the user.  Therefore, they are replaced
+with a single new command: C<report> with many abbreviations.
 
-Besides, the C<print>/C<warn>/C<die> together produce only three levels of
-reasons to produce the message: many people manually implement more, like
-verbose and debug.  Syslog has some extra levels as well, like C<critical>.
-The REASON argument to C<report()> replace them all.
+Besides, the C<print>/C<warn>/C<die> together produce only three different
+output levels with a message.  Many people manually implement their
+own additional levels, like verbose and debug.  Syslog has some extra
+levels as well, like C<critical>.  The REASON argument to C<report()>
+offers them all.
 
-The translations use the beautiful syntax defined by
+The (optional) translations use the beautiful syntax defined by
 M<Locale::TextDomain>, with some extensions (of course).  The main
 difference is that the actual translations are delayed till the delivery
-step.  This means that the pop-up in the graphical interface of the
-user will show the text in the language of the user, say Chinese,
-but at the same time syslog may write the English version of the text.
-With a little luck, translations can be avoided.
+step: until a dispatcher actually writes this message into a file or sends
+it to syslog.  This means that the pop-up in the graphical interface of
+the user may show the text in the language of the user --say Chinese in
+utf8--, but at the same time syslog may write the latin1 English version
+of the same message.
 
 =section Background ideas
 
@@ -1059,27 +1023,19 @@ handling (problem) conditions.  Simplifying the way to create reports,
 simplifies programming and maintenance.
 
 =item . multiple dispatchers
-It is not the location where the (for instance) error occurs determines
-what will happen with the text, but the main application which uses the
-the complaining module has control.  Messages have a reason.  Based
-on the reason, they can get ignored, send to one, or send to multiple
-dispatchers (like M<Log::Dispatch>, M<Log::Log4perl>, or UNIX syslog(1))
+It is not the location where the (for instance) error occurs which
+determines what will happen with the text, but the main application which
+uses the the complaining module has control.  Messages have a reason.
+Based on the `reason' classification, they can get ignored, send to one
+or multiple dispatchers, like M<Log::Dispatch>, M<Log::Log4perl>,
+or UNIX syslog.
 
 =item . delayed translations
 The background ideas are that of M<Locale::TextDomain>, based
-on C<gettext()>.  However, the C<Log::Report> infrastructure has a
-pluggable translation backend.  Translations are postponed until the
-text is dispatched to a user or log-file; the same report can be sent
-to syslog in (for instance) English and to the user interface in Dutch.
-
-=item . avoid duplication
-The same message may need to be documented on multiple locations: in
-web-pages for the graphical interface, in pod for the command-line
-configuration.  The same text may even end-up in pdf user-manuals.  When
-the message is written inside the Perl code, it's quite hard to get it
-out, to generate these documents.  Only an abstract message description
-protocol will make flexible re-use possible.
-This component still needs to be implemented.
+on C<gettext()>.  However, in the C<Log::Report> infrastructure,
+translations are postponed until the text is dispatched to a screen
+or log-file; the same report can be sent to syslog in (for instance)
+English and to the user interface in Dutch.
 
 =back
 
@@ -1242,7 +1198,7 @@ and both show more than the NORMAL mode.
 The C<GetOptions()> function will count the number of C<v> options
 on the command-line when a C<+> is after the option name.
 
- use Log::Report syntax => 'SHORT';
+ use Log::Report;
  use Getopt::Long qw(:config no_ignore_case bundling);
 
  my $mode;    # defaults to NORMAL
@@ -1317,7 +1273,7 @@ See M<Log::Report::Dispatcher::Try> and M<Log::Report::Exception>.
 
 =subsection die/warn/Carp
 
-A typical perl5 program can look like this
+A typical perl5 program can look like this:
 
  my $dir = '/etc';
 
@@ -1357,7 +1313,7 @@ A typical perl5 program can look like this
 Where C<die>, C<warn>, and C<print> are used for various tasks.  With
 C<Log::Report>, you would write
 
- use Log::Report syntax => 'SHORT';
+ use Log::Report;
 
  # can be left-out when there is no debug/verbose
  dispatcher PERL => 'default', mode => 'DEBUG';
@@ -1402,16 +1358,6 @@ A lot of things are quite visibly different, and there are a few smaller
 changes.  There is no need for a new-line after the text of the message.
 When applicable (error about system problem), then the C<$!> is added
 automatically.
-
-The distinction between C<error> and C<fault> is a bit artificial her, just
-to demonstrate the difference between the two.  In this case, I want to
-express very explicitly that the user made an error by passing the name
-of a directory in which a file is not readable.  In the common case,
-the user is not to blame and we can use C<fault>.
-
-A CPAN module like C<Log::Message> is an object oriented version of the
-standard Perl functions, and as such not really contributing to
-abstraction.
 
 =subsection Log::Dispatch and Log::Log4perl
 The two major logging frameworks for Perl are M<Log::Dispatch> and

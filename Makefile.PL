@@ -2,24 +2,40 @@ use ExtUtils::MakeMaker;
 
 use 5.008;
 
-my $version = '0.999';
+my $version = '1.00';
 
 my %prereq  =
-  ( Test::More   =>  0.86
-  , Sys::Syslog  => '0.27'
-  , Encode       => '2.00'
-  , Scalar::Util => 0
-  , Devel::GlobalDestruction => 0.09
+  ( Test::More               => '0.86'
+  , Sys::Syslog              => '0.27'
+  , Encode                   => '2.00'
+  , Scalar::Util             => 0
+  , Devel::GlobalDestruction => '0.09'
+  , Log::Report::Optional    => '1.00'
+  , String::Print            => '0.13'
   );
 
-$prereq{ 'Win32::TieRegistry' } = 0.24
-    if $^O eq 'MSWin32';
+# Upgrade L::R::Lexicon if installed
+eval "require Log::Report::Extract";
+#warn $@;
+unless($@)
+{   my $v = $Log::Report::Extract::VERSION || '1.00';
+    if($v < 1.00) { warn <<'__CHANGES_100'; sleep 10 }
+***************************************************************
+WARNING: with Log::Report 1.00, the distribution got spit into
+   four separate components.  If you use *translations*, then
+   you have to upgrade Log::Report::Lexicon as well.  You may 
+   need to add dependencies to that module as well.
+***************************************************************
+__CHANGES_100
+}
+
+#use Data::Dumper;
+#warn Dumper \%prereq;
 
 WriteMakefile
   ( NAME      => 'Log::Report'
   , VERSION   => $version
   , PREREQ_PM => \%prereq
-  , EXE_FILES => [ 'bin/xgettext-perl' ]
 
   , AUTHOR    => 'Mark Overmeer'
   , ABSTRACT  => 'report a problem, pluggable handlers and language support'
@@ -38,7 +54,7 @@ SKIP_LINKS	= XML::LibXML
 FIRST_YEAR      = 2007
 EMAIL           = perl@overmeer.net
 WEBSITE         = http://perl.overmeer.net/log-report/
-EXTENDS		= 
+EXTENDS		= ../LogOpt:../Print:../LogLex
 
 # for OODoc's oodist, HTML
 HTML_OUTPUT     = ../public_html/log-report/html

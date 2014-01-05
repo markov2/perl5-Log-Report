@@ -11,7 +11,7 @@ use List::Util qw/first/;
 Log::Report::Message - a piece of text to be translated
 
 =chapter SYNOPSIS
- # Created by Log::Report's __ functions
+ # Objects created by Log::Report's __ functions
  # Full feature description in the DETAILS section
 
  # no interpolation
@@ -44,6 +44,7 @@ translating it immediately.  However, on the location where the message
 is produced, we do not yet know in what language to translate it to:
 that depends on the front-end, the log dispatcher.
 
+
 =chapter OVERLOADING
 
 =overload stringification
@@ -64,7 +65,8 @@ overloading that operation.
 use overload
     '""'  => 'toString'
   , '&{}' => sub { my $obj = shift; sub{$obj->clone(@_)} }
-  , '.'   => 'concat';
+  , '.'   => 'concat'
+  , fallback => 1;
 
 =chapter METHODS
 
@@ -168,7 +170,7 @@ or appended translated message object.
 =default _context C<undef>
 [1.00] Set keywords which can be used to select alternatives
 between translations.  Read the DETAILS section in
-M<Log::Report::Message::Context>
+M<Log::Report::Translator::Context>
 
 =cut
 
@@ -356,17 +358,16 @@ sub toString(;$)
         or return (defined $self->{_prepend} ? $self->{_prepend} : '')
                 . (defined $self->{_append}  ? $self->{_append}  : '');
 
+    # assumed is that switching locales is expensive
+    my $oldloc = setlocale(LC_MESSAGES);
+    setlocale(LC_MESSAGES, $locale)
+        if defined $locale && (!defined $oldloc || $locale ne $oldloc);
+
     # create a translation
-    my $text = Log::Report->translator($self->{_domain})
-      ->translate($self, $self->{_lang} || $locale, $self->{_context});
+    my $text = (textdomain $self->{_domain})
+       ->translate($self, $self->{_lang} || $locale || $oldloc);
   
     defined $text or return ();
-
-    my $oldloc;
-    if(defined $locale)
-    {   $oldloc = setlocale(LC_ALL);
-        setlocale(LC_ALL, $locale);
-    }
 
     if($self->{_expand})
     {    my $re   = join '|', map quotemeta, keys %$self;
@@ -379,8 +380,8 @@ sub toString(;$)
     $text .= "$self->{_append}"
         if defined $self->{_append};
 
-    setlocale(LC_ALL, $oldloc)
-        if defined $oldloc && $oldloc ne $locale;
+    setlocale(LC_MESSAGES, $oldloc)
+        if defined $oldloc && (!defined $locale || $oldloc ne $locale);
 
     $text;
 }
@@ -485,8 +486,13 @@ parameter can disappear.
 
 =subsection Interpolation of VARIABLES
 
-There is no way of checking beforehand whether you have provided all required
-values, to be interpolated in the translated string.
+C<Log::Report> uses L<String::Print> to interpolate values in(translated)
+messages.  This is a very powerful syntax, and you should certainly read
+that manual-page.  Here, we only described additional features, specific
+to the usage of C<String::Print> in C<Log::Report::Message> objects.
+
+There is no way of checking beforehand whether you have provided all
+required values, to be interpolated in the translated string.
 
 For interpolating, the following rules apply:
 =over 4
@@ -512,35 +518,6 @@ interpolation parameter via the C<_join> OPTION.
  error __x"matching files: {files}", files => \@files;
 
  error __x"matching files: {files}", files => \@files, _join => ', ';
-
-=subsection Interpolating formatted
-
-Next to the name, you can specify a format code.  With C<gettext()>,
-you often see this:
-
- printf gettext("approx pi: %.6f\n"), PI;
-
-M<Locale::TextDomain> has two ways.
-
- printf __"approx pi: %.6f\n", PI;
- print __x"approx pi: {approx}\n", approx => sprintf("%.6f", PI);
-
-The first does not respect the wish to be able to reorder the
-arguments during translation.  The second version is quite long.
-With C<Log::Report>, above syntaxes do work, but you can also do
-
- print __x"approx pi: {pi%.6f}\n", pi => PI;
-
-So: the interpolation syntax is C< { name [format] } >.  Other
-examples:
-
- print __x "{perms} {links%2d} {user%-8s} {size%10d} {fn}\n"
-         , perms => '-rw-r--r--', links => 1, user => 'me'
-         , size => '12345', fn => $filename;
-
-An additional advantage is the fact that not all languages produce
-comparable length strings.  Now, the translators can take care that
-the layout of tables is optimal.
 
 =subsection Interpolation of OPTIONS
 
@@ -629,8 +606,9 @@ interpolation:
  {   print $s;
  }
 
-Oops, not what you mean.
-With Log::Report, you can do it.
+Oops, not what you mean because the first value of C<$i> is captured
+in the initial message object.  With Log::Report, you can do it (except
+when you use contexts)
 
  use Log::Report;
  my $i;

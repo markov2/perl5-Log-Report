@@ -8,6 +8,7 @@ use Log::Report 'log-report';
 
 use Sys::Syslog        qw/:standard :extended :macros/;
 use Log::Report::Util  qw/@reasons expand_reasons/;
+use Encode             qw/encode/;
 
 use File::Basename qw/basename/;
 
@@ -86,7 +87,7 @@ C<pid>, C<ndelay>, and C<nowait>.
 =option  facility STRING
 =default facility 'user'
 The possible values for this depend (a little) on the system.  POSIX
-only defines 'user' and 'local0' upto 'local7'.
+only defines C<user>, and C<local0> upto C<local7>.
 
 =option  to_prio ARRAY-of-PAIRS
 =default to_prio []
@@ -95,7 +96,16 @@ See M<reasonToPrio()>.
 =option  logsocket 'unix'|'inet'|'stream'
 =default logsocket C<undef>
 If specified, the log socket type will be initialized to this before
-openlog is called.  If not specified, the system default is used.
+C<openlog()> is called.  If not specified, the system default is used.
+
+=option  include_domain BOOLEAN
+=default include_domain <false>
+[1.00] Include the text-domain of the message in each logged message.
+
+=option  charset CHARSET
+=default charset 'utf8'
+Translate the text-strings into the specified charset, otherwise the
+sysadmin may get unreadable text.
 =cut
 
 sub init($)
@@ -112,7 +122,10 @@ sub init($)
     my $fac   = delete $args->{facility} || 'user';
     openlog $ident, $flags, $fac;   # doesn't produce error.
 
-    $self->{prio} = { %default_reasonToPrio };
+    $self->{LRDS_incl_dom} = delete $args->{include_domain};
+    $self->{LRDS_charset}  = delete $args->{charset} || "utf-8";
+
+    $self->{prio} = +{ %default_reasonToPrio };
     if(my $to_prio = delete $args->{to_prio})
     {   my @to = @$to_prio;
         while(@to)
@@ -141,15 +154,23 @@ sub close()
 =section Logging
 =cut
 
-sub log($$$$)
-{   my $self = shift;
-    my $text = $self->SUPER::translate(@_) or return;
+sub log($$$$$)
+{   my ($self, $opts, $reason, $msg, $domain) = @_;
+    my $text = encode $self->{LRDS_charset}
+      , $self->translate($opts, $reason, $msg) or return;
 
-    my $prio = $self->reasonToPrio($_[1]);
+    my $prio = $self->reasonToPrio($reason);
 
     # handle each line in message separately
-    syslog $prio, "%s", $_
-        for split /\n/, $text;
+    $text    =~ s/\s+$//s;
+    my @text = split /\n/, $text;
+
+    if($self->{LRDS_incl_dom} && $domain)
+    {   $domain  =~ s/\%//g;    # security
+        syslog $prio, "$domain %s", shift @text
+    }
+
+    syslog $prio, "%s", $_ for @text;
 }
 
 =method reasonToPrio REASON

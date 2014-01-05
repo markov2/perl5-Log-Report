@@ -1,8 +1,5 @@
-use warnings;
-use strict;
-
 package MojoX::Log::Report;
-use Mojo::Base 'Mojo::Log';
+use Mojo::Base 'Mojo::Log';  # implies use strict etc
 
 use Log::Report 'log-report', import => 'report';
 
@@ -27,6 +24,15 @@ but that the dispatching of the error follows a different route now.
 For instance, you cannot use C<$ENV{MOJO_LOG_LEVEL}> to control the output
 level, but you need to use M<Log::Report::dispatcher()> action C<mode>.
 
+Mojo defines five "levels" of messages, which map onto Log::Report's
+reasons this way:
+
+  debug  TRACE
+  info   INFO
+  warn   WARNING
+  error  ERROR
+  fatal  ALERT
+
 =chapter METHODS
 
 =section Constructors
@@ -39,11 +45,11 @@ sub new(@) {
     my $class = shift;
     my $self  = $class->SUPER::new(@_);
 
-    # issue with Mojo <= 4.52, where the base-class registers a function, not
-    # a method to handle the message.
-    $self->unsubscribe('message');  # clean all listeners
-    $self->on(message => sub { shift->_message(@_) });
-    return $self;
+    # issue with Mojo, where the base-class registers a function --not
+    # a method-- to handle the message.
+    $self->unsubscribe('message');    # clean all listeners
+    $self->on(message => '_message'); # call it OO
+    $self;
 }
 
 my %level2reason = qw/

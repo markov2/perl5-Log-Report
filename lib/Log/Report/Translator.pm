@@ -4,14 +4,12 @@ use warnings;
 use strict;
 
 use Log::Report 'log-report';
-
-use Log::Report::Lexicon::Index ();
 use Log::Report::Message;
 
 use File::Spec ();
 my %lexicons;
 
-sub _filename_to_lexicon($);
+sub _fn_to_lexdir($);
 
 =chapter NAME
 Log::Report::Translator - base implementation for translating messages
@@ -22,7 +20,8 @@ Log::Report::Translator - base implementation for translating messages
  print Log::Report::Translator->new(...)->translate($msg);
 
  # normal use
- use Log::Report 'my-domain';
+ textdomain 'my-domain'
+   , translator => Log::Report::Translator->new;  # default
  print __"Hello World\n";
 
 =chapter DESCRIPTION
@@ -73,20 +72,29 @@ sub new(@)
 
 sub init($)
 {   my ($self, $args) = @_;
+
     my $lex = delete $args->{lexicons} || delete $args->{lexicon}
-           || _filename_to_lexicon $args->{callerfn};
+     || (ref $self eq __PACKAGE__ ? [] : _fn_to_lexdir $args->{callerfn});
 
     my @lex;
-    foreach my $lex (ref $lex eq 'ARRAY' ? @$lex : $lex)
-    {   push @lex, $lexicons{$lex} ||=   # lexicon indexes are shared
-            Log::Report::Lexicon::Index->new($lex);
+    foreach my $dir (ref $lex eq 'ARRAY' ? @$lex : $lex)
+    {   unless(exists $INC{'Log/Report/Lexicon/Index.pm'})
+        {   eval "require Log::Report::Lexicon::Index";
+            panic $@ if $@;
+
+            error __x"You have to upgrade Log::Report::Lexicon to at least 1.00"
+                if $Log::Report::Lexicon::Index::VERSION < 1.00;
+        }
+
+        push @lex, $lexicons{$dir} ||=   # lexicon indexes are shared
+            Log::Report::Lexicon::Index->new($dir);
     }
     $self->{lexicons} = \@lex;
     $self->{charset}  = $args->{charset} || 'utf-8';
     $self;
 }
 
-sub _filename_to_lexicon($)
+sub _fn_to_lexdir($)
 {   my $fn = shift;
     $fn =~ s/\.pm$//;
     File::Spec->catdir($fn, 'messages');
@@ -109,7 +117,7 @@ sub charset() {shift->{charset}}
 
 =section Translating
 
-=method translate MESSAGE, [LANGUAGE, CONTEXT]
+=method translate MESSAGE, [LANGUAGE, CTXT]
 Returns the translation of the MESSAGE, a C<Log::Report::Message> object,
 based on the current locale.
 
@@ -119,7 +127,7 @@ message object, for performance reasons.
 
 # this is called as last resort: if a translator cannot find
 # any lexicon or has no matching language.
-sub translate($$)
+sub translate($$$)
 {   my $msg = $_[1];
 
       defined $msg->{_count} && $msg->{_count} != 1

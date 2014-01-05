@@ -136,8 +136,8 @@ And for sure, we do not know the language yet.
 The MESSAGE is either a STRING or a M<Log::Report::Message>.
 =cut
 
-sub log($$$)
-{   my ($self, $opts, $reason, $message) = @_;
+sub log($$$$)
+{   my ($self, $opts, $reason, $message, $domain) = @_;
 
     # If "try" does not want a stack, because of its mode,
     # then don't produce one later!  (too late)

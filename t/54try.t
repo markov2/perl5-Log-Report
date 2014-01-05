@@ -33,9 +33,9 @@ cmp_ok(scalar(@l1), '==', 1);
 is($l1[0]->name, 'out');
 
 try { my @l2 = dispatcher 'list';
-      cmp_ok(scalar(@l2), '==', 1);
-      is($l2[0]->name, 'try', 'only try dispatcher');
-      error "this is an error"
+      cmp_ok(scalar(@l2), '==', 2);
+      is($l2[1]->name, 'try', 'only try dispatcher');
+      error "this is an error";
     };
 
 my $caught = $@;   # be careful with this... Test::More may spoil it.

@@ -6,7 +6,6 @@ use base 'Exporter';
 
 our @EXPORT = qw/die_decode/;
 
-use Log::Report 'log-report';
 use POSIX  qw/locale_h/;
 
 =chapter NAME

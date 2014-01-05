@@ -4,7 +4,7 @@ use strict;
 package Log::Report::Dispatcher::Perl;
 use base 'Log::Report::Dispatcher';
 
-use Log::Report 'log-report', syntax => 'SHORT';
+use Log::Report 'log-report';
 use IO::File;
 
 my $singleton = 0;   # can be only one (per thread)
@@ -37,9 +37,9 @@ of warn and die using STDERR and exit; however: that is not possible.
 =section Logging
 =cut
 
-sub log($$$)
-{   my ($self, $opts, $reason, $message) = @_;
-    my $text = $self->SUPER::translate($opts, $reason, $message);
+sub log($$$$)
+{   my ($self, $opts, $reason, $message, $domain) = @_;
+    my $text = $self->translate($opts, $reason, $message);
 
     if($opts->{is_fatal})
     {   $! = $opts->{errno};

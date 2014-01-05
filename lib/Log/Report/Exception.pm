@@ -3,8 +3,9 @@ use strict;
 
 package Log::Report::Exception;
 
-use Log::Report 'log-report';
-use POSIX  qw/locale_h/;
+use Log::Report      'log-report';
+use Log::Report::Util qw/is_fatal/;
+use POSIX             qw/locale_h/;
 
 =chapter NAME
 Log::Report::Exception - a collected report
@@ -72,13 +73,13 @@ sub reason(;$)
 
 =method isFatal
 Returns whether this exception has a severity which makes it fatal
-when thrown.  See M<Log::Report::isFatal()>.
+when thrown.  See M<Log::Report::Util::is_fatal()>.
 =example
   if($ex->isFatal) { $ex->throw(reason => 'ALERT') }
   else { $ex->throw }
 =cut
 
-sub isFatal() { Log::Report->isFatal(shift->{reason}) }
+sub isFatal() { is_fatal shift->{reason} }
 
 =method message [MESSAGE]
 Change the MESSAGE of the exception, must be a M<Log::Report::Message>
@@ -136,7 +137,8 @@ sub throw(@)
 
     my $reason;
     if($reason = delete $opts->{reason})
-    {   $opts->{is_fatal} = Log::Report->isFatal($reason)
+    {   $self->{reason} = $reason;
+        $opts->{is_fatal} = is_fatal $reason
             unless exists $opts->{is_fatal};
     }
     else

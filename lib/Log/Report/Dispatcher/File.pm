@@ -4,11 +4,12 @@ use strict;
 package Log::Report::Dispatcher::File;
 use base 'Log::Report::Dispatcher';
 
-use Log::Report 'log-report';
-use IO::File ();
+use Log::Report  'log-report';
+use IO::File     ();
+use POSIX        qw/strftime/;
 
-use Encode   qw/find_encoding/;
-use Fcntl    qw/:flock/;
+use Encode       qw/find_encoding/;
+use Fcntl        qw/:flock/;
 
 =chapter NAME
 Log::Report::Dispatcher::File - send messages to a file or file-handle
@@ -73,17 +74,22 @@ Use the LOCALE setting by default, which is LC_CTYPE or LC_ALL or LANG
 (in that order).  If these contain a character-set which Perl understands,
 then that is used, otherwise silently ignored.
 
-=option  format CODE
+=option  format CODE|'LONG'
 =default format <adds timestamp>
 [1.00] process each printed line.  By default, this adds a timestamp,
 but you may want to add hostname, process number, or more.
 
    format => sub { '['.localtime().'] '.$_[0] }
    format => sub { shift }   # no timestamp
-   format => sub { strftime("[%FT%T $$] ", gmtime).shift }
+   format => 'LONG'
 
-The first parameter to format is the string to print.  It is already
-translated and trailed by a newline.
+The first parameter to format is the string to print; it is already
+translated and trailed by a newline.  The second parameter is the
+text-domain (if known).  The "LONG" format is equivalent to:
+
+  my $t = strftime "%FT%T", gmtime;
+  "[$t $$] $_[1] $_[0]"
+
 =cut
 
 sub init($)
@@ -110,15 +116,25 @@ sub init($)
         my $binmode = $args->{replace} ? '>' : '>>';
 
         my $f = $self->{output} = IO::File->new($to, $binmode)
-            or fault __x"cannot write log into {file} with {binmode}"
-                   , binmode => $binmode, file => $to;
+            or fault __x"cannot write log into {file} with mode {binmode}"
+                 , binmode => $binmode, file => $to;
         $f->autoflush;
 
         trace "opened dispatcher $name to $to with $binmode";
     }
 
-    $self->{format} = $args->{format}
-     || sub { '['.localtime()."] $_[0]" };
+    my $format = $args->{format} || sub { '['.localtime()."] $_[0]" };
+    $self->{format}
+      = ref $format eq 'CODE' ? $format
+      : $format eq 'LONG'
+      ? sub { my $msg    = shift;
+              my $domain = shift || '-';
+              my $stamp  = strftime "%FT%T", gmtime;
+              "[$stamp $$] $domain $msg"
+            }
+      : error __x"unknown format parameter `{what}'"
+          , what => ref $format || $format;
+
     $self;
 }
 
@@ -176,10 +192,9 @@ sub rotate($)
 =section Logging
 =cut
 
-sub log($$$)
-{   my $self = shift;
-    my $text = $self->format->($self->SUPER::translate(@_));
-
+sub log($$$$)
+{   my ($self, $opts, $reason, $msg, $domain) = @_;
+    my $text = $self->format->($self->translate($opts, $reason, $msg), $domain);
     my $out  = $self->output;
     flock $out, LOCK_EX;
     $out->print($text);

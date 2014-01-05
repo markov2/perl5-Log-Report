@@ -6,6 +6,7 @@ use strict;
 
 use File::Temp   qw/tempfile/;
 use Test::More;
+use Fcntl        qw/SEEK_CUR/;
 
 use Log::Report undef, syntax => 'SHORT';
 
@@ -31,12 +32,10 @@ log4perl.category.$name            = INFO, Logfile
 log4perl.appender.Logfile          = Log::Log4perl::Appender::File
 log4perl.appender.Logfile.filename = $outfn
 log4perl.appender.Logfile.layout   = Log::Log4perl::Layout::PatternLayout
-log4perl.appender.Logfile.layout.ConversionPattern = %d %F{2} %L> %m
+log4perl.appender.Logfile.layout.ConversionPattern = %d %F{2} %L> %m %n
 __CONFIG
 
-dispatcher 'Log::Log4perl' => $name, config => \$conf
-   , to_level => ['ALERT-' => 3];
-
+dispatcher LOG4PERL => $name, config => \$conf;
 dispatcher close => 'default';
 
 cmp_ok(-s $outfn, '==', 0);
@@ -49,6 +48,8 @@ notice "this is a test"; $line_number = __LINE__;
 my $s1 = -s $outfn;
 cmp_ok($s1, '>', 0);
 $log_line = <$out>;
+#warn "LINE1 = $log_line";
+
 $log_line =~ s!\\!/!g;  # windows
 $expected_msg = "$line_number> notice: this is a test";
 # do not anchor at the end: $ does not match on Windows
@@ -56,8 +57,12 @@ like($log_line, qr!^$date_qr t[/\\]53log4perl\.t \Q$expected_msg\E!);
 
 warning "some more"; $line_number = __LINE__;
 my $s2 = -s $outfn;
-cmp_ok($s2, '>', $s1);
-$log_line = do { <$out> };
+cmp_ok $s2, '>', $s1;
+
+seek $out, 0, SEEK_CUR;
+$log_line = <$out>;
+#warn "LINE2 = $log_line";
+
 $log_line =~ s!\\!/!g;  # windows
 $expected_msg = "$line_number> warning: some more";
 like($log_line, qr!^$date_qr t[/\\]53log4perl\.t \Q$expected_msg\E!);

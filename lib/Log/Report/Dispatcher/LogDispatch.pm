@@ -131,9 +131,9 @@ sub backend() {shift->{backend}}
 =section Logging
 =cut
 
-sub log($$$$)
+sub log($$$$$)
 {   my $self  = shift;
-    my $text  = $self->SUPER::translate(@_) or return;
+    my $text  = $self->translate(@_) or return;
     my $level = $self->reasonToLevel($_[1]);
 
     $self->backend->log(level => $level, message => $text);
