@@ -7,7 +7,13 @@ Mark Overmeer.
 TODO:
   . connect to Message::Passing framework
 
+version 1.01: Mon Jan  6 23:21:37 CET 2014
+
+	Fixes:
+	- LC_MESSAGE missing on Windows [Michael Long]
+
 version 1.00: Sun Jan  5 17:23:44 CET 2014
+
 	Split into four components, adding
 	- String::Print for formatting, permits positionals now
 	- Log::Report::Optional as base, super lightweight

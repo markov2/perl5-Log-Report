@@ -7,6 +7,12 @@ use Log::Report 'log-report';
 use POSIX      qw/locale_h/;
 use List::Util qw/first/;
 
+# Work-around for missing LC_MESSAGES on old Perls and Windows
+{ no warnings;
+  eval "&LC_MESSAGES";
+  *LC_MESSAGES = sub(){5} if $@;
+}
+
 =chapter NAME
 Log::Report::Message - a piece of text to be translated
 
