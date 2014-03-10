@@ -143,35 +143,37 @@ F<http://perl.overmeer.net/log-report/papers/201306-PerlMagazine-article-en.html
 
 =section Report Production and Configuration
 
-=function report [HASH-of-OPTIONS], REASON, MESSAGE|(STRING,PARAMS), 
+=function report [%options], $reason, $message|<STRING,$params>, 
 
-The C<report> function is sending (for some REASON) a MESSAGE to be
+The C<report> function is sending (for some $reason) a $message to be
 displayed or logged (by a `dispatcher').  This function is the core
 for M<error()>, M<info()> etc functions, which are nicer names for this
 exception throwing: better use those short names.
 
-The REASON is a string like 'ERROR' (for function C<error()>).
-The MESSAGE is a M<Log::Report::Message> object (which are created with
-the special translation syntax like M<__x()>).  The MESSAGE may also
+The $reason is a string like 'ERROR' (for function C<error()>).
+The $message is a M<Log::Report::Message> object (which are created with
+the special translation syntax like M<__x()>).  The $message may also
 be a plain string, or an M<Log::Report::Exception> object. The optional
 first parameter is a HASH which can be used to influence the dispatchers.
-The HASH contains any combination of the OPTIONS listed below.
 
-This function returns the LIST of dispatchers which accepted the MESSAGE.
-When empty, no back-end has accepted it so the MESSAGE was "lost".
+The optional %options are listed below.  Quite differently from other
+functions and methods, they have to be passed in a HASH as first parameter.
+
+This function returns the LIST of dispatchers which accepted the $message.
+When empty, no back-end has accepted it so the $message was "lost".
 Even when no back-end needs the message, the program will still exit
-when there is a REASON to C<die()>.
+when there is a $reason to C<die()>.
 
 =option  to NAME|ARRAY-of-NAMEs
 =default to C<undef>
-Sent the MESSAGE only to the NAME'd dispatchers.  Ignore unknown NAMEs.
+Sent the $message only to the NAMEd dispatchers.  Ignore unknown NAMEs.
 Still, the dispatcher needs to be enabled and accept the REASONs.
 
 =option  errno INTEGER
 =default errno C<$!> or C<1>
-When the REASON includes the error text (See L</Run modes>), you can
+When the $reason includes the error text (See L</Run modes>), you can
 overrule the error code kept in C<$!>.  In other cases, the return code
-defaults to C<1> (historical UNIX behavior). When the message REASON
+defaults to C<1> (historical UNIX behavior). When the message $reason
 (combined with the run-mode) is severe enough to stop the program,
 this value as return code of the program.  The use of this option itself
 will not trigger an C<die()>.
@@ -320,11 +322,11 @@ sub report($@)
     @disp;
 }
 
-=function dispatcher (TYPE, NAME, OPTIONS)|(COMMAND => NAME, [NAMEs])
+=function dispatcher <$type, $name, %options>|<$command, @names>
 
 The C<dispatcher> function controls access to dispatchers: the back-ends
 which process messages, do the logging.  Dispatchers are global entities,
-addressed by a symbolic NAME.  Please read M<Log::Report::Dispatcher> as
+addressed by a symbolic $name.  Please read M<Log::Report::Dispatcher> as
 well.
 
 The C<Log::Report> suite has its own dispatcher TYPES, but also connects
@@ -332,19 +334,19 @@ to external dispatching frameworks.  Each need some (minor) conversions,
 especially with respect to translation of REASONS of the reports
 into log-levels as the back-end understands.
 
-The OPTIONS are a mixture of parameters needed for the
+The %options are a mixture of parameters needed for the
 Log::Report dispatcher wrapper and the settings of the back-end.
 See M<Log::Report::Dispatcher>, the documentation for the back-end
 specific wrappers, and the back-ends for more details.
 
 Implemented COMMANDs are C<close>, C<find>, C<list>, C<disable>,
 C<enable>, C<mode>, C<filter>, and C<needs>.  Most commands are followed
-by a LIST of dispatcher NAMEs to be address.  For C<mode> see section
+by a LIST of dispatcher @names to be addressed.  For C<mode> see section
 L</Run modes>; it requires a MODE argument before the LIST of NAMEs.
 Non-existing names will be ignored. When C<ALL> is specified, then
 all existing dispatchers will get addressed.  For C<filter> see
 L<Log::Report::Dispatcher/Filters>; it requires a CODE reference before
-the NAMEs of the dispatchers which will have the it applied (defaults to
+the @names of the dispatchers which will have the it applied (defaults to
 all).
 
 With C<needs>, you only provide a REASON: it will return the list of
@@ -462,7 +464,7 @@ sub _whats_needed()
     $reporter->{needs} = \%needs;
 }
 
-=function try CODE, OPTIONS
+=function try CODE, %options
 
 Execute the CODE while blocking all dispatchers as long as it is running.
 The exceptions which occur while running the CODE are caught until it
@@ -477,12 +479,12 @@ Run-time errors from Perl and die's, croak's and confess's within the
 program (which shouldn't appear, but you never know) are collected into an
 M<Log::Report::Message> object, using M<Log::Report::Die>.
 
-The OPTIONS are passed to the constructor of the try-dispatcher, see
+The %options are passed to the constructor of the try-dispatcher, see
 M<Log::Report::Dispatcher::Try::new()>.  For instance, you may like to
 add C<< mode => 'DEBUG' >>, or C<< accept => 'ERROR-' >>.
 
 B<Be warned> that the parameter to C<try> is a CODE reference.  This means
-that you shall not use a comma after the block when there are OPTIONS
+that you shall not use a comma after the block when there are %options
 specified.  On the other hand, you shall use a semi-colon after the
 block if there are no arguments.
 
@@ -546,28 +548,28 @@ and available when "syntax is SHORT" (by default, see M<import()>).
 You cannot specify additional options to influence the behavior of
 C<report()>, which are usually not needed anyway.
 
-=function trace MESSAGE
-Short for C<< report TRACE => MESSAGE >>
-=function assert MESSAGE
-Short for C<< report ASSERT => MESSAGE >>
-=function info MESSAGE
-Short for C<< report INFO => MESSAGE >>
-=function notice MESSAGE
-Short for C<< report NOTICE => MESSAGE >>
-=function warning MESSAGE
-Short for C<< report WARNING => MESSAGE >>
-=function mistake MESSAGE
-Short for C<< report MISTAKE => MESSAGE >>
-=function error MESSAGE
-Short for C<< report ERROR => MESSAGE >>
-=function fault MESSAGE
-Short for C<< report FAULT => MESSAGE >>
-=function alert MESSAGE
-Short for C<< report ALERT => MESSAGE >>
-=function failure MESSAGE
-Short for C<< report FAILURE => MESSAGE >>
-=function panic MESSAGE
-Short for C<< report PANIC => MESSAGE >>
+=function trace $message
+Short for C<< report TRACE => $message >>
+=function assert $message
+Short for C<< report ASSERT => $message >>
+=function info $message
+Short for C<< report INFO => $message >>
+=function notice $message
+Short for C<< report NOTICE => $message >>
+=function warning $message
+Short for C<< report WARNING => $message >>
+=function mistake $message
+Short for C<< report MISTAKE => $message >>
+=function error $message
+Short for C<< report ERROR => $message >>
+=function fault $message
+Short for C<< report FAULT => $message >>
+=function alert $message
+Short for C<< report ALERT => $message >>
+=function failure $message
+Short for C<< report FAILURE => $message >>
+=function panic $message
+Short for C<< report PANIC => $message >>
 =cut
 
 sub trace(@)   {report TRACE   => @_}
@@ -615,12 +617,12 @@ was later replaced by a double-colon.  So C<< __'Hello' >> gets interpreted
 as C<< __::Hello ' >>.  Then, there is a trailing single quote which has
 no counterpart.
 
-=function __ MSGID
-This function (name is B<two> under-score characters) will cause the MSGID
+=function __ $msgid
+This function (name is B<two> under-score characters) will cause the $msgid
 to be replaced by the translations when doing the actual output.  Returned
 is a M<Log::Report::Message> object, which will be used in translation
 later.  Translating is invoked when the object gets stringified.  When
-you have no translation tables, the MSGID will be shown untranslated.
+you have no translation tables, the $msgid will be shown untranslated.
 
 If you need options for M<Log::Report::Message::new()> then use M<__x()>;
 the prototype of this function does not permit parameters: it is a
@@ -647,8 +649,8 @@ sub __($)
       );
 } 
 
-=function __x MSGID, PAIRS
-Translate the MSGID and then interpolate the VARIABLES in that string.
+=function __x $msgid, PAIRS
+Translate the $msgid and then interpolate the VARIABLES in that string.
 Of course, translation and interpolation is delayed as long as possible.
 Both OPTIONS and VARIABLES are key-value pairs.
 
@@ -670,10 +672,10 @@ sub __x($@)
      );
 } 
 
-=function __n MSGID, PLURAL_MSGID, COUNT, PAIRS
-It depends on the value of COUNT (and the selected language) which
+=function __n $msgid, $plural_msgid, $count, PAIRS
+It depends on the value of $count (and the selected language) which
 text will be displayed.  When translations can not be performed, then
-MSGID will be used when COUNT is 1, and PLURAL_MSGSID in other cases.
+$msgid will be used when $count is 1, and PLURAL_MSGSID in other cases.
 However, some languages have more complex schemes than English.
 
 The PAIRS are options for M<Log::Report::Message::new()> and variables
@@ -706,8 +708,8 @@ sub __n($$$@)
      );
 }
 
-=function __nx MSGID, PLURAL_MSGID, COUNT, PAIRS
-It depends on the value of COUNT (and the selected language) which
+=function __nx $msgid, $plural_msgid, $count, PAIRS
+It depends on the value of $count (and the selected language) which
 text will be displayed.  See details in M<__n()>.  After translation,
 the VARIABLES will be filled-in.
 
@@ -734,7 +736,7 @@ sub __nx($$$@)
      );
 }
 
-=function __xn SINGLE_MSGID, PLURAL_MSGID, COUNT, PAURS
+=function __xn $single_msgid, $plural_msgid, $count, $paurs
 Same as M<__nx()>, because we have no preferred order for 'x' and 'n'.
 =cut
 
@@ -750,7 +752,7 @@ sub __xn($$$@)   # repeated for prototype
      );
 }
 
-=function N__ MSGID
+=function N__ $msgid
 Label to indicate that the string is a text which will be translated
 later.  The function itself does nothing.  See also M<N__w()>.
 
@@ -772,7 +774,7 @@ translation tables.
 
 sub N__($) { $_[0] }
 
-=function N__n SINGLE_MSGID, PLURAL_MSGID
+=function N__n $single_msgid, $plural_msgid
 Label to indicate that the two MSGIDs are related, the first as
 single, the seconds as its plural.  Only used to find the text
 fragments to be translated.  The function itself does nothing.
@@ -803,14 +805,14 @@ sub N__w(@) {split " ", $_[0]}
 
 =section Configuration
 
-=method import [LEVEL,][DOMAIN], OPTIONS
+=method import [$level,][$domain,] %options
 The import is automatically called when the package is compiled.  For all
 packages but one in your distribution, it will only contain the name of
-the DOMAIN.
+the $domain.
 
 For one package, the import list may additionally contain textdomain
-configuration OPTIONS.  These OPTIONS are used for all packages which
-use the same DOMAIN.  These are alternatives:
+configuration %options.  These %options are used for all packages which
+use the same $domain.  These are alternatives:
 
   use Log::Report 'my-domain', %config, %domain_config;
 
@@ -820,11 +822,11 @@ use the same DOMAIN.  These are alternatives:
 The latter syntax has major advantages, when the configuration of the
 domain is determined at run-time.  It is probably also easier to understand.
 
-See M<Log::Report::Domain::configure()>, for the B<list of OPTIONS>
+See M<Log::Report::Domain::configure()>, for the B<list of %options>
 for the domain configuration.  Here, we only list the options which are
 related to the normal import behavior.
 
-The export LEVEL is a plus (+) followed by a number, for instance C<+1>,
+The export $level is a plus (+) followed by a number, for instance C<+1>,
 to indicate to on which caller level we need to work.  This is used
 in M<Log::Report::Optional>.  It defaults to '0': my direct caller.
 
@@ -867,6 +869,15 @@ option is ignored and only the specified FUNCTION(s) are imported.
 
 sub import(@)
 {   my $class = shift;
+
+    if($INC{'Log/Report/Minimal.pm'})
+    {    my ($pkg, $fn, $line) = caller;   # do not report on LR:: modules
+         if(index($pkg, 'Log::Report::') != 0)
+         {   my @pkgs = Log::Report::Optional->usedBy;
+             die "Log::Report loaded too late in $fn line $line, "
+               . "put in $pkg before ", (join ',', @pkgs) if @pkgs;
+         }
+    }
 
     my $to_level   = ($_[0] && $_[0] =~ m/^\+\d+$/ ? shift : undef) || 0;
     my $textdomain = @_%2 ? shift : undef;
@@ -940,9 +951,9 @@ sub translator($;$$$$)
     $domain->configure(translator => $translator, where => [$pkg, $fn, $line]);
 }
 
-=function textdomain ([DOMAIN], CONFIG) | (DOMAIN, 'DELETE')
+=function textdomain <[$domain], $config> | <$domain, 'DELETE'>
 [1.00] Without CONFIGuration, this returns the M<Log::Report::Domain> object
-which administers the DOMAIN, by default the domain effictive in the scope
+which administers the $domain, by default the domain effictive in the scope
 of the package.
 
 A very special case is for "DELETE", which will remove the domain
@@ -964,8 +975,8 @@ sub textdomain(@)
 
 =section Reasons
 
-=c_method needs REASON, [REASONS]
-Returns true when the reporter needs any of the REASONS, when any of
+=c_method needs $reason, [$reasons]
+Returns true when the reporter needs any of the $reasons, when any of
 the active dispatchers is collecting messages in the specified level.
 This is useful when the processing of data for the message is relatively
 expensive, but for instance only required in debug mode.
@@ -997,7 +1008,7 @@ with a single new command: C<report> with many abbreviations.
 Besides, the C<print>/C<warn>/C<die> together produce only three different
 output levels with a message.  Many people manually implement their
 own additional levels, like verbose and debug.  Syslog has some extra
-levels as well, like C<critical>.  The REASON argument to C<report()>
+levels as well, like C<critical>.  The $reason argument to C<report()>
 offers them all.
 
 The (optional) translations use the beautiful syntax defined by

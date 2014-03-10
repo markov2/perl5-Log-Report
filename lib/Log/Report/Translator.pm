@@ -38,7 +38,7 @@ language packs are not installed.
 
 =section Constructors
 
-=c_method new OPTIONS
+=c_method new %options
 
 =option  lexicons DIRECTORY|ARRAY-of-DIRECTORYs
 =default lexicons <see text>
@@ -86,8 +86,10 @@ sub init($)
                 if $Log::Report::Lexicon::Index::VERSION < 1.00;
         }
 
-        push @lex, $lexicons{$dir} ||=   # lexicon indexes are shared
-            Log::Report::Lexicon::Index->new($dir);
+        # lexicon indexes are shared
+        my $l = $lexicons{$dir} ||= Log::Report::Lexicon::Index->new($dir);
+        $l->index;   # index the files now
+        push @lex, $l;
     }
     $self->{lexicons} = \@lex;
     $self->{charset}  = $args->{charset} || 'utf-8';
@@ -117,8 +119,8 @@ sub charset() {shift->{charset}}
 
 =section Translating
 
-=method translate MESSAGE, [LANGUAGE, CTXT]
-Returns the translation of the MESSAGE, a C<Log::Report::Message> object,
+=method translate $message, [$language, $ctxt]
+Returns the translation of the $message, a C<Log::Report::Message> object,
 based on the current locale.
 
 Translators are permitted to peek into the internal HASH of the
@@ -135,8 +137,8 @@ sub translate($$$)
     : $msg->{_msgid};
 }
 
-=method load DOMAIN, LOCALE
-Load the translation information in the text DOMAIN for the indicated LOCALE.
+=method load $domain, $locale
+Load the translation information in the text $domain for the indicated $locale.
 Multiple calls to M<load()> should not cost significant performance: the
 data must be cached.
 =cut

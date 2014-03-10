@@ -57,7 +57,7 @@ using M<new(to_level)>.  See example in SYNOPSIS.
 
 =section Constructors
 
-=c_method new TYPE, NAME, OPTIONS
+=c_method new $type, $name, %options
 The Log::Dispatch infrastructure has quite a large number of output
 TYPEs, each extending the M<Log::Dispatch::Output> base-class.  You
 do not create these objects yourself: Log::Report is doing it for you.
@@ -140,7 +140,7 @@ sub log($$$$$)
     $self;
 }
 
-=method reasonToLevel REASON
+=method reasonToLevel $reason
 Returns a level which is understood by Log::Dispatch, based on
 a translation table.  This can be changed with M<new(to_level)>.
 =cut

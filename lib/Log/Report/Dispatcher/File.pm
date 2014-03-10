@@ -53,7 +53,7 @@ can write to the same file.
 
 =section Constructors
 
-=c_method new TYPE, NAME, OPTIONS
+=c_method new $type, $name, %options
 
 =requires to FILENAME|FILEHANDLE|OBJECT
 You can either specify a FILENAME, which is opened in append mode with
@@ -166,8 +166,8 @@ sub close()
     $self;
 }
 
-=method rotate FILENAME
-[1.00] Move the current file to FILENAME, and start a new file.
+=method rotate $filename
+[1.00] Move the current file to $filename, and start a new file.
 =cut
 
 sub rotate($)

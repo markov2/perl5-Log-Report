@@ -69,7 +69,7 @@ using M<new(to_prio)>.  See example in SYNOPSIS.
 
 =section Constructors
 
-=c_method new TYPE, NAME, OPTIONS
+=c_method new $type, $name, %options
 With syslog, people tend not to include the REASON of the message
 in the logs, because that is already used to determine the destination
 of the message.
@@ -173,7 +173,7 @@ sub log($$$$$)
     syslog $prio, "%s", $_ for @text;
 }
 
-=method reasonToPrio REASON
+=method reasonToPrio $reason
 Returns a level which is understood by syslog(3), based on a translation
 table.  This can be changed with M<new(to_prio)>.
 =cut

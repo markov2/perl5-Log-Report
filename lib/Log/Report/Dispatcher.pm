@@ -55,18 +55,18 @@ filtering rules.  See the L</DETAILS> section, below.
 
 =section Constructors
 
-=c_method new TYPE, NAME, OPTIONS
-Create a dispatcher.  The TYPE of back-end to start is required, and listed
+=c_method new $type, $name, %options
+Create a dispatcher.  The $type of back-end to start is required, and listed
 in the L</DESCRIPTION> part of this manual-page. For various external
 back-ends, special wrappers are created.
 
-The NAME must be uniquely identifying this dispatcher.  When a second
+The $name must be uniquely identifying this dispatcher.  When a second
 dispatcher is created (via M<Log::Report::dispatcher()>) with the name
 of an existing dispatcher, the existing one will get replaced.
 
-All OPTIONS which are not consumed by this base constructor are passed
-to the wrapped back-end.  Some of them will check whether all OPTIONS
-are understood, other ignore unknown OPTIONS.
+All %options which are not consumed by this base constructor are passed
+to the wrapped back-end.  Some of them will check whether all %options
+are understood, other ignore unknown %options.
 
 =option  accept REASONS
 =default accept C<depend on mode>
@@ -184,7 +184,7 @@ Returns the unique name of this dispatcher.
 sub name {shift->{name}}
 
 =method type
-The dispatcher TYPE, which is usually the same as the class of this
+The dispatcher $type, which is usually the same as the class of this
 object, but not in case of wrappers like for Log::Dispatch.
 =cut
 
@@ -227,11 +227,11 @@ sub _disabled($)
 
 sub isDisabled() {shift->{disabled}}
 
-=method needs [REASON]
+=method needs [$reason]
 Returns the list with all REASONS which are needed to fulfill this
 dispatcher's needs.  When disabled, the list is empty, but not forgotten.
 
-[0.999] when only one REASON is specified, it is returned if in the
+[0.999] when only one $reason is specified, it is returned if in the
 list.
 =cut
 
@@ -248,9 +248,9 @@ sub needs(;$)
 
 =section Logging
 
-=method log HASH-of-OPTIONS, REASON, MESSAGE, DOMAIN
+=method log HASH-$of-%options, $reason, $message, $domain
 This method is called by M<Log::Report::report()> and should not be called
-directly.  Internally, it will call M<translate()>, which does most of
+directly.  Internally, it will call M<translate()>, which does most $of
 the work.
 =cut
 
@@ -258,7 +258,7 @@ sub log($$$$)
 {   panic "method log() must be extended per back-end";
 }
 
-=method translate HASH-of-OPTIONS, REASON, MESSAGE
+=method translate HASH-$of-%options, $reason, $message
 See L</Processing the message>, which describes the actions taken by
 this method.  A string is returned, which ends on a new-line, and
 may be multi-line (in case a stack trace is produced).
@@ -332,7 +332,7 @@ sub translate($$$)
     $self->{charset_enc}->($text);
 }
 
-=ci_method collectStack [MAXDEPTH]
+=ci_method collectStack [$maxdepth]
 Returns an ARRAY of ARRAYs with text, filename, line-number.
 =cut
 
@@ -383,7 +383,7 @@ sub collectLocation()
     @args ? \@args : undef;
 }
 
-=ci_method stackTraceLine OPTIONS
+=ci_method stackTraceLine %options
 =requires package CLASS
 =requires filename STRING
 =requires linenr INTEGER

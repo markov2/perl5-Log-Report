@@ -15,6 +15,7 @@ my @show_versions =
     Sys::Syslog
     Log::Dispatch
     String::Print
+    Mojolicious
    /;
 
 #   Log::Report::Optional

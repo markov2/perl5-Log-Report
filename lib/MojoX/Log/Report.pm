@@ -37,8 +37,8 @@ reasons this way:
 
 =section Constructors
 
-=c_method new OPTIONS
-Inherited OPTIONS C<path> and C<level> are ignored.
+=c_method new %options
+Inherited %options C<path> and C<level> are ignored.
 =cut
 
 sub new(@) {

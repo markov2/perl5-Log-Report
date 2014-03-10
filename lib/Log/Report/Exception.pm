@@ -36,12 +36,14 @@ an (untranslated) report.
 Produces "reason: message".
 =cut
 
-use overload '""' => 'toString';
+use overload
+    '""'     => 'toString'
+  , fallback => 1;
 
 =chapter METHODS
 
 =section Constructors
-=c_method new OPTIONS
+=c_method new %options
 
 =option  report_opts HASH
 =default report_opts {}
@@ -63,7 +65,7 @@ sub new($@)
 
 sub report_opts() {shift->{report_opts}}
 
-=method reason [REASON]
+=method reason [$reason]
 =cut
 
 sub reason(;$)
@@ -81,8 +83,8 @@ when thrown.  See M<Log::Report::Util::is_fatal()>.
 
 sub isFatal() { is_fatal shift->{reason} }
 
-=method message [MESSAGE]
-Change the MESSAGE of the exception, must be a M<Log::Report::Message>
+=method message [$message]
+Change the $message of the exception, must be a M<Log::Report::Message>
 object.
 
 When you use a C<Log::Report::Message> object, you will get a new one
@@ -106,19 +108,19 @@ sub message(;$)
 
 =section Processing
 
-=method inClass CLASS|REGEX
-Check whether any of the classes listed in the message match CLASS
-(string) or the REGEX.  This uses M<Log::Report::Message::inClass()>.
+=method inClass $class|Regexp
+Check whether any of the classes listed in the message match $class
+(string) or the Regexp.  This uses M<Log::Report::Message::inClass()>.
 =cut
 
 sub inClass($) { $_[0]->message->inClass($_[1]) }
 
-=method throw OPTIONS
+=method throw %options
 Insert the message contained in the exception into the currently
 defined dispatchers.  The C<throw> name is commonly known
 exception related terminology for C<report>.
 
-The OPTIONS overrule the captured options to M<Log::Report::report()>.
+The %options overrule the captured options to M<Log::Report::report()>.
 This can be used to overrule a destination.  Also, the reason can
 be changed.
 
@@ -170,7 +172,7 @@ sub toString()
     lc($self->{reason}) . ': ' . (ref $msg ? $msg->toString : $msg) . "\n";
 }
 
-=method print [FILEHANDLE]
+=method print [$fh]
 The default filehandle is STDOUT.
 
 =examples

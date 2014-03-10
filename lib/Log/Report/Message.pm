@@ -57,8 +57,8 @@ that depends on the front-end, the log dispatcher.
 When the object is used in string context, it will get translated.
 Implemented as M<toString()>.
 
-=overload as function
-When the object is used to call as function, a new object is
+=overload as $function
+When the object is used to call as $function, a new object is
 created with the data from the original one but updated with the
 new parameters.  Implemented in C<clone()>.
 
@@ -78,9 +78,9 @@ use overload
 
 =section Constructors
 
-=c_method new OPTIONS
+=c_method new %options
 B<End-users: do not use this method directly>, but use M<Log::Report::__()>
-and friends.  The OPTIONS is a mixed list of object initiation parameters
+and friends.  The %options is a mixed list of object initiation parameters
 (all with a leading underscore) and variables to be filled in into the
 translated C<_msgid> string.
 
@@ -205,9 +205,9 @@ sub new($@)
     bless \%s, $class;
 }
 
-=method clone OPTIONS, VARIABLES
+=method clone %options, $variables
 Returns a new object which copies info from original, and updates it
-with the specified OPTIONS and VARIABLES.  The advantage is that the
+with the specified %options and $variables.  The advantage is that the
 cached translations are shared between the objects.
 
 =examples use of clone()
@@ -223,7 +223,7 @@ sub clone(@)
     (ref $self)->new(%$self, @_);
 }
 
-=c_method fromTemplateToolkit DOMAIN, MSGID, PARAMS
+=c_method fromTemplateToolkit $domain, $msgid, $params
 See M<Log::Report::Extract::Template> on the details how to integrate
 Log::Report translations with Template::Toolkit (version 1 and 2)
 =cut
@@ -288,8 +288,8 @@ sub classes()
     ref $class ? @$class : split(/[\s,]+/, $class);
 }
 
-=method to [NAME]
-Returns the NAME of a dispatcher if explicitly specified with
+=method to [$name]
+Returns the $name of a dispatcher if explicitly specified with
 the '_to' key. Can also be used to set it.  Usually, this will
 return undef, because usually all dispatchers get all messages.
 =cut
@@ -299,8 +299,8 @@ sub to(;$)
     @_ ? $self->{_to} = shift : $self->{_to};
 }
 
-=method valueOf PARAMETER
-Lookup the named PARAMETER for the message.  All pre-defined names
+=method valueOf $parameter
+Lookup the named $parameter for the message.  All pre-defined names
 have their own method which should be used with preference.
 
 =example
@@ -340,9 +340,9 @@ sub valueOf($) { $_[0]->{$_[1]} }
 
 =section Processing
 
-=method inClass CLASS|REGEX
-Returns true if the message is in the specified CLASS (string) or
-matches the REGEX.  The trueth value is the (first matching) class.
+=method inClass $class|Regexp
+Returns true if the message is in the specified $class (string) or
+matches the Regexp.  The trueth value is the (first matching) class.
 =cut
 
 sub inClass($)
@@ -352,7 +352,7 @@ sub inClass($)
     : (first { $_ eq $_[0] } @classes);
 }
     
-=method toString [LOCALE]
+=method toString [$locale]
 Translate a message.  If not specified, the default locale is used.
 =cut
 
@@ -428,10 +428,10 @@ sub untranslated()
    . (defined $self->{_append}  ? $self->{_append}  : '');
 }
 
-=method concat STRING|OBJECT, [PREPEND]
+=method concat STRING|$object, [$prepend]
 This method implements the overloading of concatenation, which is needed
-to delay translations even longer.  When PREPEND is true, the STRING
-or OBJECT (other C<Log::Report::Message>) needs to prepended, otherwise
+to delay translations even longer.  When $prepend is true, the STRING
+or $object (other C<Log::Report::Message>) needs to prepended, otherwise
 it is appended.
 
 =examples of concatenation

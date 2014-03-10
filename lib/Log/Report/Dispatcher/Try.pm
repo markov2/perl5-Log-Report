@@ -70,16 +70,18 @@ or nothing.
 =cut
 
 use overload
-    bool => 'failed'
-  , '""' => 'showStatus';
+    bool     => 'failed'
+  , '""'     => 'showStatus'
+  , fallback => 1;
 
 =chapter METHODS
 
 =section Constructors
 
-=c_method new TYPE, NAME, OPTIONS
-=option  exceptions ARRAY-of-EXCEPTIONS
+=c_method new $type, $name, %options
+=option  exceptions ARRAY
 =default exceptions []
+ARRAY of M<Log::Report::Exception> objects.
 
 =option  died STRING
 =default died C<undef>
@@ -127,13 +129,13 @@ sub exceptions() { @{shift->{exceptions}} }
 
 =section Logging
 
-=method log OPTS, REASON, MESSAGE
+=method log $opts, $reason, $message
 Other dispatchers translate the message here, and make it leave the
 program.  However, messages in a "try" block are only captured in
 an intermediate layer: they may never be presented to an end-users.
 And for sure, we do not know the language yet.
 
-The MESSAGE is either a STRING or a M<Log::Report::Message>.
+The $message is either a STRING or a M<Log::Report::Message>.
 =cut
 
 sub log($$$$)
@@ -159,23 +161,22 @@ sub log($$$$)
     $self;
 }
 
-=method reportAll OPTIONS
+=method reportAll %options
 Re-cast the messages in all collect exceptions into the defined
-dispatchers, which were disabled during the try block. The OPTIONS
-will end-up as HASH-of-OPTIONS to M<Log::Report::report()>; see
+dispatchers, which were disabled during the try block. The %options
+will end-up as HASH of %options to M<Log::Report::report()>; see
 M<Log::Report::Exception::throw()> which does the job.
-=cut
-
-sub reportAll(@) { $_->throw(@_) for shift->exceptions }
 
 =method reportFatal
 Re-cast only the fatal message to the defined dispatchers.  If the
-block was left without problems, then nothing will be done.  The OPTIONS
-will end-up as HASH-of-OPTIONS to M<Log::Report::report()>; see
+block was left without problems, then nothing will be done.  The %options
+will end-up as HASH of %options to M<Log::Report::report()>; see
 M<Log::Report::Exception::throw()> which does the job.
 =cut
 
 sub reportFatal(@) { $_->throw(@_) for shift->wasFatal }
+sub reportAll(@) { $_->throw(@_) for shift->exceptions }
+
 
 #-----------------
 
@@ -191,7 +192,7 @@ Returns true if the block exited normally.
 sub failed()  {   shift->{died}}
 sub success() { ! shift->{died}}
 
-=method wasFatal OPTIONS
+=method wasFatal %options
 Returns the M<Log::Report::Exception> which caused the "try" block to
 die, otherwise an empty LIST (undef).
 

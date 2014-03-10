@@ -95,9 +95,9 @@ and C<%L> are not useful in the generic case, maybe in your specific case.
 
 =section Constructors
 
-=c_method new TYPE, NAME, OPTIONS
+=c_method new $type, $name, %options
 The M<Log::Log4perl> infrastructure has all settings in a configuration
-file.  In that file, you should find a category with the NAME.
+file.  In that file, you should find a category with the $name.
 
 =option  to_level ARRAY-of-PAIRS
 =default to_level []
@@ -149,10 +149,10 @@ sub init($)
 
 =section Accessors
 
-=method logger [DOMAIN]
+=method logger [$domain]
 Returns the M<Log::Log4perl::Logger> object which is used for logging.
-When there is no specific logger for this DOMAIN (logger with the exact
-name of the DOMAIN) the default logger is being used, with the name of
+When there is no specific logger for this $domain (logger with the exact
+name of the $domain) the default logger is being used, with the name of
 this dispatcher.
 =cut
 
@@ -182,7 +182,7 @@ sub log($$$$)
     $self;
 }
 
-=method reasonToLevel REASON
+=method reasonToLevel $reason
 Returns a level which is understood by Log::Dispatch, based on
 a translation table.  This can be changed with M<new(to_level)>.
 

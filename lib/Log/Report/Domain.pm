@@ -64,7 +64,7 @@ this package.
 
 =section Constructors
 
-=c_method new OPTIONS
+=c_method new %options
 Create a new Domain object.
 =cut
 
@@ -87,11 +87,11 @@ sub translator()     {shift->{LRD_transl}}
 sub contextRules()   {shift->{LRD_ctxt_rules}}
 
 #----------------
-=method configure OPTIONS
+=method configure %options
 The import is automatically called when the package is compiled.  For all
 but one packages in your distribution, it will only contain the name of
 the DOMAIN.  For one package, it will contain configuration information.
-These OPTIONS are used for all packages which use the same DOMAIN.
+These %options are used for all packages which use the same DOMAIN.
 See chapter L</Configuring> below.
 
 =option  formatter CODE|'PRINTI'|'PRINTP'
@@ -138,11 +138,13 @@ sub configure(%)
     # 'formatter' is handled by the base-class, but documented here.
     $self->SUPER::configure(%args);
 
-    my $transl = $self->{LRD_transl}
-      = $args{translator} || Log::Report::Translator->new;
+    my $transl = $args{translator} || Log::Report::Translator->new;
+    $transl    =  Log::Report::Translator->new(@$transl)
+        if ref $transl eq 'HASH';
 
     !blessed $transl || $transl->isa('Log::Report::Translator')
         or panic "translator must be a Log::Report::Translator object";
+    $self->{LRD_transl} = $transl;
 
     my $native = $self->{LRD_native}
       = $args{native_language} || 'en_US';
@@ -192,8 +194,8 @@ not modify the content of that HASH: change it by called M<setContext()>.
 
 sub defaultContext() { shift->{LRD_ctxt_def} }
 
-=ci_method readConfig FILENAME
-Helper method, which simply parses the content FILENAME into a HASH to be
+=ci_method readConfig $filename
+Helper method, which simply parses the content $filename into a HASH to be
 used as parameters to M<configure()>. The filename must end on '.pl',
 to indicate that it uses perl syntax (can be processed with Perl's C<do>
 command) or end on '.json'.  See also chapter L</Configuring> below.
@@ -229,8 +231,8 @@ sub readConfig($)
 #-------------------
 =section Action
 
-=method translate MESSAGE, LANGUAGE
-Translate the MESSAGE into the LANGUAGE.
+=method translate $message, $language
+Translate the $message into the $language.
 =cut
 
 sub translate($$)

@@ -7,6 +7,19 @@ Mark Overmeer.
 TODO:
   . connect to Message::Passing framework
 
+version 1.02: Mon Mar 10 16:03:13 CET 2014
+
+	Fixes:
+	- add overload fallback to ::Exception and ::Dispatcher
+	  rt.cpan.org#92970 [Lukas Mai]
+	- ::Domain::new(translator) with HASH did not initialize
+	- warn better with ::Optional modules are used before Log::Report
+	  is used.
+
+	Improvements:
+	- changed documentation style
+	- ::Lexicon::Index dir-scan immediately, hopefully before fork()
+
 version 1.01: Mon Jan  6 23:21:37 CET 2014
 
 	Fixes:

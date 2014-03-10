@@ -43,7 +43,7 @@ for simple things this will do.
 
 =section Constructors
 
-=c_method new TYPE, NAME, OPTIONS
+=c_method new $type, $name, %options
 
 =requires callback CODE
 Your C<callback> is called with five parameters: this dispatcher object,
