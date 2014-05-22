@@ -209,8 +209,9 @@ sub _set_mode($)
 
     $self->{needs} = [ expand_reasons $default_accept[$mode] ];
 
-    trace __x"switching to run mode {mode}, accept {accept}"
-       , mode => $mode, accept => $default_accept[$mode];
+    trace __x"switching to run mode {mode} for {pkg}, accept {accept}"
+       , mode => $mode, pkg => ref $self, accept => $default_accept[$mode]
+         unless $self->isa('Log::Report::Dispatcher::Try');
 
     $mode;
 }
@@ -425,7 +426,7 @@ sub stackTraceLine(@)
     $max        -= @params * 2 - length($listtail);  #  \( ( \,[ ] ){n-1} \)
 
     my $calling  = $thing->stackTraceCall(\%args, $abstract, $call, $obj);
-    my @out      = map {$thing->stackTraceParam(\%args, $abstract, $_)} @params;
+    my @out      = map $thing->stackTraceParam(\%args, $abstract, $_), @params;
     my $total    = sum map {length $_} $calling, @out;
 
   ATTEMPT:
@@ -477,7 +478,14 @@ sub stackTraceParam($$$)
     return $param   # int or float
         if $param =~ /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/;
 
-    '"' . escape_chars($param) . '"';
+    my $escaped = escape_chars $param;
+    if(length $escaped > 80)
+    {    $escaped = substr($escaped, 0, 30)
+                  . '...['. (length($escaped) -80) .' chars more]...'
+                  . substr($escaped, -30);
+    }
+
+    qq{"$escaped"};
 }
 
 =chapter DETAILS

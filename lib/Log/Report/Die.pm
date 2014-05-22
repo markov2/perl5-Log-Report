@@ -51,23 +51,22 @@ following table is used:
 sub die_decode($)
 {   my @text   = split /\n/, $_[0];
     @text or return ();
-
-    $text[0]   =~ s/\.$//;   # inconsequently used
     chomp $text[-1];
 
     my %opt    = (errno => $! + 0);
     my $err    = "$!";
 
     my $dietxt = $text[0];
-    if($text[0] =~ s/ at (.+) line (\d+)$// )
+    if($text[0] =~ s/ at (.+) line (\d+)\.?$// )
     {   $opt{location} = [undef, $1, $2, undef];
     }
     elsif(@text > 1 && $text[1] =~ m/^\s*at (.+) line (\d+)\.?$/ )
-    {   $opt{location} = [undef, $1, $2, undef];
+    {   # sometimes people carp/confess with \n, folding the line
+        $opt{location} = [undef, $1, $2, undef];
         splice @text, 1, 1;
     }
 
-    $text[0] =~ s/\s*[.:;]?\s*$err\s*$//
+    $text[0] =~ s/\s*[.:;]?\s*$err\s*$//  # the $err is translation sensitive
         or delete $opt{errno};
 
     my $msg = shift @text;

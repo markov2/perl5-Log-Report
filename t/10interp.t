@@ -15,7 +15,7 @@ use Scalar::Util qw/reftype/;
 
 sub ol_is($$;$)
 {  # since Test::More 0.95_01, is() does not stringify its arguments.
-   # This means that overloading does not quick in. How to test
+   # This means that overloading does not kick in. How to test
    # overloading now?
    my ($f, $s, $comment) = @_;
    overload::Overloaded($f) || overload::Overloaded($s)
@@ -140,9 +140,13 @@ is($s->toString, "A=11;B=12");  # unchanged
 
 use constant PI => 4 * atan2(1, 1);
 my $approx = 'approx pi: 3.141593';
-is((sprintf "approx pi: %.6f", PI), $approx);
-ol_is((__x "approx pi: {approx}", approx => sprintf("%.6f", PI)), $approx);
-ol_is((__x "approx pi: {pi%.6f}", pi => PI), $approx);
+is((sprintf "approx pi: %.6f", PI), $approx, 'sprintf');
+ol_is((__x "approx pi: {approx}", approx => sprintf("%.6f", PI)), $approx,
+ 'sprintf nested');
+
+my $app = __x "approx pi: {pi%.6f}", pi => PI;
+$app    =~ s/\,/./g;  # translated under locale, which may use ','
+ol_is($app, $approx, 'interpolated format');
 
 ol_is((__x "{perms} {links%2d} {user%-8s} {size%8d} {fn}"
          , perms => '-rw-r--r--', links => 1, user => 'superman'

@@ -226,7 +226,7 @@ sub report($@)
     my $stop = exists $opts->{is_fatal} ? $opts->{is_fatal} : is_fatal $reason;
 
     my $try  = $nested_tries[-1];
-    my @disp = ($stop && $try) ? () : @{$reporter->{needs}{$reason} || []};
+    my @disp = defined $try && $stop ? () : @{$reporter->{needs}{$reason}||[]};
     push @disp, $try if defined $try && $try->needs($reason);
 
     # return when no-one needs it: skip unused trace() fast!
@@ -278,7 +278,6 @@ sub report($@)
         @disp or return;
     }
 
-    my @last_call;  # call Perl dispatcher always last, it calls real die
     my $domain = $message->domain;
     if(my $filters = $reporter->{filters})
     {
@@ -290,23 +289,11 @@ sub report($@)
                 ($r, $m) = $filter->[0]->($d, $opts, $r, $m, $domain);
                 $r or next DISPATCHER;
             }
-
-            if($d->isa('Log::Report::Dispatcher::Perl'))
-                 { @last_call = ($d, { %$opts }, $r, $m, $domain) }
-            else { $d->log($opts, $r, $m, $domain) }
+            $d->log($opts, $r, $m, $domain);
         }
     }
     else
-    {   foreach my $d (@disp)
-        {   if($d->isa('Log::Report::Dispatcher::Perl'))
-                 { @last_call = ($d, { %$opts }, $reason, $message, $domain) }
-            else { $d->log($opts, $reason, $message, $domain) }
-        }
-    }
-
-    if(@last_call && !$^S)
-    {   # the PERL dispatcher may terminate the program
-        shift(@last_call)->log(@last_call);
+    {   $_->log($opts, $reason, $message, $domain) for @disp;
     }
 
     if($stop)
@@ -873,7 +860,8 @@ sub import(@)
     if($INC{'Log/Report/Minimal.pm'})
     {    my ($pkg, $fn, $line) = caller;   # do not report on LR:: modules
          if(index($pkg, 'Log::Report::') != 0)
-         {   my @pkgs = Log::Report::Optional->usedBy;
+         {   # @pkgs empty during release testings of L::R distributions
+             my @pkgs = Log::Report::Optional->usedBy;
              die "Log::Report loaded too late in $fn line $line, "
                . "put in $pkg before ", (join ',', @pkgs) if @pkgs;
          }

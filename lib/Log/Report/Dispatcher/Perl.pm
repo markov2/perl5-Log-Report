@@ -39,15 +39,7 @@ of warn and die using STDERR and exit; however: that is not possible.
 
 sub log($$$$)
 {   my ($self, $opts, $reason, $message, $domain) = @_;
-    my $text = $self->translate($opts, $reason, $message);
-
-    if($opts->{is_fatal})
-    {   $! = $opts->{errno};
-        die $text;
-    }
-    else
-    {   warn $text;
-    }
+    print STDERR $self->translate($opts, $reason, $message);
 }
 
 1;

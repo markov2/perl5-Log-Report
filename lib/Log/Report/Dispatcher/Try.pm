@@ -74,6 +74,7 @@ use overload
   , '""'     => 'showStatus'
   , fallback => 1;
 
+#-----------------
 =chapter METHODS
 
 =section Constructors
@@ -108,6 +109,7 @@ sub close()
     $self;
 }
 
+#-----------------
 =section Accessors
 
 =method died [STRING]
@@ -127,6 +129,7 @@ them may be a fatal one.  The other are non-fatal.
 
 sub exceptions() { @{shift->{exceptions}} }
 
+#-----------------
 =section Logging
 
 =method log $opts, $reason, $message
@@ -174,12 +177,10 @@ will end-up as HASH of %options to M<Log::Report::report()>; see
 M<Log::Report::Exception::throw()> which does the job.
 =cut
 
-sub reportFatal(@) { $_->throw(@_) for shift->wasFatal }
-sub reportAll(@) { $_->throw(@_) for shift->exceptions }
-
+sub reportFatal(@) { $_->throw(@_) for shift->wasFatal   }
+sub reportAll(@)   { $_->throw(@_) for shift->exceptions }
 
 #-----------------
-
 =section Status
 
 =method failed

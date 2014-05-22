@@ -7,6 +7,17 @@ Mark Overmeer.
 TODO:
   . connect to Message::Passing framework
 
+version 1.03: Thu May 22 11:54:24 CEST 2014
+
+	Fixes:
+	- float serialization under locale in test [cpantesters]
+	- non-errors and ::Dispatcher::Perl
+
+	Improvements:
+	- shorted display of string parameters in stack-trace to max 80 chars
+	- Log4perl log-lines sometimes show dispatcher as source, skip them.
+	- disable 'mode switch' trace for try()
+
 version 1.02: Mon Mar 10 16:03:13 CET 2014
 
 	Fixes:
