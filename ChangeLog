@@ -7,6 +7,11 @@ Mark Overmeer.
 TODO:
   . connect to Message::Passing framework
 
+version 1.04: Tue Jun  3 10:42:11 CEST 2014
+
+	Fixes:
+	- float serialization under locale in test [cpantesters]
+
 version 1.03: Thu May 22 11:54:24 CEST 2014
 
 	Fixes:

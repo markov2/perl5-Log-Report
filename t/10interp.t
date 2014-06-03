@@ -139,8 +139,10 @@ is($s->toString, "A=11;B=12");  # unchanged
 #
 
 use constant PI => 4 * atan2(1, 1);
-my $approx = 'approx pi: 3.141593';
-is((sprintf "approx pi: %.6f", PI), $approx, 'sprintf');
+my $approx  = 'approx pi: 3.141593';
+my $approx2 = sprintf "approx pi: %.6f", PI;
+$approx2    =~ s/,/./g;  # locale numeric :(
+is($approx2, $approx, 'sprintf');
 ol_is((__x "approx pi: {approx}", approx => sprintf("%.6f", PI)), $approx,
  'sprintf nested');
 
