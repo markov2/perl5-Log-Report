@@ -148,7 +148,7 @@ ol_is((__x "approx pi: {approx}", approx => sprintf("%.6f", PI)), $approx,
 
 my $app = __x "approx pi: {pi%.6f}", pi => PI;
 $app    =~ s/\,/./g;  # translated under locale, which may use ','
-ol_is($app, $approx, 'interpolated format');
+is($app, $approx, 'interpolated format');
 
 ol_is((__x "{perms} {links%2d} {user%-8s} {size%8d} {fn}"
          , perms => '-rw-r--r--', links => 1, user => 'superman'

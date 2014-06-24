@@ -7,6 +7,12 @@ Mark Overmeer.
 TODO:
   . connect to Message::Passing framework
 
+version 1.05: Tue Jun 24 09:38:15 CEST 2014
+
+	Fixes:
+	- test in t/10interp.t failed for Perl 5.20, caused by a
+	  bugfix or change in overload::Overloaded [cpantesters]
+
 version 1.04: Tue Jun  3 10:42:11 CEST 2014
 
 	Fixes:
