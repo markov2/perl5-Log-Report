@@ -15,7 +15,8 @@ Log::Report::Die - compatibility routines with Perl's die/croak/confess
 
 =chapter DESCRIPTION
 
-=chapter OVERLOADING
+This module is used internally, to translate output of 'die' and Carp
+functions into M<Log::Report::Message> objects.
 
 =chapter Functions
 
@@ -69,13 +70,14 @@ sub die_decode($)
     $text[0] =~ s/\s*[.:;]?\s*$err\s*$//  # the $err is translation sensitive
         or delete $opt{errno};
 
-    my $msg = shift @text;
-    length $msg or $msg = 'stopped';
+    my @msg = shift @text;
+    length $msg[0] or $msg[0] = 'stopped';
 
     my @stack;
     foreach (@text)
-    {   push @stack, [ $1, $2, $3 ]
-            if m/^\s*(.*?)\s+called at (.*?) line (\d+)\s*$/;
+    {   if(m/^\s*(.*?)\s+called at (.*?) line (\d+)\s*$/)
+             { push @stack, [ $1, $2, $3 ] }
+        else { push @msg, $_ }
     }
     $opt{stack}   = \@stack;
     $opt{classes} = [ 'perl', (@stack ? 'confess' : 'die') ];
@@ -84,7 +86,7 @@ sub die_decode($)
       = @{$opt{stack}} ? ($opt{errno} ? 'ALERT' : 'PANIC')
       :                  ($opt{errno} ? 'FAULT' : 'ERROR');
 
-    ($dietxt, \%opt, $reason, $msg);
+    ($dietxt, \%opt, $reason, join("\n",@msg));
 }
 
 "to die or not to die, that's the question";

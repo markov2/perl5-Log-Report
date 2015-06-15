@@ -7,6 +7,20 @@ Mark Overmeer.
 TODO:
   . connect to Message::Passing framework
 
+version 1.06: Mon Jun 15 17:30:33 CEST 2015
+
+	Fixes:
+	- t/60mojo.t will not run on old mojo's: requires 2.16 (2011)
+	  [cpantesters]
+	- ::Dispatcher::File do not use %F/%T in strfime, which is not
+	  supported by Windows.
+	- make ::Die understand multiline 'die()' messages.
+	  rt.cpan.org#101389 [Ken Neighbors]
+
+	Improvements:
+	- add Dancer::Log::Report and examples/dancer/
+	- add Dancer2::*, contributed by [Andrew Beverly]
+
 version 1.05: Tue Jun 24 09:38:15 CEST 2014
 
 	Fixes:

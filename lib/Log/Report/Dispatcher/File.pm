@@ -129,7 +129,7 @@ sub init($)
       : $format eq 'LONG'
       ? sub { my $msg    = shift;
               my $domain = shift || '-';
-              my $stamp  = strftime "%FT%T", gmtime;
+              my $stamp  = strftime "%Y-%m-%dT%H:%M:%S", gmtime;
               "[$stamp $$] $domain $msg"
             }
       : error __x"unknown format parameter `{what}'"

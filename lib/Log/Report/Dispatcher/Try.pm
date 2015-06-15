@@ -36,7 +36,7 @@ Log::Report::Dispatcher::Try - capture all reports as exceptions
  if($@->success) {  # no errors  # }
 
  try { # something causes an error report, which is caught
-       report {to => 'stderr'}, FAILURE => 'no network';
+       failure 'no network';
      };
  $@->reportFatal(to => 'syslog');  # overrule destination
 

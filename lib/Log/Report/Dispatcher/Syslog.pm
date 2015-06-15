@@ -13,18 +13,18 @@ use Encode             qw/encode/;
 use File::Basename qw/basename/;
 
 my %default_reasonToPrio =
- ( TRACE   => LOG_DEBUG
- , ASSERT  => LOG_DEBUG
- , INFO    => LOG_INFO
- , NOTICE  => LOG_NOTICE
- , WARNING => LOG_WARNING
- , MISTAKE => LOG_WARNING
- , ERROR   => LOG_ERR
- , FAULT   => LOG_ERR
- , ALERT   => LOG_ALERT
- , FAILURE => LOG_EMERG
- , PANIC   => LOG_CRIT
- );
+  ( TRACE   => LOG_DEBUG
+  , ASSERT  => LOG_DEBUG
+  , INFO    => LOG_INFO
+  , NOTICE  => LOG_NOTICE
+  , WARNING => LOG_WARNING
+  , MISTAKE => LOG_WARNING
+  , ERROR   => LOG_ERR
+  , FAULT   => LOG_ERR
+  , ALERT   => LOG_ALERT
+  , FAILURE => LOG_EMERG
+  , PANIC   => LOG_CRIT
+  );
 
 @reasons==keys %default_reasonToPrio
     or panic __"not all reasons have a default translation";
@@ -149,8 +149,11 @@ sub close()
     $self->SUPER::close;
 }
 
+#--------------
 =section Accessors
+=cut
 
+#--------------
 =section Logging
 =cut
 

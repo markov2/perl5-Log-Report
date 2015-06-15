@@ -338,6 +338,7 @@ Simplified, the above example can also be written as:
 
 sub valueOf($) { $_[0]->{$_[1]} }
 
+#--------------
 =section Processing
 
 =method inClass $class|Regexp

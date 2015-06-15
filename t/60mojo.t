@@ -11,10 +11,12 @@ use Log::Report undef;
 use Data::Dumper;
 
 BEGIN
-{   eval "require Mojo::Base";
-    plan skip_all => 'Mojo is not installed'
+{   eval "require Mojolicious";
+    plan skip_all => 'Mojolicious is not installed'
         if $@;
 
+    plan skip_all => 'installed Mojolicious too old (requires 2.16)'
+        if $Mojolicious::VERSION < 2.16;
     plan tests => 7;
 }
 
