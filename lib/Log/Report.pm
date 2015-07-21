@@ -374,11 +374,14 @@ wishes to return a LIST of objects, not the count of them.
 sub dispatcher($@)
 {   if($_[0] !~ m/^(?:close|find|list|disable|enable|mode|needs|filter)$/)
     {   my ($type, $name) = (shift, shift);
+
+        # old dispatcher with same name will be closed in DESTROY
+        delete $reporter->{dispatchers}{$name};
+
         my $disp = Log::Report::Dispatcher->new($type, $name
           , mode => $default_mode, @_);
         defined $disp or return;  # use defined, because $disp is overloaded
 
-        # old dispatcher with same name will be closed in DESTROY
         $reporter->{dispatchers}{$name} = $disp;
         _whats_needed;
         return ($disp);
@@ -431,7 +434,7 @@ sub dispatcher($@)
     }
 
     # find does require reinventarization
-    _whats_needed unless $command eq 'find';
+    _whats_needed if $command ne 'find';
 
     wantarray ? @dispatchers : $dispatchers[0];
 }

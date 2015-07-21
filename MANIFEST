@@ -7,6 +7,7 @@ lib/Dancer/Logger/LogReport.pm
 lib/Dancer2/Logger/LogReport.pm
 lib/Dancer2/Plugin/LogReport.pm
 lib/Log/Report.pm
+lib/Log/Report/DBIC/Profiler.pm
 lib/Log/Report/Die.pm
 lib/Log/Report/Dispatcher.pm
 lib/Log/Report/Dispatcher/Callback.pm

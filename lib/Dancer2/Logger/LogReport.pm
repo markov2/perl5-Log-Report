@@ -11,6 +11,9 @@ use Log::Report  'logreport', syntax => 'REPORT', mode => 'DEBUG';
 
 our $AUTHORITY = 'cpan:MARKOV';
 
+# all dispatchers shall be created exactly once (unique name)
+my %disp_objs;
+
 my %level_dancer2lr =
   ( core  => 'TRACE'
   , debug => 'TRACE'
@@ -25,14 +28,23 @@ has dispatchers =>
   , lazy  => 1
   );
 
-sub BUILD
-{   my $self = shift;
-    my $dispatchers = $self->dispatchers;
+sub BUILD ()
+{   my $self     = shift;
+    my $configs  = $self->dispatchers || {default => undef};
+    $self->{use} = [keys %$config];
 
-    foreach my $name (keys %$dispatchers)
-    {   my %dispatcher = %{$dispatchers->{$name}};
-        my $type       = delete $dispatcher{type};
-        dispatcher $type => $name, %dispatcher;
+    foreach my $name (keys %$configs)
+    {   my $config = $configs->{$name} || {};
+        if(keys %$config)
+        {   # cannot use log() output yet!  recursion!
+            ! $disp_objs{$name}
+                or die "attempt to reconfigure dispatcher $name";
+
+            my $type = delete $config->{type}
+                or die "dispatcher configuration $name without type";
+
+            $disp_objs{$name} = dispatcher $type, $name, %$config;
+        }
     }
 }
 
@@ -45,6 +57,8 @@ Dancer2::Logger::LogReport - reroute Dancer2 logs into Log::Report
   # This module is loaded when configured.  It does not provide
   # end-user functions or methods.
 
+  # See L<Dancer2::Plugin::LogReport/"DETAILS">
+  
 =chapter DESCRIPTION
 
 This logger allows the use of the many logging backends available
@@ -70,6 +84,8 @@ depends on the dispatcher 'mode' (f.i. 'DEBUG').
 You also want to set the log level to C<debug>, because level filtering is
 controlled per dispatcher (as well).
 
+See L<Dancer2::Plugin::LogReport/"DETAILS"> for examples.
+
 =chapter METHODS
 
 =method log $level, $params
@@ -89,53 +105,12 @@ sub log($$$)
         $msg =~ s/\n+$//;
     }
 
-    # The levels are nearly the same.
+    # the levels are nearly the same.
     my $reason = $level_dancer2lr{$level} // uc $level;
 
-    report {is_fatal => 0}, $reason => $msg;
+    report {is_fatal => 0}, $reason => $msg, to => $self->{use};
 
     undef;
 }
  
-#--------------
-=chapter DETAILS
-
-=section Configuration
-
-The setting B<logger> should be set to C<LogReport> in order to use
-this logging engine in a Dancer application.  See M<Dancer2::Config>
-about ways to include these settings in your program.
-
-There is only one optional configuration parameter: C<dispatchers>. This
-defines the M<Log::Report> dispatchers to use.  Any number of dispatchers
-may be configured.
-
-  # instruct Dancer2 to load this module
-  logger: LogReport
-  
-  # use default Log::Report dispatchers
-  engines:
-    logger:
-      LogReport:
-  
-  # syslog and file dispatcher
-  engines:
-    logger:
-      LogReport:
-        logger_format: %i%m            # keep it simple
-        dispatchers:
-          syslog:                      # Name
-            type: SYSLOG               # Log::Report dispatcher type
-            identity: gads             # Dispatcher options
-            facility: local0
-            flags: "pid ndelay nowait"
-            mode: DEBUG
-          default:                     # will replace default dispatcher
-            type: FILE
-            to: /var/log/mylog
-            charset: utf-8
-            accept: NOTICE-            # Only accept NOTICE and above
-
-=cut
-
 1;

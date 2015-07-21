@@ -7,6 +7,22 @@ Mark Overmeer.
 TODO:
   . connect to Message::Passing framework
 
+version 1.07: Tue Jul 21 17:38:01 CEST 2015
+
+	Fixes:
+	- remove superfluous blank lines, when (translated) message
+	  ends on \n. Reported by [Andrew Beverley]
+	- Dancer2::Plugin:: deep recursion in ERROR handler [Andrew Beverley]
+
+	Improvements:
+	- document HASH for ::Syslog::new(logsocket).
+	  Idea of [Andrew Beverley]
+	- add Log::Report::DBIC::Profiler [Andrew Beverley]
+	- loads of documentation on using Log::Report in Dancer2,
+	  written by [Andrew Beverley]
+	- protect against two instances of ::Syslog at the same time: its
+	  impossible.
+
 version 1.06: Mon Jun 15 17:30:33 CEST 2015
 
 	Fixes:

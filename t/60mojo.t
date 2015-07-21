@@ -27,6 +27,7 @@ isa_ok($log, 'MojoX::Log::Report');
 isa_ok($log, 'Mojo::Log');
 
 my $tmp;
+dispatcher close => 'default';
 try { $log->error("going to die"); $tmp = 42 } mode => 3;
 my $err = $@;
 #warn Dumper $err;

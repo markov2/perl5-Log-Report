@@ -93,7 +93,7 @@ only defines C<user>, and C<local0> upto C<local7>.
 =default to_prio []
 See M<reasonToPrio()>.
 
-=option  logsocket 'unix'|'inet'|'stream'
+=option  logsocket 'unix'|'inet'|'stream'|HASH
 =default logsocket C<undef>
 If specified, the log socket type will be initialized to this before
 C<openlog()> is called.  If not specified, the system default is used.
@@ -108,11 +108,18 @@ Translate the text-strings into the specified charset, otherwise the
 sysadmin may get unreadable text.
 =cut
 
+my $active;
+
 sub init($)
 {   my ($self, $args) = @_;
     $args->{format_reason} ||= 'IGNORE';
 
     $self->SUPER::init($args);
+
+    error __x"max one active syslog dispatcher, attempt for {new} have {old}"
+      , new => $self->name, old => $active
+        if $active;
+    $active   = $self->name;
 
     setlogsock(delete $args->{logsocket})
         if $args->{logsocket};
@@ -145,7 +152,9 @@ sub init($)
 
 sub close()
 {   my $self = shift;
+    undef $active;
     closelog;
+
     $self->SUPER::close;
 }
 

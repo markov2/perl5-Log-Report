@@ -8,7 +8,7 @@ use Log::Report  'log-report', syntax => 'REPORT';
 
 use Scalar::Util qw/blessed/;
 
-my $_dsl;        # XXX How to avoid the global?
+my $_dsl;        # XXX How to avoid the global?   Dancer2::Core::DSL
 my $_settings;
 
 =chapter NAME
@@ -55,6 +55,8 @@ used, each configured separately to display different messages in different
 formats.  By default, messages are logged to a session variable for display on
 a webpage, and to STDERR.
 
+Read the L</DETAILS> in below in this manual-page.
+
 =chapter METHODS
 
 =cut
@@ -82,7 +84,7 @@ on_plugin_import
             if $error->{exception};
     });
 
-    if ($settings->{handle_http_errors})
+    if($settings->{handle_http_errors})
     {   # Need after_error for HTTP errors (eg 404) so as to
         # be able to change the forwarding location
         $dsl->hook(after_error => sub {
@@ -210,10 +212,14 @@ sub _error_handler($$$$)
         # out. With the former, the exception will have been
         # re-thrown as a non-fatal exception, so check that.
       , ERROR   => sub {
-            exists $options->{is_fatal} && !$options->{is_fatal}
-                ? _message_add( danger => $_[0] )
-                : _forward_home( $_dsl, danger => $_[0] );
-        }
+            return _message_add( danger => $_[0] )
+                if exists $options->{is_fatal} && !$options->{is_fatal};
+
+            return  _forward_home( $_dsl, danger => $_[0] )
+                if $_dsl->request->uri ne '/' || !$_dsl->request->is_get;
+
+            return;
+       }
 
         # 'FAULT', 'ALERT', 'FAILURE', 'PANIC'
         # All these are fatal errors. Display error to user, but
@@ -251,6 +257,33 @@ register_plugin for_versions => ['2'];
 #----------
 =chapter DETAILS
 
+This chapter will guide you through the myriad of ways that you can use
+M<Log::Report> in your Dancer2 application.
+
+We will set up our application to do the following:
+
+=over 4
+
+=item Messages to the user
+We'll look at an easy way to output messages to the user's web page, whether
+they be informational messages, warnings or errors.
+
+=item Debug information
+We'll look at an easy way to log debug information, at different levels.
+
+=item Manage unexpected exceptions
+We'll handle unexpected exceptions cleanly, in the unfortunate event that
+they happen in your production application.
+
+=item Email alerts of significant errors
+If we do get unexpected errors then we want to be notified them.
+
+=item Log DBIC information and errors
+We'll specifically look at nice ways to log SQL queries and errors when
+using DBIx::Class.
+
+=back
+
 =section Larger example
 
 In its simplest form, this module can be used for more flexible logging
@@ -265,36 +298,122 @@ In its simplest form, this module can be used for more flexible logging
       # The same but translated and with variables
       $name or error __x"{name} is not valid", name => $name;
  
-      # Show the user a warning, but continue exection
+      # Show the user a warning, but continue execution
       mistake "Not sure that's what you wanted";
  
-      # Add debug information, can be caught in syslog by adding the syslog
-      # dispatcher
-      trace "Hello world"; };
+      # Add debug information, can be caught in syslog by adding
+      # the (for instance) syslog dispatcher
+      trace "Hello world";
+   };
 
-The module can also be used in models to test for user input and act
-accordingly, without needing to set up complicated error handling:
+=section Setup and Configuration
 
-  # In a module
-  package MyApp::MyModel sub create_user {
-      ...
-      $surname or error "Please enter a surname"; # Execution stops here
-      ...
-      $telephone or mistake "Tel not entered"; # Execution continues
-      ...
-  }
-  
-  # In the main app
-  get '/user' => sub {
-      ...
-      if (param 'submit') {
-          if (process( sub { MyApp::Model->create_user() })) {
-              # Success, redirect user elsewhere
-          }
-      }
-      # Failed, continue as if submit hadn't been made. Error will have been
-      # logged in session to be displayed later.
-  };
+To make full use of L<Log::Report>, you'll need to use both
+L<Dancer2::Logger::LogReport> and L<Dancer2::Plugin::LogReport>.
+
+=subsection Dancer2::Logger::LogReport
+
+Set up L<Dancer2::Logger::LogReport> by adding it to your Dancer2
+application configuration (see L<Dancer2::Config>). By default,
+all messages will go to STDERR.
+
+To get all message out "the Perl way" (using print, warn and die) just use
+
+  logger: "LogReport"
+
+At start, these are handled by a M<Log::Report::Dispatcher::Perl> object,
+named 'default'.  If you open a new dispatcher with the name 'default',
+the output via the perl mechanisms will be stopped.
+
+To also send messages to your syslog:
+
+  logger: "LogReport"
+
+  engines:
+    logger:
+      LogReport:
+        log_format: %a%i%m
+        app_name: MyApp
+        dispatchers:
+          default:              # Name
+            type: SYSLOG        # Log::Reporter::dispatcher() options
+            identity: gads
+            facility: local0
+            flags: "pid ndelay nowait"
+            mode: DEBUG
+
+To send messages to a file:
+
+  logger: "LogReport"
+
+  engines:
+    logger:
+      LogReport:
+        log_format: %a%i%m
+        app_name: MyApp
+        dispatchers:
+          logfile:              # "default" dispatcher stays open as well
+            type: FILE
+            to: /var/log/myapp.log
+            charset: utf-8
+            mode: DEBUG
+
+See L<Log::Report::Dispatcher> for full details of options.
+
+Finally: on Dancer2 script may run many applications.  Each application
+has its own logger configuration.  Be aware that some loggers (for instance
+syslog) can exist only once in a program.  When you use the specify a
+logger name for a second app (without parameters) the logger object will 
+be shared.
+
+Example: reuse dispatchers 'default' and 'logfile'
+
+  engines:
+    logger:
+      LogReport:
+        app_name: Other App
+        dispatchers:
+	  default:   
+          logfile:
+
+=subsection Dancer2::Plugin::LogReport
+
+To use the plugin, you simply use it in your application:
+
+  package MyApp;
+  use Dancer2;
+  use Dancer2::Plugin::LogReport %config;
+
+Dancer2::Plugin::LogReport takes the same C<%config> options as
+L<Log::Report>.
+
+If you want to send messages from your modules/models, there is
+no need to use this specific plugin. Instead, you should simply
+C<use Log::Report> to negate the need of loading all the Dancer2
+specific code.
+
+=section In use
+
+=subsection Logging debug information
+
+In its simplest form, you can now use all the
+L<Log::Report logging functions|Log::Report#The-Reason-for-the-report>
+to send messages to your dispatchers (as configured in the Logger
+configuration):
+
+  trace "I'm here";
+
+  warning "Something dodgy happened";
+
+  panic "I'm bailing out";
+
+  # Additional, special Dancer2 keyword
+  success "Settings saved successfully";
+
+=subsection Exceptions
+
+Log::Report is a combination of a logger and an exception system.  Messages
+to be logged a I<thrown> to all listening dispatchers to be handled.
 
 This module will also catch any unexpected exceptions:
 
@@ -307,55 +426,145 @@ This module will also catch any unexpected exceptions:
       my $bar = $foo->{x}; # whoops
   }
 
-Errors are all logged to the session. These need to be cleared once they have
-been displayed.
+=subsection Sending messages to the user
+
+To make it easier to send messages to your users, messages at the following
+levels are also stored in the user's session: C<notice>, C<warning>, C<mistake>
+and C<error>.
+
+You can pass these to your template and display them at each page render:
 
   hook before_template => sub {
-      my $tokens = shift;
-      # Pass messages to template and clear session
-      $tokens->{messages} = session 'messages';
-      session 'messages' => [];
+    my $tokens = shift;
+    $tokens->{messages} = session 'messages';
+    session 'messages' => []; # Clear the message queue
   }
-  
-In the template. This example prints them in Bootstrap colors:
 
- [% FOR message IN messages %]
-     [% IF message.type %]
-         [% msgtype = message.type %]
-     [% ELSE %]
-         [% msgtype = "info" %]
-     [% END %]
-     <div class="alert alert-[% msgtype %]">
-         [% message.text | html_entity %]
-     </div>
- [% END %]
+Then in your template (for example the main layout):
 
-=section Configuration
+  [% FOR message IN messages %]
+    [% IF message.type %]
+      [% msgtype = message.type %]
+    [% ELSE %]
+      [% msgtype = "info" %]
+    [% END %]
+    <div class="alert alert-[% msgtype %]">
+      [% message.text | html_entity %]
+    </div>
+  [% END %]
 
-=subsection Dancer2 configuration
+The C<type> of the message is compatible with Bootstrap contextual colors:
+C<info>, C<warning> or C<danger>.
 
-In your application's configuration file (values shown are defaults):
+Now, anywhere in your application that you have used Log::Report, you can
 
-  plugins: LogReport
-          # Set the forward URL on fatal error that isn't caught
-          forward_url: /
+  warning "Hey user, you should now about this";
 
-          # Set to 1 if you want the module to also catch Dancer HTTP errors
-          # (such as 404s)
-          handle_http_errors: 0
+and the message will be sent to the next page the user sees.
 
-          # Configure session variable for messages
-          messages_key = messages
+=subsection Handling user errors
 
-=subsection Log::Report configuration
+Sometimes we write a function in a model, and it would be nice to have a
+nice easy way to return from the function with an error message. One
+way of doing this is with a separate error message variable, but that
+can be messy code. An alternative is to use exceptions, but these
+can be a pain to deal with in terms of catching them.
+Here's how to do it with Log::Report.
 
-Any L<Log::Report configuration options|Log::Report/Configuration> can also be
-used with this plugin.
+In this example, we do use exceptions, but in a neat, easier to use manner.
 
-=subsection Dancer2::Logger::LogReport
+First, your module/model:
 
-You probably want to also use and configure M<Dancer2::Logger::LogReport>.
-See its documentation for full details.
+  package MyApp::CD;
+
+  sub update {
+    my ($self, %values) = @_;
+    $values{title} or error "Please enter a title";
+    $values{description} or warning "No description entered";
+  }
+
+Then, in your controller:
+
+  package MyApp;
+  use Dancer2;
+
+  post '/cd' => sub {
+    my %values = (
+      title       => param('title');
+      description => param('description');
+    );
+    if (process sub { MyApp::CD->update(%values) } ) {
+      success "CD updated successfully";
+      redirect '/cd';
+    }
+
+    template 'cd' => { values => \%values };
+  }
+
+Now, when update() is called, any exceptions are caught. However, there is
+no need to worry about any error messages. Both the error and warning
+messages in the above code will have been stored in the messages session
+variable, where they can be displayed using the code in the previous section.
+The C<error> will have caused the code to stop running, and process()
+will have returned false. C<warning> will have simply logged the warning
+and not caused the function to stop running.
+
+=subsection Logging DBIC database queries and errors
+
+If you use L<DBIx::Class> in your application, you can easily integrate
+its logging and exceptions. To log SQL queries:
+
+  # Log all queries and execution time
+  $schema->storage->debugobj(new Log::Report::DBIC::Profiler);
+  $schema->storage->debug(1);
+
+By default, exceptions from DBIC are classified at the level "error". This
+is normally a user level error, and thus may be filtered as normal program
+operation. If you do not expect to receive any DBIC exceptions, then it
+is better to class them at the level "panic":
+
+  # panic() DBIC errors
+  $schema->exception_action(sub { panic @_ });
+  # Optionally get a stracktrace too
+  $schema->stacktrace(1);
+
+If you are occasionally running queries where you expect to naturally
+get exceptions (such as not inserting multiple values on a unique constraint),
+then you can catch these separately:
+
+  try { $self->schema->resultset('Unique')->create() };
+  # Log any messages from try block, but only as trace
+  $@->reportAll(reason => 'TRACE');
+
+=subsection Email alerts of exceptions
+
+If you have an unexpected exception in your production application,
+then you probably want to be notified about it. One way to do so is
+configure rsyslog to send emails of messages at the panic level. Use
+the following configuration to do so:
+
+  # Normal logging from LOCAL0
+  local0.*                        -/var/log/myapp.log
+
+  # Load the mail module
+  $ModLoad ommail
+  # Configure sender, receiver and mail server
+  $ActionMailSMTPServer localhost
+  $ActionMailFrom root
+  $ActionMailTo root
+  # Set up an email template
+  $template mailSubject,"Critical error on %hostname%"
+  $template mailBody,"RSYSLOG Alert\r\nmsg='%msg%'\r\nseverity='%syslogseverity-text%'"
+  $ActionMailSubject mailSubject
+  # Send an email no more frequently than every minute
+  $ActionExecOnlyOnceEveryInterval 60
+  # Configure the level of message to notify via email
+  if $syslogfacility-text == 'local0' and $syslogseverity < 3 then :ommail:;mailBody
+  $ActionExecOnlyOnceEveryInterval 0
+
+With the above configuration, you will only be emailed of severe errors, but can
+view the full log information in /var/log/myapp.log
+
 
 =cut
 

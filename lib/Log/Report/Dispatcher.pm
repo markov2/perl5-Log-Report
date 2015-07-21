@@ -304,7 +304,8 @@ sub translate($$$)
       = ( defined $format
         ? __x($format, message => $msg->toString , reason => $r, error => $e)
         : $msg
-        )->toString . "\n";
+        )->toString;
+    $text =~ s/\n*\z/\n/;
 
     if($show_loc)
     {   if(my $loc = $opts->{location} || $self->collectLocation)
