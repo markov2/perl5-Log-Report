@@ -248,6 +248,7 @@ sub fromTemplateToolkit($$;@)
       , %$args, _expand => 1, _domain => $domain);
 }
 
+#----------------
 =section Accessors
 
 =method prepend
@@ -452,6 +453,7 @@ sub concat($;$)
     ref($self)->new(%$self, _append => $what);
 }
 
+#----------------
 =chapter DETAILS
 
 =section OPTIONS and VARIABLES

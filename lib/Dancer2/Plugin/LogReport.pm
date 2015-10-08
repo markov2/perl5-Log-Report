@@ -4,7 +4,9 @@ use warnings;
 use strict;
 
 use Dancer2::Plugin;
-use Log::Report  'log-report', syntax => 'REPORT';
+use Dancer2::Plugin::LogReport::Message;
+use Log::Report  'log-report', syntax => 'REPORT',
+    message_class => 'Dancer2::Plugin::LogReport::Message';
 
 use Scalar::Util qw/blessed/;
 
@@ -44,6 +46,8 @@ Dancer2::Plugin::LogReport - logging and exceptions via Log::Report
 
 =chapter DESCRIPTION
 
+[The Dancer2 plugin was contributed by Andrew Beverley]
+
 This module provides easy access to the extensive logging facilities
 provided by M<Log::Report>. Along with M<Dancer2::Logger::LogReport>,
 this brings together all the internal Dancer2 logging, handling for
@@ -54,6 +58,10 @@ L<dispatchers|Log::Report::Dispatcher/DETAILS>.  Multiple dispatchers can be
 used, each configured separately to display different messages in different
 formats.  By default, messages are logged to a session variable for display on
 a webpage, and to STDERR.
+
+Messages within this plugin use the extended
+L<Dancer2::Logger::LogReport::Message> class rather than the standard
+L<Log::Report::Message> class.
 
 Read the L</DETAILS> in below in this manual-page.
 
@@ -66,6 +74,11 @@ sub import
 {   my $class = shift;
     Log::Report->import('+2', @_, syntax => 'LONG');
 }
+
+my %session_messages;
+# The default reasons that a message will be displayed to the end user
+my @default_reasons = qw/NOTICE WARNING MISTAKE ERROR FAULT ALERT FAILURE PANIC/;
+my $hide_real_message; # Used to hide the real message to the end user
 
 # Dancer2 import
 on_plugin_import
@@ -88,16 +101,33 @@ on_plugin_import
     {   # Need after_error for HTTP errors (eg 404) so as to
         # be able to change the forwarding location
         $dsl->hook(after_error => sub {
-            use Data::Dumper; say STDERR Dumper \@_;
             my $error = shift;
-            my $msg = $error->status . ": "
-              . Dancer2::Core::HTTP->status_message($error->status);
+            my $msg = __($error->status . ": "
+              . Dancer2::Core::HTTP->status_message($error->status));
 
-            # XXX How to write messages to the session? request() is not
-            # in the DSL at this point. At least log it.
-            report 'TRACE' => $msg;
-            _forward_home( $error, danger => $msg ); # $error is the request
+            # XXX This doesn't work at the moment. The DSL at this point
+            # doesn't seem to respond to changes in the session or
+            # forward requests
+            _forward_home( $_dsl, $msg );
         });
+    }
+
+    # Define which messages are saved to the session for later display
+    # to the user. This can be configured in the config file, or we
+    # choose some sensible defaults.
+    my $sm = $settings->{session_messages} // \@default_reasons;
+    $session_messages{$_} = 1
+        for ref $sm eq 'ARRAY' ? @$sm : $sm;
+
+    # In a production server, we don't want the end user seeing (unexpected)
+    # exception messages, for both security and usability. If we detect
+    # that this is a production server (show_errors is 0), then we change
+    # the specific error to a generic error, when displayed to the user.
+    # The message can be customised in the config file.
+    my $fatal_error_message = $settings->{fatal_error_message}
+        || "An unexpected error has occurred";
+    unless($dsl->app->config->{show_errors})
+    {   $hide_real_message->{$_} = $fatal_error_message for qw/FAULT ALERT FAILURE PANIC/;
     }
 
     # This is so that all messages go into the session, to be displayed
@@ -141,19 +171,26 @@ sub process($$)
 
 register process => \&process;
 
-sub _message_add($$)
-{   my ($type, $text) = @_;
-    $text && $type or return;
+sub _message_add($)
+{   my $msg = shift;
+    return unless $session_messages{$msg->reason};
     unless ($_dsl->app->request)
     {   # This happens for HTTP errors
         # XXX the session is not available in the DSL
         report 'ASSERT' => "Unable to write message to session: unable to write cookie";
         return;
     }
+
+    my $r = $msg->reason;
+    if(my $newm = $hide_real_message->{$r})
+    {   $msg = __$newm;
+        $msg->reason($r);
+    }
+
     my $messages_variable = $_settings->{messages_key} || 'messages';
     my $session           = $_dsl->app->session;
     my $msgs              = $session->read($messages_variable);
-    push @$msgs, { text => $text, type => $type };
+    push @$msgs, $msg;
     $session->write($messages_variable => $msgs);
 }
 
@@ -177,9 +214,9 @@ of when each one should be used.
 =method panic
 =cut
 
-sub _forward_home($$$)
+sub _forward_home($$)
 {   my $dsl = shift;
-    _message_add(shift, shift);
+    _message_add(shift);
     my $page = $_settings->{forward_url} || '/';
     $dsl->redirect($page);
 }
@@ -188,22 +225,15 @@ sub _error_handler($$$$)
 {   my ($disp, $options, $reason, $message) = @_;
 
     my $fatal_handler = sub {
-        _forward_home( $_dsl, danger => $_[0] )
+        _forward_home( $_dsl, $_[0] )
             unless $_dsl->request->uri eq '/' && $_dsl->request->is_get;
     };
 
+    $message->reason($reason);
+
     my %handler =
       ( # Default do nothing for the moment (TRACE|ASSERT|INFO)
-        default => sub {}
-
-        # Notice that something has happened. Not an error.
-      , NOTICE  => sub {_message_add info => $_[0]}
-
-        # Non-fatal problem. Show warning.
-      , WARNING => sub {_message_add warning => $_[0]}
-
-        # Non-fatal problem. Show warning.
-      , MISTAKE => sub {_message_add warning => $_[0]}
+        default => sub {_message_add $_[0]}
 
         # A user-created error condition that is not recoverable.
         # This could have already been caught by the process
@@ -212,10 +242,10 @@ sub _error_handler($$$$)
         # out. With the former, the exception will have been
         # re-thrown as a non-fatal exception, so check that.
       , ERROR   => sub {
-            return _message_add( danger => $_[0] )
+            return _message_add( $_[0] )
                 if exists $options->{is_fatal} && !$options->{is_fatal};
 
-            return  _forward_home( $_dsl, danger => $_[0] )
+            return  _forward_home( $_dsl, $_[0] )
                 if $_dsl->request->uri ne '/' || !$_dsl->request->is_get;
 
             return;
@@ -233,15 +263,22 @@ sub _error_handler($$$$)
       );
 
     my $call = $handler{$reason} || $handler{default};
-    $call->("$message");
+    $call->($message);
 }
 
 sub _report($@) {
     my ($reason, $dsl) = (shift, shift);
 
+
     my $msg = (blessed($_[0]) && $_[0]->isa('Log::Report::Message'))
        ? $_[0] : Dancer2::Core::Role::Logger::_serialize(@_);
 
+    if ($reason eq 'SUCCESS')
+    {
+        $msg = __$msg unless blessed $msg;
+        $msg = $msg->clone(_class => 'success');
+        $reason = 'NOTICE';
+    }
     report uc($reason) => $msg;
 }
 
@@ -251,10 +288,37 @@ register notice  => sub { _report(NOTICE => @_) };
 register mistake => sub { _report(MISTAKE => @_) };
 register panic   => sub { _report(PANIC => @_) };
 register alert   => sub { _report(ALERT => @_) };
+=method success
+This is a special additional type, equivalent to C<notice>.  The difference is
+that messages using this keyword will have the class C<success> added, which
+can be used to color the messages differently to the end user. For example,
+L<Dancer2::Plugin::LogReport::Message#bootstrap_color> uses this to display the
+message in green.
+=cut
+register success => sub { _report(SUCCESS => @_) };
 
 register_plugin for_versions => ['2'];
 
 #----------
+
+=chapter CONFIGURATION
+
+All configuration is optional. The example configuration file below shows the
+configuration options and defaults.
+
+    plugins:
+      LogReport:
+        # Whether to handle Dancer HTTP errors such as 404s. Currently has
+        # no effect due to unresolved issues saving messages to the session
+        # and accessing the DSL at that time.
+        handle_http_errors: 1
+        # For a production server (show_errors: 0), this is the text that
+        # will be displayed instead of unexpected exception errors
+        fatal_error_message: An unexpected error has occurred
+        # The levels of messages that will be saved to the session, and
+        # thus displayed to the end user
+        session_messages: [ NOTICE WARNING MISTAKE ERROR FAULT ALERT FAILURE PANIC ]
+
 =chapter DETAILS
 
 This chapter will guide you through the myriad of ways that you can use
@@ -337,7 +401,7 @@ To also send messages to your syslog:
         dispatchers:
           default:              # Name
             type: SYSLOG        # Log::Reporter::dispatcher() options
-            identity: gads
+            identity: myapp
             facility: local0
             flags: "pid ndelay nowait"
             mode: DEBUG
@@ -413,7 +477,7 @@ configuration):
 =subsection Exceptions
 
 Log::Report is a combination of a logger and an exception system.  Messages
-to be logged a I<thrown> to all listening dispatchers to be handled.
+to be logged are I<thrown> to all listening dispatchers to be handled.
 
 This module will also catch any unexpected exceptions:
 
@@ -426,11 +490,15 @@ This module will also catch any unexpected exceptions:
       my $bar = $foo->{x}; # whoops
   }
 
+For a production application (C<show_errors: 1>), the message saved in the
+session will be the generic text "An unexpected error has occurred". This
+can be customised in the configuration file, and will be translated.
+
 =subsection Sending messages to the user
 
 To make it easier to send messages to your users, messages at the following
-levels are also stored in the user's session: C<notice>, C<warning>, C<mistake>
-and C<error>.
+levels are also stored in the user's session: C<notice>, C<warning>, C<mistake>,
+C<error>, C<fault>, C<alert>, C<failure> and C<panic>.
 
 You can pass these to your template and display them at each page render:
 
@@ -443,18 +511,13 @@ You can pass these to your template and display them at each page render:
 Then in your template (for example the main layout):
 
   [% FOR message IN messages %]
-    [% IF message.type %]
-      [% msgtype = message.type %]
-    [% ELSE %]
-      [% msgtype = "info" %]
-    [% END %]
-    <div class="alert alert-[% msgtype %]">
-      [% message.text | html_entity %]
+    <div class="alert alert-[% message.bootstrap_color %]">
+      [% message.toString | html_entity %]
     </div>
   [% END %]
 
-The C<type> of the message is compatible with Bootstrap contextual colors:
-C<info>, C<warning> or C<danger>.
+The C<bootstrap_color> of the message is compatible with Bootstrap contextual
+colors: C<success>, C<info>, C<warning> or C<danger>.
 
 Now, anywhere in your application that you have used Log::Report, you can
 

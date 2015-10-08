@@ -83,13 +83,17 @@ sub notice  { goto &Dancer::Logger::notice }
 sub panic   { goto &Dancer::Logger::panic  }
 sub alert   { goto &Dancer::Logger::alert  }
 
-{ use Dancer::Logger;
-  package Dancer::Logger;
-  sub assert  { my $l = logger(); $l && $l->_log(assert => _serialize(@_)) }
-  sub notice  { my $l = logger(); $l && $l->_log(notice => _serialize(@_)) }
-  sub alert   { my $l = logger(); $l && $l->_log(alert  => _serialize(@_)) }
-  sub panic   { my $l = logger(); $l && $l->_log(panic  => _serialize(@_)) }
-}
+sub Dancer::Logger::assert
+{ my $l = logger(); $l && $l->_log(assert => _serialize(@_)) }
+
+sub Dancer::Logger::notice
+{ my $l = logger(); $l && $l->_log(notice => _serialize(@_)) }
+
+sub Dancer::Logger::alert
+{ my $l = logger(); $l && $l->_log(alert  => _serialize(@_)) }
+
+sub Dancer::Logger::panic
+{ my $l = logger(); $l && $l->_log(panic  => _serialize(@_)) }
  
 #sub init(@)
 #{   my $self = shift;

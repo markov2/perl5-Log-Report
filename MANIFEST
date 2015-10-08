@@ -6,6 +6,7 @@ examples/dancer/dancer1.pl
 lib/Dancer/Logger/LogReport.pm
 lib/Dancer2/Logger/LogReport.pm
 lib/Dancer2/Plugin/LogReport.pm
+lib/Dancer2/Plugin/LogReport/Message.pm
 lib/Log/Report.pm
 lib/Log/Report/DBIC/Profiler.pm
 lib/Log/Report/Die.pm

@@ -31,7 +31,7 @@ has dispatchers =>
 sub BUILD ()
 {   my $self     = shift;
     my $configs  = $self->dispatchers || {default => undef};
-    $self->{use} = [keys %$config];
+    $self->{use} = [keys %$configs];
 
     foreach my $name (keys %$configs)
     {   my $config = $configs->{$name} || {};
@@ -60,6 +60,8 @@ Dancer2::Logger::LogReport - reroute Dancer2 logs into Log::Report
   # See L<Dancer2::Plugin::LogReport/"DETAILS">
   
 =chapter DESCRIPTION
+
+[The Dancer2 plugin was contributed by Andrew Beverley]
 
 This logger allows the use of the many logging backends available
 in M<Log::Report>.  It will process all of the Dancer2 log messages,

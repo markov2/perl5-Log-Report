@@ -9,6 +9,7 @@ use List::Util         qw/first/;
 use Scalar::Util       qw/blessed/;
 
 use Log::Report::Util;
+my $lrm = 'Log::Report::Message';
 
 ### if you change anything here, you also have to change Log::Report::Minimal
 my @make_msg         = qw/__ __x __n __nx __xn N__ N__n N__w/;
@@ -260,17 +261,17 @@ sub report($@)
     $opts->{location} ||= Log::Report::Dispatcher->collectLocation;
 
     my $exception;
-    if(UNIVERSAL::isa($message, 'Log::Report::Message'))
-    {   @_==0 or error __x"a message object is reported with more parameters";
+    if(!blessed $message)
+    {   # untranslated message into object
+        @_%2 and error __x"odd length parameter list with '{msg}'", msg => $message;
+        $message  = $lrm->new(_prepend => $message, @_);
     }
-    elsif(UNIVERSAL::isa($message, 'Log::Report::Exception'))
+    elsif($message->isa('Log::Report::Exception'))
     {   $exception = $message;
         $message   = $exception->message;
     }
-    else
-    {   # untranslated message into object
-        @_%2 and error __x"odd length parameter list with '{msg}'", msg => $message;
-        $message = Log::Report::Message->new(_prepend => $message, @_);
+    elsif($message->isa('Log::Report::Message'))
+    {   @_==0 or error __x"a message object is reported with more parameters";
     }
 
     if(my $to = $message->to)
@@ -633,7 +634,7 @@ prefix operator!
 sub _default_domain(@) { pkg2domain $_[0] }
 
 sub __($)
-{   Log::Report::Message->new
+{   $lrm->new
       ( _msgid  => shift
       , _domain => _default_domain(caller)
       );
@@ -654,7 +655,7 @@ sub __x($@)
         where => join(' line ', (caller)[1,2]);
 
     my $msgid = shift;
-    Log::Report::Message->new
+    $lrm->new
      ( _msgid  => $msgid
      , _expand => 1
      , _domain => _default_domain(caller)
@@ -689,7 +690,7 @@ to be filled in.
 
 sub __n($$$@)
 {   my ($single, $plural, $count) = (shift, shift, shift);
-    Log::Report::Message->new
+    $lrm->new
      ( _msgid  => $single
      , _plural => $plural
      , _count  => $count
@@ -716,7 +717,7 @@ to be filled in.
 
 sub __nx($$$@)
 {   my ($single, $plural, $count) = (shift, shift, shift);
-    Log::Report::Message->new
+    $lrm->new
      ( _msgid  => $single
      , _plural => $plural
      , _count  => $count
@@ -732,7 +733,7 @@ Same as M<__nx()>, because we have no preferred order for 'x' and 'n'.
 
 sub __xn($$$@)   # repeated for prototype
 {   my ($single, $plural, $count) = (shift, shift, shift);
-    Log::Report::Message->new
+    $lrm->new
      ( _msgid  => $single
      , _plural => $plural
      , _count  => $count
@@ -839,6 +840,12 @@ also selectively change the output mode, like
 of functions which are being exported.  With this option, the C<syntax>
 option is ignored and only the specified FUNCTION(s) are imported.
 
+=option  message_class CLASS
+=default message_class C<Log::Report::Message>
+[1.08] Use a more powerful message object class, for instance because
+your messages need extra attributes.  The provided CLASS must extend
+M<Log::Report::Message>
+
 =examples of import
  use Log::Report mode => 3;     # '3' or 'DEBUG'
 
@@ -905,6 +912,13 @@ sub import(@)
         {   error __x"syntax flag must be either SHORT or REPORT, not `{flag}' in {fn} line {line}"
               , flag => $syntax, fn => $fn, line => $linenr;
         }
+    }
+
+    if(my $msg_class = delete $opts{message_class})
+    {   $msg_class->isa($lrm)
+            or error __x"message_class {class} does not extend {base}"
+                 , base => $lrm, class => $msg_class;
+        $lrm = $msg_class;
     }
 
     $class->export_to_level(1+$to_level, undef, @export);

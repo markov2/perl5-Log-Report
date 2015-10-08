@@ -23,12 +23,14 @@ sub process($)
     my $stack = join "\n",
                     map { join '#', $_->[0], $_->[1], 'XX' }
                         @{$opt->{stack}};
-    <<__RESULT
+    my $r     = <<__RESULT;
 $reason: $message ($errno)
 $err
 $loca
 $stack
 __RESULT
+    $r =~ s!\\!/!g;   # Windows
+    $r;
 }
 
 sub run_tests()
