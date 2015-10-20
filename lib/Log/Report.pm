@@ -226,9 +226,15 @@ sub report($@)
     my $reason = shift;
     my $stop = exists $opts->{is_fatal} ? $opts->{is_fatal} : is_fatal $reason;
 
-    my $try  = $nested_tries[-1];
-    my @disp = defined $try && $stop ? () : @{$reporter->{needs}{$reason}||[]};
-    push @disp, $try if defined $try && $try->needs($reason);
+    my @disp;
+    if(defined(my $try = $nested_tries[-1]))
+    {   push @disp, @{$reporter->{needs}{$reason}||[]}
+            unless $stop || $try->hides($reason);
+        push @disp, $try if $try->needs($reason);
+    }
+    else
+    {   @disp = @{$reporter->{needs}{$reason} || []};
+    }
 
     # return when no-one needs it: skip unused trace() fast!
     @disp || $stop or return;
@@ -328,18 +334,19 @@ See M<Log::Report::Dispatcher>, the documentation for the back-end
 specific wrappers, and the back-ends for more details.
 
 Implemented COMMANDs are C<close>, C<find>, C<list>, C<disable>,
-C<enable>, C<mode>, C<filter>, and C<needs>.  Most commands are followed
-by a LIST of dispatcher @names to be addressed.  For C<mode> see section
-L</Run modes>; it requires a MODE argument before the LIST of NAMEs.
-Non-existing names will be ignored. When C<ALL> is specified, then
-all existing dispatchers will get addressed.  For C<filter> see
+C<enable>, C<mode>, C<filter>, C<needs>, and C<active-try>.  Most commands
+are followed by a LIST of dispatcher @names to be addressed.  For C<mode>
+see section L</Run modes>; it requires a MODE argument before the LIST
+of NAMEs.  Non-existing names will be ignored. When C<ALL> is specified,
+then all existing dispatchers will get addressed.  For C<filter> see
 L<Log::Report::Dispatcher/Filters>; it requires a CODE reference before
-the @names of the dispatchers which will have the it applied (defaults to
-all).
+the @names of the dispatchers which will have the it applied (defaults
+to all).
 
 With C<needs>, you only provide a REASON: it will return the list of
 dispatchers which need to be called in case of a message with the REASON
-is triggered.
+is triggered.  The C<active-try> [1.09] returns the closest surrounding
+exception catcher, a M<Log::Report::Dispatcher::Try> object.
 
 For both the creation as COMMANDs version of this method, all objects
 involved are returned as LIST, non-existing ones skipped.  In SCALAR
@@ -358,6 +365,7 @@ context with only one name, the one object is returned.
  dispatcher enable => 'mylog', 'syslog'; # more at a time
  dispatcher mode => 'DEBUG', 'mylog';
  dispatcher mode => 'DEBUG', 'ALL';
+ my $catcher = dispatcher 'active-try';
 
  my @need_info = dispatcher needs => 'INFO';
  if(dispatcher needs => 'INFO') ...      # anyone needs INFO
@@ -372,8 +380,11 @@ objects which it has accessed.  When multiple names where given, it
 wishes to return a LIST of objects, not the count of them.
 =cut
 
+my %disp_actions = map +($_ => 1)
+ , qw/close find list disable enable mode needs filter active-try/;
+
 sub dispatcher($@)
-{   if($_[0] !~ m/^(?:close|find|list|disable|enable|mode|needs|filter)$/)
+{   if(! $disp_actions{$_[0]})
     {   my ($type, $name) = (shift, shift);
 
         # old dispatcher with same name will be closed in DESTROY
@@ -410,6 +421,9 @@ sub dispatcher($@)
         my %names = map { ($_ => 1) } @_;
         push @{$reporter->{filters}}, [ $code, \%names ];
         return ();
+    }
+    if($command eq 'active-try')
+    {   return $nested_tries[-1];
     }
 
     my $mode     = $command eq 'mode' ? shift : undef;

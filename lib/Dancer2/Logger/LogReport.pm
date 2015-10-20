@@ -23,14 +23,14 @@ with 'Dancer2::Core::Role::Logger';
 
 # Set by calling function
 has dispatchers =>
-  ( is    => 'ro'
-  , isa   => Maybe[HashRef]
-  , lazy  => 1
+  ( is     => 'ro'
+  , isa    => Maybe[HashRef]
+  , tigger => 1
   );
 
-sub BUILD ()
+sub _trigger_dispatchers()
 {   my $self     = shift;
-    my $configs  = $self->dispatchers || {default => undef};
+    my $configs  = shift || {default => undef};
     $self->{use} = [keys %$configs];
 
     foreach my $name (keys %$configs)
@@ -47,6 +47,22 @@ sub BUILD ()
         }
     }
 }
+
+around 'info' => sub {
+    my ($orig, $self) = (shift, shift);
+    $self->log(info => @_);
+};
+
+around 'warning' => sub {
+    my ($orig, $self) = (shift, shift);
+    $self->log(warning => @_);
+};
+
+around 'error' => sub {
+    my ($orig, $self) = (shift, shift);
+    return if $_[0] =~ /^Route exception/;
+    $self->log(error => @_);
+};
 
 =chapter NAME
 
@@ -95,23 +111,12 @@ See L<Dancer2::Plugin::LogReport/"DETAILS"> for examples.
 =cut
 
 sub log($$$)
-{   my ($self, $level, $params) = @_;
-
-    # all dancer levels are the same as L::R levels, except:
-    my $msg;
-    if(blessed $params && $params->isa('Log::Report::Message'))
-    {   $msg = $params;
-    }
-    else
-    {   $msg = $self->format_message($level => $params);
-        $msg =~ s/\n+$//;
-    }
+{   my ($self, $level, $msg) = @_;
 
     # the levels are nearly the same.
     my $reason = $level_dancer2lr{$level} // uc $level;
 
-    report {is_fatal => 0}, $reason => $msg, to => $self->{use};
-
+    report $reason => $msg;
     undef;
 }
  

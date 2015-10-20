@@ -21,6 +21,7 @@ Dancer2::Plugin::LogReport - logging and exceptions via Log::Report
 
   # Load the plugin into Dancer2
   # see Log::Report::import() for %options
+  use Log::Report ();    # load early in main
   use Dancer2::Plugin::LogReport %options;
 
   # Stop execution, redirect, and display an error to the user
@@ -79,6 +80,8 @@ my %session_messages;
 # The default reasons that a message will be displayed to the end user
 my @default_reasons = qw/NOTICE WARNING MISTAKE ERROR FAULT ALERT FAILURE PANIC/;
 my $hide_real_message; # Used to hide the real message to the end user
+my $messages_variable = $_settings->{messages_key} || 'messages';
+
 
 # Dancer2 import
 on_plugin_import
@@ -111,6 +114,11 @@ on_plugin_import
             _forward_home( $_dsl, $msg );
         });
     }
+
+    $dsl->hook(after_layout_render => sub {
+        my $session = $_dsl->app->session;
+        $session->write($messages_variable => []);
+    });
 
     # Define which messages are saved to the session for later display
     # to the user. This can be configured in the config file, or we
@@ -158,23 +166,23 @@ Modules do not need to use this plugin, instead they can C<use Log::Report>.
 
 sub process($$)
 {   my ($dsl, $coderef) = @_;
-    try { $coderef->() };
-
-    # Return true on success
-    if (my $exception = $@->wasFatal)
-    {   $exception->throw(is_fatal => 0);
-        return 0;
-    }
-    $@->reportAll;
-    1;
+    try { $coderef->() } hide => 'ALL';
+    my $success = $@->died ? 0 : 1;
+    $@->reportAll(is_fatal => 0);
+    $success;
 }
 
 register process => \&process;
 
 sub _message_add($)
 {   my $msg = shift;
-    return unless $session_messages{$msg->reason};
-    unless ($_dsl->app->request)
+
+    return
+        if ! $session_messages{$msg->reason}
+        ||   $msg->inClass('no_session');
+
+    my $app = $_dsl->app;
+    unless($app->request)
     {   # This happens for HTTP errors
         # XXX the session is not available in the DSL
         report 'ASSERT' => "Unable to write message to session: unable to write cookie";
@@ -187,8 +195,7 @@ sub _message_add($)
         $msg->reason($r);
     }
 
-    my $messages_variable = $_settings->{messages_key} || 'messages';
-    my $session           = $_dsl->app->session;
+    my $session           = $app->session;
     my $msgs              = $session->read($messages_variable);
     push @$msgs, $msg;
     $session->write($messages_variable => $msgs);
@@ -200,6 +207,18 @@ sub _message_add($)
 All the standard M<Log::Report> functions are available to use. Please see the
 L<Log::Report/"The Reason for the report"> for details
 of when each one should be used.
+
+L<Log::Report class functionality|Log::Report::Message.pod#class-STRING-ARRAY>
+to class messages (which can then be tested later):
+
+  notice __x"Class me up", _class => 'label';
+  ...
+  if ($msg->inClass('label')) ...
+
+M<Dancer2::Plugin::LogReport> has a special message class, C<no_session>,
+which prevents the message from being saved to the messages session
+variable. This is useful, for example, if you are writing messages within
+the session hooks, in which case recursive loops can be experienced.
 
 =method trace
 =method assert
@@ -225,8 +244,9 @@ sub _error_handler($$$$)
 {   my ($disp, $options, $reason, $message) = @_;
 
     my $fatal_handler = sub {
+        my $req = $_dsl->request;
         _forward_home( $_dsl, $_[0] )
-            unless $_dsl->request->uri eq '/' && $_dsl->request->is_get;
+            if $req && ($req->uri ne '/' || !$req->is_get);
     };
 
     $message->reason($reason);
@@ -245,8 +265,9 @@ sub _error_handler($$$$)
             return _message_add( $_[0] )
                 if exists $options->{is_fatal} && !$options->{is_fatal};
 
+            my $req = $_dsl->request;
             return  _forward_home( $_dsl, $_[0] )
-                if $_dsl->request->uri ne '/' || !$_dsl->request->is_get;
+                if $req && ($req->uri ne '/' || !$req->is_get);
 
             return;
        }
@@ -445,11 +466,12 @@ Example: reuse dispatchers 'default' and 'logfile'
 To use the plugin, you simply use it in your application:
 
   package MyApp;
+  use Log::Report ();  # use early and minimal once
   use Dancer2;
   use Dancer2::Plugin::LogReport %config;
 
 Dancer2::Plugin::LogReport takes the same C<%config> options as
-L<Log::Report>.
+L<Log::Report> itself (see M<Log::Report::import()>).
 
 If you want to send messages from your modules/models, there is
 no need to use this specific plugin. Instead, you should simply

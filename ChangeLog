@@ -7,6 +7,15 @@ Mark Overmeer.
 TODO:
   . connect to Message::Passing framework
 
+version 1.09: Tue 20 Oct 09:26:00 CEST 2015
+
+	Fixes:
+	- try: do not ignore is_fatal parameter
+
+	Improvements:
+	- dispatcher() new action 'active-try'
+	- many, many improvements to Dancer2::*  [Andrew Beverley]
+
 version 1.08: Thu  8 Oct 17:55:39 CEST 2015
 
 	Fixes:

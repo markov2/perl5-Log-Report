@@ -33,7 +33,7 @@ my $err = $@;
 #warn Dumper $err;
 
 cmp_ok($tmp, '==', 42, 'errors not cast directly');
-ok($@->success, 'block continued succesfully');
+ok($err->success, 'block continued succesfully');
 
 my @exc = $err->exceptions;
 cmp_ok(scalar @exc, '==', 1, "caught 1");

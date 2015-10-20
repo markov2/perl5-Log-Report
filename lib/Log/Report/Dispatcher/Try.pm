@@ -26,6 +26,7 @@ Log::Report::Dispatcher::Try - capture all reports as exceptions
     mode => 'DEBUG', accept => 'ALL';
 
  try \&myhandler, accept => 'ERROR-';
+ try { ... } hide => 'TRACE';
 
  print ref $@;      # Log::Report::Dispatcher::Try
 
@@ -88,6 +89,14 @@ ARRAY of M<Log::Report::Exception> objects.
 =default died C<undef>
 The exit string ($@) of the eval'ed block.
 
+=option  hide REASON|ARRAY|'ALL'
+=default hide []
+[1.09] By default, the try will only catch messages which stop the
+execution of the block (errors etc, internally a 'die').  Other messages
+are passed up.  This option gives the opportunity to block, for instance,
+trace messages.  Those messages are still collected inside the try
+object, so may get passed-on later via M<reportAll()> if you like.
+
 =cut
 
 sub init($)
@@ -95,6 +104,14 @@ sub init($)
     defined $self->SUPER::init($args) or return;
     $self->{exceptions} = delete $args->{exceptions} || [];
     $self->{died}       = delete $args->{died};
+
+    if(my $h = $args->{hide})
+    {   my @h = ref $h eq 'ARRAY' ? @$h : defined $h ? $h : ();
+        $self->{hides}
+           = @h==0 ? undef
+           : @h==1 && $h[0] eq 'ALL' ? {} # empty HASH = ALL
+           :    +{ map +($_ => 1), @h };
+    }
     $self;
 }
 
@@ -129,6 +146,14 @@ them may be a fatal one.  The other are non-fatal.
 
 sub exceptions() { @{shift->{exceptions}} }
 
+=method hides REASON
+=cut
+
+sub hides($)
+{   my $h = shift->{hides} or return 0;
+    keys %$h ? $h->{(shift)} : 1;
+}
+
 #-----------------
 =section Logging
 
@@ -150,17 +175,16 @@ sub log($$$$)
     $opts->{location} ||= '';
 
     my $e = Log::Report::Exception->new
-     ( reason      => $reason
-     , report_opts => $opts
-     , message     => $message
-     );
-
-    my $is_fatal = exists $opts->{is_fatal} ? $opts->{is_fatal} : $e->isFatal;
+      ( reason      => $reason
+      , report_opts => $opts
+      , message     => $message
+      );
 
     push @{$self->{exceptions}}, $e;
 
-    # later changed into nice message
-    $self->{died} ||= $opts->{is_fatal};
+    $self->{died} ||=
+        exists $opts->{is_fatal} ? $opts->{is_fatal} : $e->isFatal;
+
     $self;
 }
 
