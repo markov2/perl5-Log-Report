@@ -106,6 +106,14 @@ C<openlog()> is called.  If not specified, the system default is used.
 =default charset 'utf8'
 Translate the text-strings into the specified charset, otherwise the
 sysadmin may get unreadable text.
+
+=option  format CODE
+=default format <unchanged>
+[1.10] With a CODE reference you get your hands on the text before
+it gets sent to syslog.  The three parameters are: the (translated) text,
+the related text domain object, and the message object.  You may want to
+use context information from the latter.
+
 =cut
 
 my $active;
@@ -131,6 +139,7 @@ sub init($)
 
     $self->{LRDS_incl_dom} = delete $args->{include_domain};
     $self->{LRDS_charset}  = delete $args->{charset} || "utf-8";
+    $self->{LRDS_format}   = $args->{format} || sub {$_[0]};
 
     $self->{prio} = +{ %default_reasonToPrio };
     if(my $to_prio = delete $args->{to_prio})
@@ -160,7 +169,15 @@ sub close()
 
 #--------------
 =section Accessors
+
+=method format [CODE]
+Returns the CODE ref which formats the syslog line.
 =cut
+
+sub format(;$)
+{   my $self = shift;
+    @_ ? $self->{LRDS_format} = shift : $self->{LRDS_format};
+}
 
 #--------------
 =section Logging
@@ -168,21 +185,23 @@ sub close()
 
 sub log($$$$$)
 {   my ($self, $opts, $reason, $msg, $domain) = @_;
-    my $text = encode $self->{LRDS_charset}
-      , $self->translate($opts, $reason, $msg) or return;
-
-    my $prio = $self->reasonToPrio($reason);
+    my $text   = $self->translate($opts, $reason, $msg) or return;
+    my $format = $self->format;
 
     # handle each line in message separately
     $text    =~ s/\s+$//s;
-    my @text = split /\n/, $text;
+    my @text = split /\n/, $format->($text, $domain, $msg);
+
+    my $prio    = $self->reasonToPrio($reason);
+    my $charset = $self->{LRDS_charset};
 
     if($self->{LRDS_incl_dom} && $domain)
     {   $domain  =~ s/\%//g;    # security
-        syslog $prio, "$domain %s", shift @text
+        syslog $prio, "$domain %s", encode($charset, shift @text);
     }
 
-    syslog $prio, "%s", $_ for @text;
+    syslog $prio, "%s", encode($charset, $_)
+        for @text;
 }
 
 =method reasonToPrio $reason

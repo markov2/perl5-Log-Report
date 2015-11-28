@@ -102,6 +102,7 @@ sub _fn_to_lexdir($)
     File::Spec->catdir($fn, 'messages');
 }
 
+#------------
 =section Accessors
 
 =method lexicons
@@ -117,6 +118,7 @@ Returns the default charset, which can be overrule by the locale.
 
 sub charset() {shift->{charset}}
 
+#------------
 =section Translating
 
 =method translate $message, [$language, $ctxt]

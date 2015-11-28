@@ -184,12 +184,28 @@ sub setContext(@)
     my $cr   = $self->contextRules  # ignore context if no rules given
         or return;
 
-    $self->{LRD_ctxt_def} = $cr->needDecode(setContext => shift);
+    $self->{LRD_ctxt_def} = $cr->needDecode(set => @_);
+}
+
+=method updateContext STRING|HASH|ARRAY|PAIRS
+[1.10] Make changes and additions to the active context (see M<setContext()>).
+=cut
+
+sub updateContext(@)
+{   my $self = shift;
+    my $cr   = $self->contextRules  # ignore context if no rules given
+        or return;
+
+    my $rules = $cr->needDecode(update => @_);
+    my $r = $self->{LRD_ctxt_def} ||= {};
+    @{$r}{keys %$r} = values %$r;
+    $r;
 }
 
 =method defaultContext
 Returns the current default translation context settings as HASH.  You should
-not modify the content of that HASH: change it by called M<setContext()>.
+not modify the content of that HASH: change it by called M<setContext()> or
+M<updateContext()>.
 =cut
 
 sub defaultContext() { shift->{LRD_ctxt_def} }
@@ -276,11 +292,11 @@ implicitly.  The explicit form:
 
    textdomain->configure(conf => $filename);
 
-The implicit form is
+The implicit form is (no variables possible, only constants!)
 
    package My::Package;
    use Log::Report 'my-domain', %configuration;
-   use Log::Report 'my-domain', conf => $filename;
+   use Log::Report 'my-domain', conf => '/filename';
 
 You can only configure your domain in one place in your program.  The
 textdomain setup is then used for all packages in the same domain.
@@ -302,5 +318,24 @@ of C<String::Print>, you need to pass a code reference.
 
   textdomain 'some-domain'
     , formatter => sub { $sp->printi(@_) };
+
+=subsection configuring global values
+
+Say, you log for a (Dancer) webserver, where you wish to include the website
+name in some of the log lines.  For this, (ab)use the translation context:
+
+  ### first enabled translation contexts
+  use Log::Report 'my-domain', context_rules => {};
+  # or
+  use Log::Report 'my-domain';
+  textdomain->configure(context_rules => {});
+  
+  ### every time you start working for a different virtual host
+  (textdomain 'my-domain')->setContext(host => $host);
+
+  ### now you can use that in your code
+  package My::Package;
+  use Log::Report 'my-domain';
+  error __x"in {host} not logged-in {user}", user => $username;
 
 =cut

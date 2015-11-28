@@ -25,25 +25,24 @@ with 'Dancer2::Core::Role::Logger';
 has dispatchers =>
   ( is     => 'ro'
   , isa    => Maybe[HashRef]
-  , tigger => 1
   );
 
-sub _trigger_dispatchers()
+sub BUILD
 {   my $self     = shift;
-    my $configs  = shift || {default => undef};
+    my $configs  = $self->dispatchers || {default => undef};
     $self->{use} = [keys %$configs];
+
+    dispatcher 'do-not-reopen';
 
     foreach my $name (keys %$configs)
     {   my $config = $configs->{$name} || {};
         if(keys %$config)
-        {   # cannot use log() output yet!  recursion!
-            ! $disp_objs{$name}
-                or die "attempt to reconfigure dispatcher $name";
-
-            my $type = delete $config->{type}
+        {   my $type = delete $config->{type}
                 or die "dispatcher configuration $name without type";
 
-            $disp_objs{$name} = dispatcher $type, $name, %$config;
+            $disp_objs{$name} = $self->app_name;
+            dispatcher $type, $name, %$config;
+
         }
     }
 }

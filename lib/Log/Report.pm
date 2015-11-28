@@ -120,15 +120,11 @@ Log::Report - report a problem, with exceptions and translation support
  if($@->wasFatal->inClass('parsing')) ...
 
 =chapter DESCRIPTION 
-Handling messages directed to users can be a hassle, certainly when the
-same software is used for command-line and in a graphical interfaces
-(you may not now how it is used, writing an abstract module), or has to
-cope with internationalization; this modules tries to simplify this.
-
-C<Log::Report> combines
+Get messages to users and logs.  C<Log::Report> combines three tasks
+which are closely related in one:
 =over 4
-=item . exceptions (like error and info), with
 =item . logging (like L<Log::Log4Perl> and syslog), and
+=item . exceptions (like error and info), with
 =item . translations (like C<gettext> and L<Locale::TextDomain>)
 =back
 You B<do not need> to use this module for all three reasons: pick what
@@ -236,11 +232,12 @@ sub report($@)
     {   @disp = @{$reporter->{needs}{$reason} || []};
     }
 
-    # return when no-one needs it: skip unused trace() fast!
-    @disp || $stop or return;
-
     is_reason $reason
         or error __x"token '{token}' not recognized as reason", token=>$reason;
+
+    # return when no-one needs it: skip unused trace() fast!
+    @disp || $stop
+        or return;
 
     $opts->{errno} ||= $!+0 || $? || 1
         if use_errno($reason) && !defined $opts->{errno};
@@ -323,10 +320,15 @@ which process messages, do the logging.  Dispatchers are global entities,
 addressed by a symbolic $name.  Please read M<Log::Report::Dispatcher> as
 well.
 
-The C<Log::Report> suite has its own dispatcher TYPES, but also connects
+The C<Log::Report> suite has its own dispatcher @types, but also connects
 to external dispatching frameworks.  Each need some (minor) conversions,
 especially with respect to translation of REASONS of the reports
 into log-levels as the back-end understands.
+
+[1.10] When you open a dispatcher with a $name which is already in use,
+that existing dispatcher gets closed.  Except when you have given an
+'dispatcher "do-not-reopen"' earlier, in which case the first object
+stays alive, and the second attempt ignored.
 
 The %options are a mixture of parameters needed for the
 Log::Report dispatcher wrapper and the settings of the back-end.
@@ -334,14 +336,15 @@ See M<Log::Report::Dispatcher>, the documentation for the back-end
 specific wrappers, and the back-ends for more details.
 
 Implemented COMMANDs are C<close>, C<find>, C<list>, C<disable>,
-C<enable>, C<mode>, C<filter>, C<needs>, and C<active-try>.  Most commands
-are followed by a LIST of dispatcher @names to be addressed.  For C<mode>
-see section L</Run modes>; it requires a MODE argument before the LIST
-of NAMEs.  Non-existing names will be ignored. When C<ALL> is specified,
-then all existing dispatchers will get addressed.  For C<filter> see
-L<Log::Report::Dispatcher/Filters>; it requires a CODE reference before
-the @names of the dispatchers which will have the it applied (defaults
-to all).
+C<enable>, C<mode>, C<filter>, C<needs>, C<active-try>, and C<do-not-reopen>.
+
+Most commands are followed by a LIST of dispatcher @names to be addressed.
+For C<mode> see section L</Run modes>; it requires a MODE argument
+before the LIST of NAMEs.  Non-existing names will be ignored. When
+C<ALL> is specified, then all existing dispatchers will get addressed.
+For C<filter> see L<Log::Report::Dispatcher/Filters>; it requires a CODE
+reference before the @names of the dispatchers which will have the it
+applied (defaults to all).
 
 With C<needs>, you only provide a REASON: it will return the list of
 dispatchers which need to be called in case of a message with the REASON
@@ -366,6 +369,7 @@ context with only one name, the one object is returned.
  dispatcher mode => 'DEBUG', 'mylog';
  dispatcher mode => 'DEBUG', 'ALL';
  my $catcher = dispatcher 'active-try';
+ dispatcher 'do-not-reopen';
 
  my @need_info = dispatcher needs => 'INFO';
  if(dispatcher needs => 'INFO') ...      # anyone needs INFO
@@ -380,30 +384,47 @@ objects which it has accessed.  When multiple names where given, it
 wishes to return a LIST of objects, not the count of them.
 =cut
 
-my %disp_actions = map +($_ => 1)
- , qw/close find list disable enable mode needs filter active-try/;
+my %disp_actions = map +($_ => 1), qw/
+  close find list disable enable mode needs filter active-try do-not-reopen
+  /;
+
+my $reopen_disp = 1;
 
 sub dispatcher($@)
 {   if(! $disp_actions{$_[0]})
     {   my ($type, $name) = (shift, shift);
 
         # old dispatcher with same name will be closed in DESTROY
-        delete $reporter->{dispatchers}{$name};
+        my $disps = $reporter->{dispatchers};
+        my @disps;
+        if($reopen_disp)
+        {   @disps  = grep $_->name ne $name, @$disps;
+            trace "reopened dispatcher $name" if @disps != @$disps;
+        }
+        else
+        {   my $has = first {$_->name eq $name} @$disps;
+            if(defined $has)
+            {   trace "not reopening $name";
+                return $has;
+            }
+            @disps  = @$disps;
+        }
 
-        my $disp = Log::Report::Dispatcher->new($type, $name
-          , mode => $default_mode, @_);
-        defined $disp or return;  # use defined, because $disp is overloaded
+        my $disp = Log::Report::Dispatcher
+           ->new($type, $name, mode => $default_mode, @_);
 
-        $reporter->{dispatchers}{$name} = $disp;
+        push @disps, $disp if $disp;
+        $reporter->{dispatchers} = \@disps;
+
         _whats_needed;
-        return ($disp);
+        return $disp ? ($disp) : undef;
     }
 
     my $command = shift;
     if($command eq 'list')
     {   mistake __"the 'list' sub-command doesn't expect additional parameters"
            if @_;
-        my @disp = values %{$reporter->{dispatchers}};
+        my @disp = @{$reporter->{dispatchers}};
         push @disp, $nested_tries[-1] if @nested_tries;
         return @disp;
     }
@@ -418,43 +439,52 @@ sub dispatcher($@)
     {   my $code = shift;
         error __"the 'filter' sub-command needs a CODE reference"
             unless ref $code eq 'CODE';
-        my %names = map { ($_ => 1) } @_;
+        my %names = map +($_ => 1), @_;
         push @{$reporter->{filters}}, [ $code, \%names ];
         return ();
     }
     if($command eq 'active-try')
     {   return $nested_tries[-1];
     }
+    if($command eq 'do-not-reopen')
+    {   $reopen_disp = 0;
+        return ();
+    }
 
     my $mode     = $command eq 'mode' ? shift : undef;
 
     my $all_disp = @_==1 && $_[0] eq 'ALL';
-    my @disps    = $all_disp ? keys %{$reporter->{dispatchers}} : @_;
-
-    my @dispatchers = grep defined, @{$reporter->{dispatchers}}{@disps};
-    @dispatchers or return;
+    my $disps    = $reporter->{dispatchers};
+    my @disps;
+    if($all_disp) { @disps = @$disps }
+    else
+    {   # take the dispatchers in the specified order.  Both lists
+        # are small, so O(x²) is small enough
+        for my $n (@_) { push @disps, grep $_->name eq $n, @$disps }
+    }
 
     error __"only one dispatcher name accepted in SCALAR context"
-        if @dispatchers > 1 && !wantarray && defined wantarray;
+        if @disps > 1 && !wantarray && defined wantarray;
 
     if($command eq 'close')
-    {   delete @{$reporter->{dispatchers}}{@disps};
-        $_->close for @dispatchers;
+    {   my %kill = map +($_->name => 1), @disps;
+        @$disps  = grep !$kill{$_->name}, @$disps;
+        $_->close for @disps;
     }
-    elsif($command eq 'enable')  { $_->_disabled(0) for @dispatchers }
-    elsif($command eq 'disable') { $_->_disabled(1) for @dispatchers }
+    elsif($command eq 'enable')  { $_->_disabled(0) for @disps }
+    elsif($command eq 'disable') { $_->_disabled(1) for @disps }
     elsif($command eq 'mode')
     {    Log::Report::Dispatcher->defaultMode($mode) if $all_disp;
-         $_->_set_mode($mode) for @dispatchers;
+         $_->_set_mode($mode) for @disps;
     }
 
     # find does require reinventarization
     _whats_needed if $command ne 'find';
 
-    wantarray ? @dispatchers : $dispatchers[0];
+    wantarray ? @disps : $disps[0];
 }
 
-END { $_->close for grep defined, values %{$reporter->{dispatchers}} }
+END { $_->close for @{$reporter->{dispatchers}} }
 
 # _whats_needed
 # Investigate from all dispatchers which reasons will need to be
@@ -463,7 +493,7 @@ END { $_->close for grep defined, values %{$reporter->{dispatchers}} }
 
 sub _whats_needed()
 {   my %needs;
-    foreach my $disp (values %{$reporter->{dispatchers}})
+    foreach my $disp (@{$reporter->{dispatchers}})
     {   push @{$needs{$_}}, $disp for $disp->needs;
     }
     $reporter->{needs} = \%needs;
@@ -819,10 +849,12 @@ For one package, the import list may additionally contain textdomain
 configuration %options.  These %options are used for all packages which
 use the same $domain.  These are alternatives:
 
+  # Do not use variables in the %*config!  They are not yet initialized
+  # when Log::Report->import is run!!!
   use Log::Report 'my-domain', %config, %domain_config;
 
   use Log::Report 'my-domain', %config;
-  textdomain 'my-domain', %domain_config;
+  textdomain 'my-domain', %domain_config;   # vars allowed
 
 The latter syntax has major advantages, when the configuration of the
 domain is determined at run-time.  It is probably also easier to understand.
@@ -1017,27 +1049,34 @@ sub needs(@)
 
 =section Introduction
 
-There are three steps in this story: produce some text on a certain
-condition, translate it to the proper language, and deliver it in some
-way to a user.  Texts in Perl are produced by commands like C<print>,
-C<die>, C<warn>, C<carp>, or C<croak>, which have no way of configuring
-the way they deliver text to the user.  Therefore, they are replaced
-with a single new command: C<report> with many abbreviations.
+Getting messages to users and logs. The distincting concept of this module,
+is that three tasks which are strongly related are merged into one simple
+syntax.  The three tasks:
+
+=over 4
+=item produce some text on a certain condition,
+=item translate it to the proper language, and
+=item deliver it in some way to a user.
+=back
+
+Text messages in Perl are produced by commands like C<print>, C<die>,
+C<warn>, C<carp>, or C<croak>.  But where is that output directed to?
+Translations is hard.  There is no clean exception mechanism.
 
 Besides, the C<print>/C<warn>/C<die> together produce only three different
-output levels with a message.  Many people manually implement their
-own additional levels, like verbose and debug.  Syslog has some extra
-levels as well, like C<critical>.  The $reason argument to C<report()>
-offers them all.
+output "levels" with a message.  Think of the variation syslog offers:
+more than 7 levels.  Many people manually implement their own tricks to
+get additional levels, like verbose and debug flags.  Log::Report offers
+that variety.
 
 The (optional) translations use the beautiful syntax defined by
-M<Locale::TextDomain>, with some extensions (of course).  The main
-difference is that the actual translations are delayed till the delivery
-step: until a dispatcher actually writes this message into a file or sends
-it to syslog.  This means that the pop-up in the graphical interface of
-the user may show the text in the language of the user --say Chinese in
-utf8--, but at the same time syslog may write the latin1 English version
-of the same message.
+M<Locale::TextDomain>, with some own extensions (of course).  A very
+important difference is that translations are delayed till the delivery
+step: until a dispatcher actually writes your message into a file, sends
+it to syslog, or shows it on the screen.  This means that the pop-up in
+the graphical interface of the user may show the text in the language
+of the user --say Chinese in utf8--, but at the same time syslog may
+write the latin1 English version of the same message.
 
 =section Background ideas
 
@@ -1067,6 +1106,11 @@ translations are postponed until the text is dispatched to a screen
 or log-file; the same report can be sent to syslog in (for instance)
 English and to the user interface in Dutch.
 
+=item . context sensitive
+Using contexts, you can set-up how to translate or rewrite messages,
+to improve messages.  A typical problem is whether to use gender in
+text (use 'his' or 'her'): you can set a gender in a context, and the
+use translation tables to pick the right one.
 =back
 
 =section Error handling models

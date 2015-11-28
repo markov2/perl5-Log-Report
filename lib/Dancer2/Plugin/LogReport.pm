@@ -191,12 +191,12 @@ sub _message_add($)
 
     my $r = $msg->reason;
     if(my $newm = $hide_real_message->{$r})
-    {   $msg = __$newm;
+    {   $msg    = __$newm;
         $msg->reason($r);
     }
 
-    my $session           = $app->session;
-    my $msgs              = $session->read($messages_variable);
+    my $session = $app->session;
+    my $msgs    = $session->read($messages_variable);
     push @$msgs, $msg;
     $session->write($messages_variable => $msgs);
 }
@@ -290,7 +290,6 @@ sub _error_handler($$$$)
 sub _report($@) {
     my ($reason, $dsl) = (shift, shift);
 
-
     my $msg = (blessed($_[0]) && $_[0]->isa('Log::Report::Message'))
        ? $_[0] : Dancer2::Core::Role::Logger::_serialize(@_);
 
@@ -309,6 +308,7 @@ register notice  => sub { _report(NOTICE => @_) };
 register mistake => sub { _report(MISTAKE => @_) };
 register panic   => sub { _report(PANIC => @_) };
 register alert   => sub { _report(ALERT => @_) };
+
 =method success
 This is a special additional type, equivalent to C<notice>.  The difference is
 that messages using this keyword will have the class C<success> added, which
@@ -445,21 +445,12 @@ To send messages to a file:
 
 See L<Log::Report::Dispatcher> for full details of options.
 
-Finally: on Dancer2 script may run many applications.  Each application
-has its own logger configuration.  Be aware that some loggers (for instance
-syslog) can exist only once in a program.  When you use the specify a
-logger name for a second app (without parameters) the logger object will 
-be shared.
-
-Example: reuse dispatchers 'default' and 'logfile'
-
-  engines:
-    logger:
-      LogReport:
-        app_name: Other App
-        dispatchers:
-	  default:   
-          logfile:
+Finally: a Dancer2 script may run many applications.  Each application
+can have its own logger configuration.  However, Log::Report dispatchers
+are global, so will be shared between Dancer2 applications.  Any attempt
+to create a new Log::Report dispatcher by the same name (as will happen
+when a new Dancer2 application is started with the same configuration)
+will be ignored.
 
 =subsection Dancer2::Plugin::LogReport
 

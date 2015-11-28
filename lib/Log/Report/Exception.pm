@@ -149,7 +149,7 @@ sub throw(@)
     }
 
     $opts->{stack} = Log::Report::Dispatcher->collectStack
-        if $opts->{stack} && @{$opts->{stack}};
+        unless $opts->{stack} && @{$opts->{stack}};
 
     report $opts, $reason, $self;
 }

@@ -7,6 +7,27 @@ Mark Overmeer.
 TODO:
   . connect to Message::Passing framework
 
+version 1.10: Fri 27 Nov 11:43:46 CET 2015
+
+	Fixes:
+	- Dancer2 object build  [Andrew Beverley]
+	- ::Domain::setContext with PAIRS as parameter
+	- collect stack for exceptions inside try block. [Andrew Beverley]
+
+	Improvements:
+	- keep dispatchers ordered.
+	- interpolate context setting inside msg_id's as well
+	- add ::Domain::updateContext()
+	- new option dispatcher 'do-not-reopen'
+	- ::Dispatcher::File option format() with CODE, now calls with
+	  additional parameter $msg.
+	- ::Dispatcher::File option output() now with CODE, to dynamically
+	  return the logfile name.
+	- added t/55throw.t
+	- new method ::Try::hide()
+	- renamed internal fields of ::Dispatcher::File, to lead with LRDF_
+	- new option ::Dispatcher::Syslog::new(format)
+
 version 1.09: Tue 20 Oct 09:26:00 CEST 2015
 
 	Fixes:

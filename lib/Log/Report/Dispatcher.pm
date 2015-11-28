@@ -486,6 +486,7 @@ sub stackTraceParam($$$)
     qq{"$escaped"};
 }
 
+#------------
 =chapter DETAILS
 
 =section Available back-ends

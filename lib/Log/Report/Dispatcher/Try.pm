@@ -5,7 +5,8 @@ package Log::Report::Dispatcher::Try;
 use base 'Log::Report::Dispatcher';
 
 use Log::Report 'log-report', syntax => 'SHORT';
-use Log::Report::Exception;
+use Log::Report::Exception ();
+use Log::Report::Util      qw/%reason_code/;
 
 =chapter NAME
 Log::Report::Dispatcher::Try - capture all reports as exceptions
@@ -89,13 +90,9 @@ ARRAY of M<Log::Report::Exception> objects.
 =default died C<undef>
 The exit string ($@) of the eval'ed block.
 
-=option  hide REASON|ARRAY|'ALL'
-=default hide []
-[1.09] By default, the try will only catch messages which stop the
-execution of the block (errors etc, internally a 'die').  Other messages
-are passed up.  This option gives the opportunity to block, for instance,
-trace messages.  Those messages are still collected inside the try
-object, so may get passed-on later via M<reportAll()> if you like.
+=option  hide REASON|ARRAY|'ALL'|'NONE'
+=default hide 'NONE'
+[1.09] see M<hide()>
 
 =cut
 
@@ -104,14 +101,7 @@ sub init($)
     defined $self->SUPER::init($args) or return;
     $self->{exceptions} = delete $args->{exceptions} || [];
     $self->{died}       = delete $args->{died};
-
-    if(my $h = $args->{hide})
-    {   my @h = ref $h eq 'ARRAY' ? @$h : defined $h ? $h : ();
-        $self->{hides}
-           = @h==0 ? undef
-           : @h==1 && $h[0] eq 'ALL' ? {} # empty HASH = ALL
-           :    +{ map +($_ => 1), @h };
-    }
+    $self->hide($args->{hide} // 'NONE');
     $self;
 }
 
@@ -154,6 +144,34 @@ sub hides($)
     keys %$h ? $h->{(shift)} : 1;
 }
 
+=method hide REASON|REASONS|ARRAY|'ALL'|'NONE'
+[1.09] By default, the try will only catch messages which stop the
+execution of the block (errors etc, internally a 'die').  Other messages
+are passed to parent try blocks, if none than to the dispatchers.
+
+This option gives the opportunity to block, for instance, trace messages.
+Those messages are still collected inside the try object, so may get
+passed-on later via M<reportAll()> if you like.
+
+Be warned: Using this method will reset the whole 'hide' configuration:
+it's a I<set> not an I<add>.
+
+=example change the setting of the running block
+  my $parent_try = dispatcher 'active-try';
+  parent_try->hide('NONE');
+=cut
+
+sub hide(@)
+{   my $self = shift;
+    my @h = map { ref $_ eq 'ARRAY' ? @$_ : defined($_) ? $_ : () } @_;
+
+    $self->{hides}
+      = @h==0 ? undef
+      : @h==1 && $h[0] eq 'ALL'  ? {}    # empty HASH = ALL
+      : @h==1 && $h[0] eq 'NONE' ? undef
+      :    +{ map +($_ => 1), @h };
+}
+
 #-----------------
 =section Logging
 
@@ -169,9 +187,14 @@ The $message is either a STRING or a M<Log::Report::Message>.
 sub log($$$$)
 {   my ($self, $opts, $reason, $message, $domain) = @_;
 
-    # If "try" does not want a stack, because of its mode,
-    # then don't produce one later!  (too late)
-    $opts->{stack}    ||= [];
+    unless($opts->{stack})
+    {   my $mode = $self->mode;
+        $opts->{stack} = $self->collectStack
+            if $reason eq 'PANIC'
+            || ($mode==2 && $reason_code{$reason} >= $reason_code{ALERT})
+            || ($mode==3 && $reason_code{$reason} >= $reason_code{ERROR});
+    }
+
     $opts->{location} ||= '';
 
     my $e = Log::Report::Exception->new

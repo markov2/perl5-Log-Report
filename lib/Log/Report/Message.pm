@@ -377,10 +377,8 @@ sub toString(;$)
   
     defined $text or return ();
 
-    if($self->{_expand})
-    {    my $re   = join '|', map quotemeta, keys %$self;
-         $text    =~ s/\{($re)(\%[^}]*)?\}/$self->_expand($1,$2)/ge;
-    }
+    $text  =~ s/\{([^%}]+)(\%[^}]*)?\}/$self->_expand($1,$2)/ge
+        if $self->{_expand};
 
     $text  = "$self->{_prepend}$text"
         if defined $self->{_prepend};
@@ -396,7 +394,7 @@ sub toString(;$)
 
 sub _expand($$)
 {   my ($self, $key, $format) = @_;
-    my $value = $self->{$key};
+    my $value = $self->{$key} // $self->{_context}{$key};
 
     $value = $value->($self)
         while ref $value eq 'CODE';

@@ -55,7 +55,7 @@ can write to the same file.
 
 =c_method new $type, $name, %options
 
-=requires to FILENAME|FILEHANDLE|OBJECT
+=requires to FILENAME|FILEHANDLE|OBJECT|CODE
 You can either specify a FILENAME, which is opened in append mode with
 autoflush on. Or pass any kind of FILE-HANDLE or some OBJECT which
 implements a C<print()> method. You probably want to have autoflush
@@ -63,6 +63,24 @@ enabled on your FILE-HANDLES.
 
 When cleaning-up the dispatcher, the file will only be closed in case
 of a FILENAME.
+
+[1.10] When you pass a CODE, then for each log message the function is
+called with two arguments: this dispatcher object and the message object.
+In some way (maybe via the message context) you have to determine the
+log filename.  This means that probably many log-files are open at the
+same time.
+
+   # configuration time
+   dispatcher FILE => 'logfile', to =>
+       sub { my ($disp, $msg) = @_; $msg->context->{logfile} };
+
+   # whenever you want to change the logfile
+   textdomain->updateContext(logfile => '/var/log/app');
+   (textdomain 'mydomain')->setContext(logfile => '/var/log/app');
+
+   # or
+   error __x"help", _context => {logfile => '/dev/tty'};
+   error __x"help", _context => "logfile=/dev/tty";
 
 =option  replace BOOLEAN
 =default replace C<false>
@@ -85,11 +103,20 @@ but you may want to add hostname, process number, or more.
 
 The first parameter to format is the string to print; it is already
 translated and trailed by a newline.  The second parameter is the
-text-domain (if known).  The "LONG" format is equivalent to:
+text-domain (if known). [1.10] As third parameter, you get the $msg
+raw object as well (maybe you want to use the message context?)
+
+The "LONG" format is equivalent to:
 
   my $t = strftime "%FT%T", gmtime;
   "[$t $$] $_[1] $_[0]"
 
+Use of context:
+
+   format => sub { my ($msgstr, $domain, $msg) = @_;
+      my $host = $msg->context->{host};
+      "$host $msgstr";
+   }
 =cut
 
 sub init($)
@@ -104,27 +131,12 @@ sub init($)
     $self->SUPER::init($args);
 
     my $name = $self->name;
-    my $to   = delete $args->{to}
+    $self->{to}      = $args->{to}
         or error __x"dispatcher {name} needs parameter 'to'", name => $name;
-
-    if(ref $to)
-    {   $self->{output} = $to;
-        trace "opened dispatcher $name to a ".ref($to);
-    }
-    else
-    {   $self->{filename} = $to;
-        my $binmode = $args->{replace} ? '>' : '>>';
-
-        my $f = $self->{output} = IO::File->new($to, $binmode)
-            or fault __x"cannot write log into {file} with mode {binmode}"
-                 , binmode => $binmode, file => $to;
-        $f->autoflush;
-
-        trace "opened dispatcher $name to $to with $binmode";
-    }
+    $self->{replace} = $args->{replace} || 0;
 
     my $format = $args->{format} || sub { '['.localtime()."] $_[0]" };
-    $self->{format}
+    $self->{LRDF_format}
       = ref $format eq 'CODE' ? $format
       : $format eq 'LONG'
       ? sub { my $msg    = shift;
@@ -138,6 +150,7 @@ sub init($)
     $self;
 }
 
+#-----------
 =section Accessors
 
 =method filename
@@ -145,13 +158,47 @@ Returns the name of the opened file, or C<undef> in case this dispatcher
 was started from a file-handle or file-object.
 
 =method format
-=method output
 =cut
 
-sub filename() {shift->{filename}}
-sub format()   {shift->{format}}
-sub output()   {shift->{output}}
+sub filename() {shift->{LRDF_filename}}
+sub format()   {shift->{LRDF_format}}
 
+=method output $msg
+Returns the file-handle to write the log lines to. [1.10] This may
+depend on the $msg (especially message context)
+=cut
+
+sub output($)
+{   # fast simple case
+    return $_[0]->{LRDF_output} if $_[0]->{LRDF_output};
+
+    my ($self, $msg) = @_;
+    my $name = $self->name;
+
+    my $to   = $self->{to};
+    if(!ref $to)
+    {   # constant file name
+        $self->{LRDF_filename} = $to;
+        my $binmode = $self->{replace} ? '>' : '>>';
+
+        my $f = $self->{LRDF_output} = IO::File->new($to, $binmode)
+            or fault __x"cannot write log into {file} with mode {binmode}"
+                 , binmode => $binmode, file => $to;
+        $f->autoflush;
+        return $self->{LRDF_output} = $f;
+    }
+
+    if(ref $to eq 'CODE')
+    {   # variable filename
+        my $fn = $self->{LRDF_filename} = $to->($self, $msg);
+        return $self->{LRDF_output} = $self->{LRDF_out}{$fn};
+    }
+
+    # probably file-handle
+    $self->{LRDF_output} = $to;
+}
+
+#-----------
 =section File maintenance
 
 =method close
@@ -161,41 +208,61 @@ other case, nothing will be done.
 
 sub close()
 {   my $self = shift;
-    $self->SUPER::close or return;
-    $self->output->close if $self->filename;
+    $self->SUPER::close
+        or return;
+
+    my $to = $self->{to};
+    my @close
+      = ref $to eq 'CODE' ? values %{$self->{LRDF_out}}
+      : $self->{LRDF_filename} ? $self->{LRDF_output}
+      : ();
+
+    $_->close for @close;
     $self;
 }
 
-=method rotate $filename
+=method rotate $filename|CODE
 [1.00] Move the current file to $filename, and start a new file.
 =cut
 
 sub rotate($)
-{   my ($self, $new) = @_;
+{   my ($self, $old) = @_;
 
-    my $log = $self->filename
-        or error __x"cannot rotate log file which was opened as file-handle";
+    my $to   = $self->{to};
+    my $logs = ref $to eq 'CODE' ? $self->{LRDF_out}
+      : +{ $self->{to} => $self->{LRDF_output} };
+    
+    while(my ($log, $fh) = each %$logs)
+    {   !ref $log
+           or error __x"cannot rotate log file which was opened as file-handle";
 
-    trace "rotating $log to $new";
 
-    rename $log, $new
-        or fault __x"unable to rotate logfile {oldfn} to {newfn}"
-              , oldfn => $log, newfn => $new;
+        my $oldfn = ref $old eq 'CODE' ? $old->($log) : $old;
+        trace "rotating $log to $oldfn";
 
-    $self->output->close;   # close after move not possible on Windows?
-    my $f = $self->{output} = IO::File->new($log, '>>')
-        or fault __x"cannot write log into {file}", file => $log;
-    $f->autoflush;
+        rename $log, $oldfn
+           or fault __x"unable to rotate logfile {fn} to {oldfn}"
+               , fn => $log, oldfn => $oldfn;
+
+        $fh->close;   # close after move not possible on Windows?
+        my $f = $self->{LRDF_output} = $logs->{$log} = IO::File->new($log, '>>')
+               or fault __x"cannot write log into {file}", file => $log;
+        $f->autoflush;
+    }
+
     $self;
 }
 
+#-----------
 =section Logging
 =cut
 
 sub log($$$$)
 {   my ($self, $opts, $reason, $msg, $domain) = @_;
-    my $text = $self->format->($self->translate($opts, $reason, $msg), $domain);
-    my $out  = $self->output;
+    my $trans = $self->translate($opts, $reason, $msg);
+    my $text  = $self->format->($trans, $domain, $msg);
+
+    my $out   = $self->output($msg);
     flock $out, LOCK_EX;
     $out->print($text);
     flock $out, LOCK_UN;
