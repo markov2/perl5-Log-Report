@@ -398,19 +398,17 @@ sub dispatcher($@)
 
         # old dispatcher with same name will be closed in DESTROY
         my $disps = $reporter->{dispatchers};
-        my @disps;
-        if($reopen_disp)
-        {   @disps  = grep $_->name ne $name, @$disps;
-            trace "reopened dispatcher $name" if @disps != @$disps;
-        }
-        else
+ 
+        if(!$reopen_disp)
         {   my $has = first {$_->name eq $name} @$disps;
             if(defined $has && $has ne $default_dispatcher)
             {   trace "not reopening $name";
                 return $has;
             }
-            @disps  = @$disps;
         }
+
+        my @disps = grep $_->name ne $name, @$disps;
+        trace "reopening dispatcher $name" if @disps != @$disps;
 
         my $disp = Log::Report::Dispatcher
            ->new($type, $name, mode => $default_mode, @_);

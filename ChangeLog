@@ -7,11 +7,19 @@ Mark Overmeer.
 TODO:
   . connect to Message::Passing framework
 
+version 1.12: Mon Jan 18 21:55:35 CET 2016
+
+	Fixes:
+	- reopen default dispatcher creates a double. [Andrew Beverley]
+
+	Improvements:
+	- remove mode=DEBUG from Dancer2::*
+
 version 1.11: Mon 18 Jan 17:07:43 CET 2016
 
 	Fixes:
 	- warning when log outside sub [Andrew Beverley]
-	- missing register of fault and failed [Andrew Beverley]
+	- missing register of fault and failure [Andrew Beverley]
 	- some module is textdomain logreport, should be log-report.
 	  [Andrew Beverley]
 	- Dancer2::Logger::LogReport should not set the mode

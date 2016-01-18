@@ -7,7 +7,7 @@ use warnings;
 use Moo;
 use Dancer2::Core::Types;
 use Scalar::Util qw/blessed/;
-use Log::Report  'log-report', syntax => 'REPORT', mode => 'DEBUG';
+use Log::Report  'log-report', syntax => 'REPORT';
 
 our $AUTHORITY = 'cpan:MARKOV';
 
