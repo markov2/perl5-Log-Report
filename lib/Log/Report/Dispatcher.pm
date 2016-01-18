@@ -247,6 +247,7 @@ sub needs(;$)
     first {$need eq $_} @$needs;
 }
 
+#-----------
 =section Logging
 
 =method log HASH-$of-%options, $reason, $message, $domain
@@ -372,12 +373,11 @@ sub collectLocation()
     my $nest  = 1;
     my @args;
 
-    do {@args = caller $nest++}
+    do { @args = caller $nest++ }
     until $args[3] eq 'Log::Report::report';  # common entry point
 
-    # skip syntax==SHORT routine entries
     @args = caller $nest++
-        if +(caller $nest)[3] =~ m/^Log\:\:Report\:\:[^:]*$/;
+        if +((caller $nest)[3] || '') =~ m/^Log\:\:Report\:\:[^:]*$/;
 
     @args ? \@args : undef;
 }

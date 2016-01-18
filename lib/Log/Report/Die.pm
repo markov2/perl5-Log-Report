@@ -18,7 +18,7 @@ Log::Report::Die - compatibility routines with Perl's die/croak/confess
 This module is used internally, to translate output of 'die' and Carp
 functions into M<Log::Report::Message> objects.
 
-=chapter Functions
+=chapter FUNCTIONS
 
 =function die_decode STRING
 The STRING is the content of C<$@> after an eval() caught a die().
@@ -54,6 +54,7 @@ sub die_decode($)
     @text or return ();
     chomp $text[-1];
 
+    # Try to catch the error directly, to remove it from the error text
     my %opt    = (errno => $! + 0);
     my $err    = "$!";
 

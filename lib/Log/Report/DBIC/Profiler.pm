@@ -4,7 +4,7 @@ use warnings;
 package Log::Report::DBIC::Profiler;
 use base 'DBIx::Class::Storage::Statistics';
 
-use Log::Report  import => 'trace';
+use Log::Report  'log-report', import => 'trace';
 use Time::HiRes  qw(time);
 
 =chapter NAME

@@ -308,6 +308,8 @@ register notice  => sub { _report(NOTICE => @_) };
 register mistake => sub { _report(MISTAKE => @_) };
 register panic   => sub { _report(PANIC => @_) };
 register alert   => sub { _report(ALERT => @_) };
+register fault   => sub { _report(FAULT => @_) };
+register failure => sub { _report(FAILURE => @_) };
 
 =method success
 This is a special additional type, equivalent to C<notice>.  The difference is
@@ -338,7 +340,7 @@ configuration options and defaults.
         fatal_error_message: An unexpected error has occurred
         # The levels of messages that will be saved to the session, and
         # thus displayed to the end user
-        session_messages: [ NOTICE WARNING MISTAKE ERROR FAULT ALERT FAILURE PANIC ]
+        session_messages: [ NOTICE, WARNING, MISTAKE, ERROR, FAULT, ALERT, FAILURE, PANIC ]
 
 =chapter DETAILS
 

@@ -4,7 +4,7 @@ use strict;
 package Log::Report::Exception;
 
 use Log::Report      'log-report';
-use Log::Report::Util qw/is_fatal/;
+use Log::Report::Util qw/is_fatal to_html/;
 use POSIX             qw/locale_h/;
 use Scalar::Util      qw/blessed/;
 
@@ -148,16 +148,14 @@ sub throw(@)
     {   $reason = $self->{reason};
     }
 
-    $opts->{stack} = Log::Report::Dispatcher->collectStack
-        unless $opts->{stack} && @{$opts->{stack}};
-
+    $opts->{stack} ||= Log::Report::Dispatcher->collectStack;
     report $opts, $reason, $self;
 }
 
 # where the throw is handled is not interesting
 sub PROPAGATE($$) {shift}
 
-=method toString
+=method toString [$locale]
 Prints the reason and the message.  Differently from M<throw()>, this
 only represents the textual content: it does not re-cast the exceptions to
 higher levels.
@@ -167,11 +165,17 @@ higher levels.
  print $_ for $@->exceptions;   # via overloading
 =cut
 
-sub toString()
-{   my $self = shift;
+sub toString(;$)
+{   my ($self, $locale) = @_;
     my $msg  = $self->message;
-    lc($self->{reason}) . ': ' . (ref $msg ? $msg->toString : $msg) . "\n";
+    lc($self->{reason}).': '.(ref $msg ? $msg->toString($locale) : $msg)."\n";
 }
+
+=method toHTML [$locale]
+[1.11] as M<toString()>, and escape HTML volatile characters.
+=cut
+
+sub toHTML(;$) { to_html($_[0]->toString($_[1])) }
 
 =method print [$fh]
 The default filehandle is STDOUT.

@@ -4,8 +4,9 @@ use strict;
 package Log::Report::Message;
 
 use Log::Report 'log-report';
-use POSIX      qw/locale_h/;
-use List::Util qw/first/;
+use POSIX             qw/locale_h/;
+use List::Util        qw/first/;
+use Log::Report::Util qw/to_html/;
 
 # Work-around for missing LC_MESSAGES on old Perls and Windows
 { no warnings;
@@ -415,6 +416,14 @@ sub _expand($$)
     ? sprintf($format, $value)
     : "$value";   # enforce stringification on objects
 }
+
+=method toHTML [$locale]
+[1.11] Translate the message, and then entity encode HTML volatile characters.
+=cut
+
+my %tohtml = qw/  > gt   < lt   " quot  & amp /;
+
+sub toHTML(;$) { to_html($_[0]->toString($_[1])) }
 
 =method untranslated
 Return the concatenation of the prepend, msgid, and append strings.  Variable

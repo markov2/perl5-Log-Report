@@ -176,13 +176,17 @@ Temporary set the default translation context for messages.  This is used
 when the message is created without a C<_context> parameter. The context
 can be retrieved with M<defaultContext()>.
 
-Contexts are totally ignored then there are no C<context_rules>.
+Contexts are totally ignored then there are no C<context_rules>.  When
+you do not wish to change settings, you may simply provide a HASH.
+
+=example
+   use Log::Report 'my-domain', context_rules => {};
 =cut
 
 sub setContext(@)
 {   my $self = shift;
     my $cr   = $self->contextRules  # ignore context if no rules given
-        or return;
+        or error __x"you need to configure context_rules before setContext";
 
     $self->{LRD_ctxt_def} = $cr->needDecode(set => @_);
 }

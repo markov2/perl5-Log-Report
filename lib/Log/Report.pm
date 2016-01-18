@@ -48,7 +48,7 @@ require Log::Report::Dispatcher::Try;
 #, translator => Log::Report::Translator::POT->new(charset => 'utf-8');
 textdomain 'log-report';
 
-dispatcher PERL => 'default', accept => 'NOTICE-';
+my $default_dispatcher = dispatcher PERL => 'default', accept => 'NOTICE-';
 
 =chapter NAME
 Log::Report - report a problem, with exceptions and translation support
@@ -328,7 +328,9 @@ into log-levels as the back-end understands.
 [1.10] When you open a dispatcher with a $name which is already in use,
 that existing dispatcher gets closed.  Except when you have given an
 'dispatcher "do-not-reopen"' earlier, in which case the first object
-stays alive, and the second attempt ignored.
+stays alive, and the second attempt ignored. [1.11] The automatically
+created default dispatcher will get replaced, even when this option
+is given, by another dispatcher which is named 'default'.
 
 The %options are a mixture of parameters needed for the
 Log::Report dispatcher wrapper and the settings of the back-end.
@@ -403,7 +405,7 @@ sub dispatcher($@)
         }
         else
         {   my $has = first {$_->name eq $name} @$disps;
-            if(defined $has)
+            if(defined $has && $has ne $default_dispatcher)
             {   trace "not reopening $name";
                 return $has;
             }

@@ -5,7 +5,7 @@ use strict;
 use warnings;
 
 use Scalar::Util            qw/blessed/;
-use Log::Report             'logreport', import => 'report';
+use Log::Report             'log-report', import => 'report';
 use Log::Report::Dispatcher ();
 
 our $AUTHORITY = 'cpan:MARKOV';

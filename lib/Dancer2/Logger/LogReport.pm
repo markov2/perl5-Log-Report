@@ -7,12 +7,9 @@ use warnings;
 use Moo;
 use Dancer2::Core::Types;
 use Scalar::Util qw/blessed/;
-use Log::Report  'logreport', syntax => 'REPORT', mode => 'DEBUG';
+use Log::Report  'log-report', syntax => 'REPORT', mode => 'DEBUG';
 
 our $AUTHORITY = 'cpan:MARKOV';
-
-# all dispatchers shall be created exactly once (unique name)
-my %disp_objs;
 
 my %level_dancer2lr =
   ( core  => 'TRACE'
@@ -40,9 +37,7 @@ sub BUILD
         {   my $type = delete $config->{type}
                 or die "dispatcher configuration $name without type";
 
-            $disp_objs{$name} = $self->app_name;
             dispatcher $type, $name, %$config;
-
         }
     }
 }

@@ -7,7 +7,23 @@ Mark Overmeer.
 TODO:
   . connect to Message::Passing framework
 
-version 1.10: Fri 27 Nov 11:43:46 CET 2015
+version 1.11: Mon 18 Jan 17:07:43 CET 2016
+
+	Fixes:
+	- warning when log outside sub [Andrew Beverley]
+	- missing register of fault and failed [Andrew Beverley]
+	- some module is textdomain logreport, should be log-report.
+	  [Andrew Beverley]
+	- Dancer2::Logger::LogReport should not set the mode
+
+	Improvements:
+	- dispatcher 'do-not-reopen' does not protect the default
+	  dispatcher [Andrew Beverley]
+	- produce error when setContext is used while context_rules
+	  are not provided.
+	- added ::Exception::toHTML() and ::Message::toHTML()
+
+version 1.10: Sat Nov 28 17:39:16 CET 2015
 
 	Fixes:
 	- Dancer2 object build  [Andrew Beverley]
