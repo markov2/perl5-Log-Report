@@ -23,8 +23,10 @@ my %modes = (NORMAL => 0, VERBOSE => 1, ASSERT => 2, DEBUG => 3
 my @default_accept = ('NOTICE-', 'INFO-', 'ASSERT-', 'ALL');
 my %always_loc = map +($_ => 1), qw/ASSERT ALERT FAILURE PANIC/;
 
-my %predef_dispatchers = map { (uc($_) => __PACKAGE__.'::'.$_) }
-   qw/File Perl Syslog Try Callback Log4perl/;
+my %predef_dispatchers = map +(uc($_) => __PACKAGE__.'::'.$_)
+  , qw/File Perl Syslog Try Callback Log4perl/;
+
+my @skip_stack = sub { $_[0][0] =~ m/^Log\:\:Report(?:\:\:|$)/ };
 
 =chapter NAME
 Log::Report::Dispatcher - manage message dispatching, display or logging
@@ -341,11 +343,7 @@ Returns an ARRAY of ARRAYs with text, filename, line-number.
 
 sub collectStack($)
 {   my ($thing, $max) = @_;
-
-    my ($nest, $sub) = (1, undef);
-    do { $sub = (caller $nest++)[3] }
-    while(defined $sub && $sub ne 'Log::Report::report');
-    defined $sub or $nest = 1;  # not found
+    my $nest = $thing->skipStack;
 
     # special trick by Perl for Carp::Heavy: adds @DB::args
   { package DB;    # non-blank before package to avoid problem with OODoc
@@ -363,24 +361,54 @@ sub collectStack($)
   }
 }
 
-=ci_method collectLocation
-Collect the information to be displayed as line where the error occurred.
-Probably, this needs improvement, where carp and die show different lines.
+=ci_method addSkipStack @CODE
+[1.13] Add one or more CODE blocks of caller lines which should not be
+collected for stack-traces or location display.  A CODE gets
+called with an ARRAY of caller information, and returns true
+when that line should get skipped.
+
+B<Warning:> this logic is applied globally: on all dispatchers.
+
+=example
+By default, all lines in the Log::Report packages are skipped from
+display, with a simple CODE as this:
+
+  sub in_lr { $_[0][0] =~ m/^Log\:\:Report(?:\:\:|$)/ }
+  Log::Report::Dispatcher->addSkipStack(\&in_lr);
+
+The only parameter to in_lr is the return of caller().  The first
+element of that ARRAY is the package name of a stack line.
 =cut
 
-sub collectLocation()
+sub addSkipStack(@)
+{   my $thing = shift;
+    push @skip_stack, @_;
+    $thing;
+}
+
+=method skipStack
+[1.13] Returns the number of nestings in the stack which should be skipped
+to get outside the Log::Report (and related) modules.  The end-user
+does not want to see those internals in stack-traces.
+=cut
+
+sub skipStack()
 {   my $thing = shift;
     my $nest  = 1;
-    my @args;
+    my $args;
 
-    do { @args = caller $nest++ }
-    until $args[3] eq 'Log::Report::report';  # common entry point
+    do { $args = [caller ++$nest] }
+    while @$args && first {$_->($args)} @skip_stack;
 
-    @args = caller $nest++
-        if +((caller $nest)[3] || '') =~ m/^Log\:\:Report\:\:[^:]*$/;
-
-    @args ? \@args : undef;
+    # do not count my own stack level in!
+    @$args ? $nest-1 : 1;
 }
+
+=ci_method collectLocation
+Collect the information to be displayed as line where the error occurred.
+=cut
+
+sub collectLocation() { [caller shift->skipStack] }
 
 =ci_method stackTraceLine %options
 =requires package CLASS

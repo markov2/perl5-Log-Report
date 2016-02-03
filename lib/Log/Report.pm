@@ -554,6 +554,9 @@ sub try(&@)
     my $disp = Log::Report::Dispatcher::Try->new(TRY => 'try', @_);
     push @nested_tries, $disp;
 
+    # user's __DIE__ handlers would frustrate the exception mechanism
+    local $SIG{__DIE__};
+
     my ($ret, @ret);
     if(!defined wantarray)  { eval { $code->() } } # VOID   context
     elsif(wantarray) { @ret = eval { $code->() } } # LIST   context

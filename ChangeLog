@@ -7,6 +7,20 @@ Mark Overmeer.
 TODO:
   . connect to Message::Passing framework
 
+version 1.13: Wed  3 Feb 11:34:18 CET 2016
+
+	Fixes:
+	- init of lexicon with HASH
+	  rt.cpan.org#111420 [Paulo A Ferreira]
+
+	Improvements:
+	- skip Log::Report wrappers from stacktrace and location.
+	- added ::Dispatcher::addSkipStack() and ::skipStack()
+	- add forward_url to Dancer2 plugin example [Andrew Beverley]
+	- ignore $SIG{__DIE__} within try blocks [Milos Lazarevic]
+	- dancer2: add regression test for plugin [Andrew Beverley]
+	- dancer2: add forward_template option [Raj Barath]
+
 version 1.12: Mon Jan 18 21:55:35 CET 2016
 
 	Fixes:

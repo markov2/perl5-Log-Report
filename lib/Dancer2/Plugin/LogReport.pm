@@ -133,9 +133,22 @@ on_plugin_import
     # the specific error to a generic error, when displayed to the user.
     # The message can be customised in the config file.
     my $fatal_error_message = $settings->{fatal_error_message}
-        || "An unexpected error has occurred";
+       // "An unexpected error has occurred";
+
     unless($dsl->app->config->{show_errors})
-    {   $hide_real_message->{$_} = $fatal_error_message for qw/FAULT ALERT FAILURE PANIC/;
+    {   $hide_real_message->{$_} = $fatal_error_message
+            for qw/FAULT ALERT FAILURE PANIC/;
+    }
+
+    if(my $forward_template = $settings->{forward_template})
+    {   # Add a route for the specified template
+        $dsl->app->add_route
+          ( method => 'get'
+          , regexp => qr!^/\Q$forward_template\E$!,
+          , code   => sub { shift->app->template($forward_template) }
+          );
+        # Forward to that new route
+        $settings->{forward_url} = $forward_template;
     }
 
     # This is so that all messages go into the session, to be displayed
@@ -143,6 +156,13 @@ on_plugin_import
     dispatcher CALLBACK => 'error_handler'
       , callback => \&_error_handler
       , mode     => 'DEBUG';
+
+    Log::Report::Dispatcher->addSkipStack( sub { $_[0][0] =~
+        m/ ^ Dancer2\:\:(?:Plugin|Logger)\:\:LogReport
+         | ^ Dancer2\:\:Core\:\:Role\:\:DSL
+         /x
+    });
+
 };    # ";" required!
 
 =method process
@@ -179,7 +199,7 @@ sub _message_add($)
 
     return
         if ! $session_messages{$msg->reason}
-        ||   $msg->inClass('no_session');
+        || $msg->inClass('no_session');
 
     my $app = $_dsl->app;
     unless($app->request)
@@ -335,12 +355,18 @@ configuration options and defaults.
         # no effect due to unresolved issues saving messages to the session
         # and accessing the DSL at that time.
         handle_http_errors: 1
+        # Where to forward users in the event of an uncaught fatal
+        # error within a GET request
+        forward_url: /
+        # Or you can specify a template instead [1.13]
+        forward_template: error_template_file   # Defaults to empty
         # For a production server (show_errors: 0), this is the text that
         # will be displayed instead of unexpected exception errors
         fatal_error_message: An unexpected error has occurred
         # The levels of messages that will be saved to the session, and
         # thus displayed to the end user
         session_messages: [ NOTICE, WARNING, MISTAKE, ERROR, FAULT, ALERT, FAILURE, PANIC ]
+
 
 =chapter DETAILS
 

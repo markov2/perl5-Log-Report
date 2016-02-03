@@ -38,5 +38,6 @@ t/53log4perl.t
 t/54try.t
 t/55throw.t
 t/60mojo.t
+t/70dancer2.t
 t/DieTests.pm
 xt/99pod.t

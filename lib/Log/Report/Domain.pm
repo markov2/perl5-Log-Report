@@ -139,7 +139,7 @@ sub configure(%)
     $self->SUPER::configure(%args);
 
     my $transl = $args{translator} || Log::Report::Translator->new;
-    $transl    =  Log::Report::Translator->new(@$transl)
+    $transl    =  Log::Report::Translator->new(%$transl)
         if ref $transl eq 'HASH';
 
     !blessed $transl || $transl->isa('Log::Report::Translator')
