@@ -9,6 +9,11 @@ BEGIN {
     plan skip_all => 'Dancer2 is not installed'
         if $@;
 
+    plan skip_all => "Dancer2 is too old: $Dancer2::VERSION"
+        if $Dancer2::VERSION < 0.151000;   # for to_app()
+
+    warn "Dancer2 version $Dancer2::VERSION\n";
+
     plan tests => 5;
 
     eval "require Plack::Test";

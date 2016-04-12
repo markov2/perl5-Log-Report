@@ -87,7 +87,7 @@ C<pid>, C<ndelay>, and C<nowait>.
 =option  facility STRING
 =default facility 'user'
 The possible values for this depend (a little) on the system.  POSIX
-only defines C<user>, and C<local0> upto C<local7>.
+only defines C<user>, and C<local0> up to C<local7>.
 
 =option  to_prio ARRAY-of-PAIRS
 =default to_prio []

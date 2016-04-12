@@ -264,9 +264,24 @@ sub _error_handler($$$$)
 {   my ($disp, $options, $reason, $message) = @_;
 
     my $fatal_handler = sub {
-        my $req = $_dsl->request;
-        _forward_home( $_dsl, $_[0] )
-            if $req && ($req->uri ne '/' || !$req->is_get);
+
+        # Check whether this fatal message has been caught, in which case we
+        # don't want to redirect
+        return _message_add($_[0])
+            if exists $options->{is_fatal} && !$options->{is_fatal};
+
+        my $req = $_dsl->request
+            or return;
+
+        # Don't forward if it's a GET request to the error page, as it will
+        # cause a recursive loop. In this case, do nothing, and let dancer
+        # handle it.
+        # return not needed because of Return::MultiLevel hack, but let's
+        # leave it in anyway in hope.
+        return _forward_home($_dsl, $_[0])
+            if $req->uri ne $_settings->{forward_url} || !$req->is_get;
+
+        return;
     };
 
     $message->reason($reason);
@@ -279,24 +294,11 @@ sub _error_handler($$$$)
         # This could have already been caught by the process
         # subroutine, in which case we should continue running
         # of the program. In all other cases, we should bail
-        # out. With the former, the exception will have been
-        # re-thrown as a non-fatal exception, so check that.
-      , ERROR   => sub {
-            return _message_add( $_[0] )
-                if exists $options->{is_fatal} && !$options->{is_fatal};
-
-            my $req = $_dsl->request;
-            return  _forward_home( $_dsl, $_[0] )
-                if $req && ($req->uri ne '/' || !$req->is_get);
-
-            return;
-       }
+        # out.
+      , ERROR   => $fatal_handler
 
         # 'FAULT', 'ALERT', 'FAILURE', 'PANIC'
-        # All these are fatal errors. Display error to user, but
-        # forward home so that we can reload. However, don't if
-        # it's a GET request to the home, as it will cause a recursive
-        # loop. In this case, do nothing, and let dancer handle it.
+        # All these are fatal errors.
       , FAULT   => $fatal_handler
       , ALERT   => $fatal_handler
       , FAILURE => $fatal_handler

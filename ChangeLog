@@ -7,6 +7,15 @@ Mark Overmeer.
 TODO:
   . connect to Message::Passing framework
 
+version 1.14: Tue 12 Apr 15:10:27 CEST 2016
+
+	Fixes:
+	- dancer2: regression test only for recent Dancer2 [cpantesters]
+
+	Improvements:
+	- typo rt.cpan.org#111985 [Gregor Herrmann, Debian]
+	- dancer2: treat all exceptions equal [Andrew Beverley]
+
 version 1.13: Wed  3 Feb 11:34:18 CET 2016
 
 	Fixes:
