@@ -31,7 +31,7 @@ BEGIN {
     package TestApp;
     use Dancer2;
     use Log::Report ();
-    use Dancer2::Plugin::LogReport;
+    use Dancer2::Plugin::LogReport mode => 'NORMAL';  # 'mode' to test import
 
     set session => 'Simple';
     set logger  => 'LogReport';

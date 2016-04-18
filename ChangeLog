@@ -7,6 +7,12 @@ Mark Overmeer.
 TODO:
   . connect to Message::Passing framework
 
+version 1.15: Mon 18 Apr 13:54:12 CEST 2016
+
+	Improvements:
+	- dancer2: test import parameters [Andrew Beverley]
+	  https://github.com/PerlDancer/Dancer2/issues/1156
+
 version 1.14: Tue 12 Apr 15:10:27 CEST 2016
 
 	Fixes:

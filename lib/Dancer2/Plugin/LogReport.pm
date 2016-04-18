@@ -278,8 +278,9 @@ sub _error_handler($$$$)
         # handle it.
         # return not needed because of Return::MultiLevel hack, but let's
         # leave it in anyway in hope.
+        my $fwd_url = $_settings->{forward_url} || '';
         return _forward_home($_dsl, $_[0])
-            if $req->uri ne $_settings->{forward_url} || !$req->is_get;
+            if $req->uri ne $fwd_url || !$req->is_get;
 
         return;
     };
