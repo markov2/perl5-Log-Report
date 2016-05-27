@@ -7,6 +7,14 @@ Mark Overmeer.
 TODO:
   . connect to Message::Passing framework
 
+version 1.16: Fri 27 May 08:54:01 CEST 2016
+
+	Fixes:
+	- ::Dancer2: support for Dancer2 >v0.166001 [Russell Jenkins]
+
+	Improvements:
+	- typo rt.cpan.org#114072 [Gregor Herrmann, Debian]
+
 version 1.15: Mon 18 Apr 13:54:12 CEST 2016
 
 	Improvements:

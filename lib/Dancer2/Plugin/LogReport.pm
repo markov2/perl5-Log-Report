@@ -3,6 +3,8 @@ package Dancer2::Plugin::LogReport;
 use warnings;
 use strict;
 
+BEGIN { use Log::Report () }  # require very early   XXX MO: useless?
+
 use Dancer2::Plugin;
 use Dancer2::Plugin::LogReport::Message;
 use Log::Report  'log-report', syntax => 'REPORT',
@@ -73,7 +75,15 @@ Read the L</DETAILS> in below in this manual-page.
 # "use" import
 sub import
 {   my $class = shift;
-    Log::Report->import('+2', @_, syntax => 'LONG');
+
+     # Import Log::Report into the caller. Import options get passed through
+     my $level = $Dancer2::VERSION > 0.166001 ? '+1' : '+2';
+     Log::Report->import($level, @_, syntax => 'LONG');
+ 
+     # Ensure the overridden import method is called (from Exporter::Tiny)
+     # note this does not (currently) pass options through.
+     my $caller = caller;
+     $class->SUPER::import( {into => $caller} );
 }
 
 my %session_messages;

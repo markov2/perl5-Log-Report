@@ -104,11 +104,11 @@ See L<Dancer2::Plugin::LogReport/"DETAILS"> for examples.
 
 =cut
 
-sub log($$$)
+sub log   # no protoypes in Dancer2
 {   my ($self, $level, $msg) = @_;
 
     # the levels are nearly the same.
-    my $reason = $level_dancer2lr{$level} // uc $level;
+    my $reason = $level_dancer2lr{$level} || uc $level;
 
     report $reason => $msg;
     undef;
