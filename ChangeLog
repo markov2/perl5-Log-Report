@@ -7,6 +7,12 @@ Mark Overmeer.
 TODO:
   . connect to Message::Passing framework
 
+version 1.17: Mon Sep 19 23:42:56 CEST 2016
+
+	Improvements:
+	- typo rt.cpan.org#114072, second attempt [Gregor Herrmann, Debian]
+	- include examples in manual pages.
+
 version 1.16: Fri 27 May 08:54:01 CEST 2016
 
 	Fixes:

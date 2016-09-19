@@ -72,7 +72,7 @@ C<simple> format adds.  For instance, to get the filename/line-number
 in messages depends on the dispatcher 'mode' (f.i. 'DEBUG').
 
 You also want to set the log level to C<debug>, because level filtering
-is controled per dispatcher (as well)
+is controlled per dispatcher (as well)
 
 =cut
 
