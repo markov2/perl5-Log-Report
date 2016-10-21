@@ -7,6 +7,18 @@ Mark Overmeer.
 TODO:
   . connect to Message::Passing framework
 
+version 1.18: Fri 21 Oct 09:50:51 CEST 2016
+
+	Fixes:
+	- die_decode() should not return an 'ALERT' reason, because that is
+	  not deadly.  Dies are always deadly.
+
+	Improvements:
+	- ::Try has new attribute on_die, to specify whether a die in the
+	  code should produce PANICs or ERRORs.  Request by [Andrew Beverley]
+	- ::Die::die_decode() got on_die parameter.
+	- the Dancer2 logger will always PANIC on dies.
+
 version 1.17: Mon Sep 19 23:42:56 CEST 2016
 
 	Improvements:

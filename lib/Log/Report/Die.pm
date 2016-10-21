@@ -20,7 +20,7 @@ functions into M<Log::Report::Message> objects.
 
 =chapter FUNCTIONS
 
-=function die_decode STRING
+=function die_decode STRING, %options
 The STRING is the content of C<$@> after an eval() caught a die().
 croak(), or confess().  This routine tries to convert this into
 parameters for M<Log::Report::report()>.  This is done in a very
@@ -45,12 +45,14 @@ following table is used:
     no      yes      PANIC   (confess) implementation error
     yes     yes      ALERT   (confess) external problem, caught
 
-      = @{$opt{stack}} ? ($opt{errno} ? 'ALERT' : 'PANIC')
-      :                  ($opt{errno} ? 'FAULT' : 'ERROR');
+=option  on_die REASON
+=default on_die 'ERROR'
 =cut
 
-sub die_decode($)
-{   my @text   = split /\n/, $_[0];
+sub die_decode($%)
+{   my ($text, %args) = @_;
+
+    my @text   = split /\n/, $text;
     @text or return ();
     chomp $text[-1];
 
@@ -84,10 +86,11 @@ sub die_decode($)
     $opt{classes} = [ 'perl', (@stack ? 'confess' : 'die') ];
 
     my $reason
-      = @{$opt{stack}} ? ($opt{errno} ? 'ALERT' : 'PANIC')
-      :                  ($opt{errno} ? 'FAULT' : 'ERROR');
+      = $opt{errno} ? 'FAULT'
+      : @stack      ? 'PANIC'
+      :               $args{on_die} || 'ERROR';
 
-    ($dietxt, \%opt, $reason, join("\n",@msg));
+    ($dietxt, \%opt, $reason, join("\n", @msg));
 }
 
 "to die or not to die, that's the question";

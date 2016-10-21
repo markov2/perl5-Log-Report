@@ -567,7 +567,8 @@ sub try(&@)
 
     my $is_exception = blessed $err && $err->isa('Log::Report::Exception');
     if($err && !$is_exception && !$disp->wasFatal)
-    {   ($err, my($opts, $reason, $text)) = Log::Report::Die::die_decode($err);
+    {   ($err, my($opts, $reason, $text))
+           = Log::Report::Die::die_decode($err, on_die => $disp->die2reason);
         $disp->log($opts, $reason, __$text);
     }
 

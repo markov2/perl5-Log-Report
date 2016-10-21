@@ -145,7 +145,7 @@ __OUT
 eval { $! = $errno; confess "ouch $!" };
 my $confess_text3 = $@;
 is(process($confess_text3),  <<__OUT, "confess");
-ALERT: ouch (3)
+FAULT: ouch (3)
 ouch No such process at t/DieTests.pm line XX
 t/DieTests.pm#XX
 eval {...}#t/DieTests.pm#XX
@@ -164,7 +164,7 @@ else
 eval { $! = $errno; confess "ouch $!\n" };
 my $confess_text4 = $@;
 is(process($confess_text4),  <<__OUT, "confess");
-ALERT: ouch (3)
+FAULT: ouch (3)
 ouch No such process
 t/DieTests.pm#XX
 eval {...}#t/DieTests.pm#XX

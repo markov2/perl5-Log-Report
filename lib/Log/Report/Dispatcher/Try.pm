@@ -94,6 +94,13 @@ The exit string ($@) of the eval'ed block.
 =default hide 'NONE'
 [1.09] see M<hide()>
 
+=option  on_die 'ERROR'|'PANIC'
+=default on_die 'ERROR'
+When code which runs in this block exits with a die(), it will get
+translated into a M<Log::Report::Exception> using
+M<Log::Report::Die::die_decode()>.  How serious are we about these
+errors?
+
 =cut
 
 sub init($)
@@ -102,6 +109,7 @@ sub init($)
     $self->{exceptions} = delete $args->{exceptions} || [];
     $self->{died}       = delete $args->{died};
     $self->hide($args->{hide} // 'NONE');
+    $self->{on_die}     = $args->{on_die} // 'ERROR';
     $self;
 }
 
@@ -171,6 +179,12 @@ sub hide(@)
       : @h==1 && $h[0] eq 'NONE' ? undef
       :    +{ map +($_ => 1), @h };
 }
+
+=method die2reason
+Returns the value of M<new(on_die).
+=cut
+
+sub die2reason() { shift->{on_die} }
 
 #-----------------
 =section Logging
