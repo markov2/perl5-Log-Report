@@ -10,9 +10,9 @@ use Dancer2::Plugin::LogReport::Message;
 use Log::Report  'log-report', syntax => 'REPORT',
     message_class => 'Dancer2::Plugin::LogReport::Message';
 
-use Scalar::Util qw/blessed/;
+use Scalar::Util qw/blessed refaddr/;
 
-my $_dsl;        # XXX How to avoid the global?   Dancer2::Core::DSL
+my %_all_dsls;  # The DSLs for each app within the Dancer application
 my $_settings;
 
 =chapter NAME
@@ -23,7 +23,6 @@ Dancer2::Plugin::LogReport - logging and exceptions via Log::Report
 
   # Load the plugin into Dancer2
   # see Log::Report::import() for %options
-  use Log::Report ();    # load early in main
   use Dancer2::Plugin::LogReport %options;
 
   # Stop execution, redirect, and display an error to the user
@@ -66,6 +65,12 @@ Messages within this plugin use the extended
 L<Dancer2::Logger::LogReport::Message> class rather than the standard
 L<Log::Report::Message> class.
 
+Note that it is currently recommended to use the plugin in all apps within
+a Dancer2 program, not only some. Therefore, wherever you C<use Dancer2>
+you should also C<use Dancer2::Plugin::LogReport>. This does not apply if
+using the same app name (C<use Dancer2 appname, 'Already::Exists'>). In
+all other modules, you can just C<use Log::Report>.
+
 Read the L</DETAILS> in below in this manual-page.
 
 =chapter METHODS
@@ -95,40 +100,54 @@ my $messages_variable = $_settings->{messages_key} || 'messages';
 
 # Dancer2 import
 on_plugin_import
-{   my $dsl      = $_dsl      = shift;  # capture global singleton
+{   # The DSL for the particular app that is loading the plugin
+    my $dsl      = shift;  # capture global singleton
+    $_all_dsls{refaddr($dsl->app)} = $dsl;
+
     my $settings = $_settings = plugin_setting;
 
-    # Need init_error for exceptions and other errors
-    $dsl->hook(init_error => sub {
-        my $error = shift;
-        # Catch other exceptions. This hook is called for all errors
-        # not just exceptions (including for example 404s), so check first.
-        # If it's an exception then panic it to get Log::Report
-        # to handle it nicely. If it's another error such as a 404
-        # then exception will not be set.
-        report 'PANIC' => $error->{exception}
-            if $error->{exception};
-    });
+    # Any exceptions in routes should not be happening. Therefore,
+    # raise to PANIC.
+    $dsl->app->add_hook(
+        Dancer2::Core::Hook->new(
+            name => 'core.app.route_exception',
+            code => sub {
+                my ($app, $error) = @_;
+                report 'PANIC' => $error;
+            },
+        ),
+    );
+
 
     if($settings->{handle_http_errors})
     {   # Need after_error for HTTP errors (eg 404) so as to
         # be able to change the forwarding location
-        $dsl->hook(after_error => sub {
-            my $error = shift;
-            my $msg = __($error->status . ": "
-              . Dancer2::Core::HTTP->status_message($error->status));
+        $dsl->app->add_hook(
+            Dancer2::Core::Hook->new(
+                name => 'after_error',
+                code => sub {
+                    my $error = shift;
+                    my $msg = __($error->status . ": "
+                      . Dancer2::Core::HTTP->status_message($error->status));
 
-            # XXX This doesn't work at the moment. The DSL at this point
-            # doesn't seem to respond to changes in the session or
-            # forward requests
-            _forward_home( $_dsl, $msg );
-        });
+                    #XXX This doesn't work at the moment. The DSL at this point
+                    # doesn't seem to respond to changes in the session or
+                    # forward requests
+                    _forward_home($msg);
+                },
+            ),
+        );
     }
 
-    $dsl->hook(after_layout_render => sub {
-        my $session = $_dsl->app->session;
-        $session->write($messages_variable => []);
-    });
+    $dsl->app->add_hook(
+        Dancer2::Core::Hook->new(
+            name => 'after_layout_render',
+            code => sub {
+                my $session = $dsl->app->session;
+                $session->write($messages_variable => []);
+            },
+        ),
+    );
 
     # Define which messages are saved to the session for later display
     # to the user. This can be configured in the config file, or we
@@ -165,11 +184,13 @@ on_plugin_import
     # on the web page (if required)
     dispatcher CALLBACK => 'error_handler'
       , callback => \&_error_handler
-      , mode     => 'DEBUG';
+      , mode     => 'DEBUG'
+        unless dispatcher find => 'error_handler';
 
     Log::Report::Dispatcher->addSkipStack( sub { $_[0][0] =~
-        m/ ^ Dancer2\:\:(?:Plugin|Logger)\:\:LogReport
+        m/ ^ Dancer2\:\:(?:Plugin|Logger)
          | ^ Dancer2\:\:Core\:\:Role\:\:DSL
+         | ^ Dancer2\:\:Core\:\:App
          /x
     });
 
@@ -206,6 +227,30 @@ sub process($$)
 
 register process => \&process;
 
+sub _get_dsl()
+{   # Similar trick to Log::Report::Dispatcher::collectStack(), this time to
+    # work out which Dancer app we were called from. We then use that app's
+    # DSL. If we use the wrong DSL, then the request object will not be
+    # available and we won't be able to forward if needed
+
+    package DB;
+    use Scalar::Util qw/blessed refaddr/;
+
+    my (@ret, $ref, $i);
+    do { @ret = caller ++$i }
+    until !@ret
+     || (    blessed $DB::args[0]
+          && blessed $DB::args[0] eq 'Dancer2::Core::App'
+          && ( $ref = refaddr $DB::args[0] )
+        )
+     || (    blessed $DB::args[1]
+          && blessed $DB::args[1] eq 'Dancer2::Core::App'
+          && ( $ref = refaddr $DB::args[1] )
+        );
+    $ref ? $_all_dsls{$ref} : undef;
+}
+
+
 sub _message_add($)
 {   my $msg = shift;
 
@@ -213,13 +258,22 @@ sub _message_add($)
         if ! $session_messages{$msg->reason}
         || $msg->inClass('no_session');
 
-    my $app = $_dsl->app;
-    unless($app->request)
-    {   # This happens for HTTP errors
-        # XXX the session is not available in the DSL
-        report 'ASSERT' => "Unable to write message to session: unable to write cookie";
+    # Get the DSL, only now that we know it's needed
+    my $dsl = _get_dsl();
+
+    if (!$dsl)
+    {   report {to => 'default'}, NOTICE =>
+            "Unable to write message $msg to the session. "
+          . "Have you loaded Dancer2::Plugin::LogReport to all your separate Dancer apps?";
         return;
     }
+
+    my $app = $dsl->app;
+
+    # Check that we can write to the session before continuing. We can't
+    # check $app->session as that can be true regardless. Instead, we check
+    # for request(), which is used to access the cookies of a session.
+    return unless $app->request;
 
     my $r = $msg->reason;
     if(my $newm = $hide_real_message->{$r})
@@ -231,6 +285,8 @@ sub _message_add($)
     my $msgs    = $session->read($messages_variable);
     push @$msgs, $msg;
     $session->write($messages_variable => $msgs);
+
+    return $dsl;
 }
 
 #------
@@ -265,10 +321,16 @@ the session hooks, in which case recursive loops can be experienced.
 =method panic
 =cut
 
-sub _forward_home($$)
-{   my $dsl = shift;
-    _message_add(shift);
+sub _forward_home($)
+{   my $dsl = _message_add(shift) || _get_dsl();
     my $page = $_settings->{forward_url} || '/';
+
+    # Don't forward if it's a GET request to the error page, as it will
+    # cause a recursive loop. In this case, do nothing, and let dancer
+    # handle it.
+    my $req = $dsl->app->request;
+    return if $req->uri eq $page && $req->is_get;
+
     $dsl->redirect($page);
 }
 
@@ -282,19 +344,7 @@ sub _error_handler($$$$)
         return _message_add($_[0])
             if exists $options->{is_fatal} && !$options->{is_fatal};
 
-        my $req = $_dsl->request
-            or return;
-
-        # Don't forward if it's a GET request to the error page, as it will
-        # cause a recursive loop. In this case, do nothing, and let dancer
-        # handle it.
-        # return not needed because of Return::MultiLevel hack, but let's
-        # leave it in anyway in hope.
-        my $fwd_url = $_settings->{forward_url} || '';
-        return _forward_home($_dsl, $_[0])
-            if $req->uri ne $fwd_url || !$req->is_get;
-
-        return;
+        _forward_home($_[0]);
     };
 
     $message->reason($reason);
@@ -460,7 +510,7 @@ To also send messages to your syslog:
   engines:
     logger:
       LogReport:
-        log_format: %a%i%m
+        log_format: %a%i%m      # See Dancer2::Logger::LogReport
         app_name: MyApp
         dispatchers:
           default:              # Name
@@ -477,7 +527,7 @@ To send messages to a file:
   engines:
     logger:
       LogReport:
-        log_format: %a%i%m
+        log_format: %a%i%m      # See Dancer2::Logger::LogReport
         app_name: MyApp
         dispatchers:
           logfile:              # "default" dispatcher stays open as well

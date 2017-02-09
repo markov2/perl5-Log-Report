@@ -181,7 +181,7 @@ sub hide(@)
 }
 
 =method die2reason
-Returns the value of M<new(on_die).
+Returns the value of M<new(on_die)>.
 =cut
 
 sub die2reason() { shift->{on_die} }

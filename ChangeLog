@@ -7,6 +7,22 @@ Mark Overmeer.
 TODO:
   . connect to Message::Passing framework
 
+version 1.19: Thu  9 Feb 17:35:43 CET 2017
+
+	Fixes:
+	- Dancer2 change when a stack-level needs to be skipped for
+	  reporting the location of the exception [Andrew Beverley]
+	- more modules optional during Dancer2 tests
+
+	Improvements:
+	- Dancer2 interface changes [Andrew Beverley]
+	- spell fixes. rt.cpan.org#118561 [Gregor Herrmann, Debian]
+	- spell fixes. rt.cpan.org#118562 [Gregor Herrmann, Debian]
+	- free format calls in ::File and ::Syslog get additional info, which
+	  can be used in line formatting.
+	- Use Dancer2::Logger::LogReport without Dancer2::Plugin::LogReport
+	  [Andrew Beverley]
+
 version 1.18: Fri 21 Oct 09:50:51 CEST 2016
 
 	Fixes:

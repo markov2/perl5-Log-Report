@@ -103,8 +103,13 @@ but you may want to add hostname, process number, or more.
 
 The first parameter to format is the string to print; it is already
 translated and trailed by a newline.  The second parameter is the
-text-domain (if known). [1.10] As third parameter, you get the $msg
-raw object as well (maybe you want to use the message context?)
+text-domain (if known).
+
+[1.10] As third parameter, you get the $msg raw object as well (maybe
+you want to use the message context?)
+[1.19] After the three positional parameters, there may be a list
+of pairs providing additional facts about the exception.  It may
+contain C<location> information.
 
 The "LONG" format is equivalent to:
 
@@ -113,10 +118,11 @@ The "LONG" format is equivalent to:
 
 Use of context:
 
-   format => sub { my ($msgstr, $domain, $msg) = @_;
+   format => sub { my ($msgstr, $domain, $msg, %more) = @_;
       my $host = $msg->context->{host};
       "$host $msgstr";
    }
+
 =cut
 
 sub init($)
@@ -260,7 +266,7 @@ sub rotate($)
 sub log($$$$)
 {   my ($self, $opts, $reason, $msg, $domain) = @_;
     my $trans = $self->translate($opts, $reason, $msg);
-    my $text  = $self->format->($trans, $domain, $msg);
+    my $text  = $self->format->($trans, $domain, $msg, %$opts);
 
     my $out   = $self->output($msg);
     flock $out, LOCK_EX;

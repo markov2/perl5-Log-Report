@@ -402,7 +402,9 @@ sub dispatcher($@)
         if(!$reopen_disp)
         {   my $has = first {$_->name eq $name} @$disps;
             if(defined $has && $has ne $default_dispatcher)
-            {   trace "not reopening $name";
+            {   my $default = $name eq 'default'
+                   ? ' (refreshing configuration instead)' : '';
+                trace "not reopening $name$default";
                 return $has;
             }
         }
@@ -876,7 +878,7 @@ in M<Log::Report::Optional>.  It defaults to '0': my direct caller.
 The SHORT syntax will add the report abbreviations (like function
 M<error()>) to your name-space.  Otherwise, each message must be produced
 with M<report()>. C<LONG> is an alternative to C<REPORT>: both do not
-polute your namespace with the useful abbrev functions.
+pollute your namespace with the useful abbrev functions.
 
 =option  mode LEVEL
 =default mode 'NORMAL'

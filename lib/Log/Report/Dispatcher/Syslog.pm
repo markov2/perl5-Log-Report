@@ -114,6 +114,10 @@ it gets sent to syslog.  The three parameters are: the (translated) text,
 the related text domain object, and the message object.  You may want to
 use context information from the latter.
 
+[1.19] After the three positional parameters, there may be a list of
+pairs (named parameters) with additional info.  This may contain a
+C<location> with an ARRAY of information produced by caller() about the
+origin of the exception.
 =cut
 
 my $active;
@@ -190,7 +194,7 @@ sub log($$$$$)
 
     # handle each line in message separately
     $text    =~ s/\s+$//s;
-    my @text = split /\n/, $format->($text, $domain, $msg);
+    my @text = split /\n/, $format->($text, $domain, $msg, %$opts);
 
     my $prio    = $self->reasonToPrio($reason);
     my $charset = $self->{LRDS_charset};

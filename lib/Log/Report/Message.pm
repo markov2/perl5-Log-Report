@@ -595,7 +595,7 @@ information"; it is an layout issue, not a translation issue.
 
 Therefore, the first form will automatically be translated into the
 second.  All leading and trailing white-space (blanks, new-lines, tabs,
-...) are removed from the msgid befor the look-up, and then added to
+...) are removed from the msgid before the look-up, and then added to
 the translated string.
 
 Leading and trailing white-space on the plural form will also be

@@ -14,17 +14,17 @@ BEGIN {
 
     warn "Dancer2 version $Dancer2::VERSION\n";
 
-    plan tests => 5;
-
     eval "require Plack::Test";
-    ok !$@, 'Unable to load Plack::Test for Dancer2 tests';
+    $@ and plan skip_all => 'Unable to load Plack::Test';
 
     eval "require HTTP::Cookies";
-    ok !$@, 'Unable to load HTTP::Cookies for Dancer2 tests';
+    $@ and plan skip_all => 'Unable to load HTTP::Cookies';
 
     eval "require HTTP::Request::Common";
-    ok !$@, 'Unable to load HTTP::Request::Common for Dancer2 tests';
+    $@ and plan skip_all => 'Unable to load HTTP::Request::Common';
     HTTP::Request::Common->import;
+
+    plan tests => 2;
 }
 
 {

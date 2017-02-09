@@ -8,14 +8,17 @@ use Test::More tests => 11;
 # the environment in which the tests are run.  This is certainly not a
 # full list of all installed modules.
 my @show_versions =
- qw/PPI
-    POSIX
-    Test::Pod
-    Log::Log4perl
-    Sys::Syslog
+ qw/
+    Dancer2
     Log::Dispatch
-    String::Print
+    Log::Log4perl
     Mojolicious
+    Plack::Test
+    POSIX
+    PPI
+    String::Print
+    Sys::Syslog
+    Test::Pod
    /;
 
 #   Log::Report::Optional
