@@ -2,7 +2,7 @@ use ExtUtils::MakeMaker;
 
 use 5.008;
 
-my $version = '1.19';
+my $version = '1.20';
 
 my %prereq  =
   ( Test::More               => '0.86'
@@ -10,8 +10,8 @@ my %prereq  =
   , Encode                   => '2.00'
   , Scalar::Util             => 0
   , Devel::GlobalDestruction => '0.09'
-  , Log::Report::Optional    => '1.02'
-  , String::Print            => '0.13'
+  , Log::Report::Optional    => '1.03'
+  , String::Print            => '0.91'
   );
 
 # Upgrade L::R::Lexicon if installed
@@ -48,13 +48,13 @@ sub MY::postamble { <<'__POSTAMBLE' }
 RAWDIR          = ../public_html/log-report/raw
 DISTDIR         = ../public_html/log-report/source
 LICENSE         = artistic
-SKIP_LINKS	= Dancer2::Config
+SKIP_LINKS      = Dancer2::Config
 
 # for OODoc's oodist, POD
 FIRST_YEAR      = 2007
 EMAIL           = perl@overmeer.net
 WEBSITE         = http://perl.overmeer.net/log-report/
-EXTENDS		= ../LogOpt:../Print:../LogLex
+EXTENDS      	= ../LogOpt:../Print:../LogLex:../LogTT
 
 # for OODoc's oodist, HTML
 HTML_OUTPUT     = ../public_html/log-report/html

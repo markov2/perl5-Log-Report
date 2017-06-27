@@ -156,6 +156,27 @@ sub init($)
     $self;
 }
 
+
+=method close
+Only when initiated with a FILENAME, the file will be closed.  In any
+other case, nothing will be done.
+=cut
+
+sub close()
+{   my $self = shift;
+    $self->SUPER::close
+        or return;
+
+    my $to = $self->{to};
+    my @close
+      = ref $to eq 'CODE' ? values %{$self->{LRDF_out}}
+      : $self->{LRDF_filename} ? $self->{LRDF_output}
+      : ();
+
+    $_->close for @close;
+    $self;
+}
+
 #-----------
 =section Accessors
 
@@ -204,28 +225,9 @@ sub output($)
     $self->{LRDF_output} = $to;
 }
 
+
 #-----------
 =section File maintenance
-
-=method close
-Only when initiated with a FILENAME, the file will be closed.  In any
-other case, nothing will be done.
-=cut
-
-sub close()
-{   my $self = shift;
-    $self->SUPER::close
-        or return;
-
-    my $to = $self->{to};
-    my @close
-      = ref $to eq 'CODE' ? values %{$self->{LRDF_out}}
-      : $self->{LRDF_filename} ? $self->{LRDF_output}
-      : ();
-
-    $_->close for @close;
-    $self;
-}
 
 =method rotate $filename|CODE
 [1.00] Move the current file to $filename, and start a new file.

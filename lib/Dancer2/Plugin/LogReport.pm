@@ -220,9 +220,9 @@ can C<use Log::Report> to get useful functions like error and fault.
 sub process($$)
 {   my ($dsl, $coderef) = @_;
     try { $coderef->() } hide => 'ALL', on_die => 'PANIC';
-    my $success = $@->died ? 0 : 1;
-    $@->reportAll(is_fatal => 0);
-    $success;
+	my $e = $@;  # fragile
+    $e->reportAll(is_fatal => 0);
+    $e->success || 0;
 }
 
 register process => \&process;
@@ -328,7 +328,7 @@ sub _forward_home($)
     # Don't forward if it's a GET request to the error page, as it will
     # cause a recursive loop. In this case, do nothing, and let dancer
     # handle it.
-    my $req = $dsl->app->request;
+    my $req = $dsl->app->request or return;
     return if $req->uri eq $page && $req->is_get;
 
     $dsl->redirect($page);

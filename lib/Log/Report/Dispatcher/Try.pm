@@ -113,17 +113,6 @@ sub init($)
     $self;
 }
 
-=method close
-Only when initiated with a FILENAME, the file will be closed.  In any
-other case, nothing will be done.
-=cut
-
-sub close()
-{   my $self = shift;
-    $self->SUPER::close or return;
-    $self;
-}
-
 #-----------------
 =section Accessors
 
@@ -219,8 +208,8 @@ sub log($$$$)
 
     push @{$self->{exceptions}}, $e;
 
-    $self->{died} ||=
-        exists $opts->{is_fatal} ? $opts->{is_fatal} : $e->isFatal;
+#    $self->{died} ||=
+#        exists $opts->{is_fatal} ? $opts->{is_fatal} : $e->isFatal;
 
     $self;
 }
@@ -251,8 +240,9 @@ Returns true if the block was left with an fatal message.
 Returns true if the block exited normally.
 =cut
 
-sub failed()  {   shift->{died}}
-sub success() { ! shift->{died}}
+sub failed()  {   defined shift->{died}}
+sub success() { ! defined shift->{died}}
+
 
 =method wasFatal %options
 Returns the M<Log::Report::Exception> which caused the "try" block to
@@ -267,7 +257,8 @@ See M<Log::Report::Message::inClass()>
 
 sub wasFatal(@)
 {   my ($self, %args) = @_;
-    $self->{died} or return ();
+    defined $self->{died} or return ();
+
     my $ex = $self->{exceptions}[-1];
     (!$args{class} || $ex->inClass($args{class})) ? $ex : ();
 }

@@ -94,12 +94,11 @@ the DOMAIN.  For one package, it will contain configuration information.
 These %options are used for all packages which use the same DOMAIN.
 See chapter L</Configuring> below.
 
-=option  formatter CODE|'PRINTI'|'PRINTP'
+=option  formatter CODE|HASH|'PRINTI'
 =default formatter C<PRINTI>
 Selects the formatter used for the errors messages.  The default is C<PRINTI>,
 which will use M<String::Print::printi()>: interpolation with curly
-braces around the variable names.  C<PRINTP> uses positional parameters,
-just like C<printf>, implemented by M<String::Print::printp()>.
+braces around the variable names.
 
 =option  translator M<Log::Report::Translator>|HASH
 =default translator C<created internally>
@@ -135,7 +134,14 @@ sub configure(%)
         %args   = (%$set, %args);
     }
 
-    # 'formatter' is handled by the base-class, but documented here.
+    # 'formatter' is mainly handled by the base-class, but documented here.
+    my $format = $args{formatter} || 'PRINTI';
+    $args{formatter} = $format = {} if $format eq 'PRINTI';
+
+    if(ref $format eq 'HASH')
+    {   $format->{missing_key} = sub {$self->_reportMissingKey(@_)};
+    }
+
     $self->SUPER::configure(%args);
 
     my $transl = $args{translator} || Log::Report::Translator->new;
@@ -169,6 +175,17 @@ sub configure(%)
     }
 
     $self;
+}
+
+sub _reportMissingKey($$)
+{   my ($self, $sp, $key, $args) = @_;
+
+    warning
+      __x"Missing key '{key}' in format '{format}', file {use}"
+      , key => $key, format => $args->{_format}
+      , use => $args->{_use};
+
+    undef;
 }
 
 =method setContext STRING|HASH|ARRAY|PAIRS
@@ -257,23 +274,27 @@ Translate the $message into the $language.
 
 sub translate($$)
 {   my ($self, $msg, $lang) = @_;
+    my $tr    = $self->translator || $self->configure->translator;
+	my $msgid = $msg->msgid;
 
-    my ($msgid, $msgctxt);
+    # fast route when certainly no context is involved
+    return $tr->translate($msg, $lang) || $msgid
+	    if index($msgid, '<') == -1;
+
+    my $msgctxt;
     if(my $rules = $self->contextRules)
     {   ($msgid, $msgctxt)
            = $rules->ctxtFor($msg, $lang, $self->defaultContext);
     }
     else
-    {   $msgid = $msg->msgid;
-        1 while $msgid =~
+    {   1 while $msgid =~
             s/\{([^}]*)\<\w+([^}]*)\}/length "$1$2" ? "{$1$2}" : ''/e;
     }
 
     # This is ugly, horrible and worse... but I do not want to mutulate
-    # the message neither to clone it.  We do need to get rit of {<}
+    # the message neither to clone it for performance.  We do need to get
+    # rit of {<}
     local $msg->{_msgid} = $msgid;
-
-    my $tr = $self->translator || $self->configure->translator;
     $tr->translate($msg, $lang, $msgctxt) || $msgid;
 }
 
@@ -308,20 +329,24 @@ textdomain setup is then used for all packages in the same domain.
 This also works for M<Log::Report::Optional>, which is a dressed-down
 version of M<Log::Report>.
 
-=subsection configuring your formatter
+=subsection configuring your own formatter
 
-The C<PRINTI> and C<PRINTP> are special constants for M<configure(formatter)>,
-and will use M<String::Print> functions C<printi()> respectively C<printp()>
-in their default modus.  When you want your own formatter, or configuration
-of C<String::Print>, you need to pass a code reference.
-
-  my $sp = String::Print->new
-    ( modifiers   => ...
-    , serializers => ...
-    );
+[0.91] The C<PRINTI> is a special constants for M<configure(formatter)>, and
+will use M<String::Print> function C<printi()>, with the standard tricks.
 
   textdomain 'some-domain'
-    , formatter => sub { $sp->printi(@_) };
+    formatter =>
+      { class     => 'String::Print'    # default
+      , method    => 'sprinti'          # default
+      , %options    # constructor options for the class
+      );
+
+When you want your own formatter, or configuration of C<String::Print>,
+you need to pass a CODE.  Be aware that you may loose magic added by
+M<Log::Report> and other layers, like M<Log::Report::Template>:
+
+  textdomain 'some-domain'
+    , formatter => \&my_formatter;
 
 =subsection configuring global values
 
@@ -333,6 +358,9 @@ name in some of the log lines.  For this, (ab)use the translation context:
   # or
   use Log::Report 'my-domain';
   textdomain->configure(context_rules => {});
+  # or
+  textdomain 'my-domain'
+    , content_rules => {};
   
   ### every time you start working for a different virtual host
   (textdomain 'my-domain')->setContext(host => $host);
@@ -340,6 +368,6 @@ name in some of the log lines.  For this, (ab)use the translation context:
   ### now you can use that in your code
   package My::Package;
   use Log::Report 'my-domain';
-  error __x"in {host} not logged-in {user}", user => $username;
+  error __x"in {_context.host} not logged-in {user}", user => $username;
 
 =cut

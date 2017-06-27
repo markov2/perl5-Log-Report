@@ -568,14 +568,14 @@ sub try(&@)
     pop @nested_tries;
 
     my $is_exception = blessed $err && $err->isa('Log::Report::Exception');
-    if($err && !$is_exception && !$disp->wasFatal)
+    if(!$is_exception && $err && !$disp->wasFatal)
     {   ($err, my($opts, $reason, $text))
            = Log::Report::Die::die_decode($err, on_die => $disp->die2reason);
         $disp->log($opts, $reason, __$text);
     }
 
     $disp->died($err)
-        if $err && ($is_exception ? $err->isFatal : 1);
+        if $is_exception ? $err->isFatal : $err;
 
     $@ = $disp;
 
@@ -681,12 +681,13 @@ prefix operator!
  print $s->toString('fr');   # ok, forced into French
 =cut
 
-sub _default_domain(@) { pkg2domain $_[0] }
 
 sub __($)
-{   $lrm->new
+{   my ($cpkg, $fn, $linenr) = caller;
+    $lrm->new
       ( _msgid  => shift
-      , _domain => _default_domain(caller)
+      , _domain => pkg2domain($cpkg)
+      , _use    => "$fn line $linenr"
       );
 } 
 
@@ -701,16 +702,18 @@ to be filled in.
 
 # label "msgid" added before first argument
 sub __x($@)
-{   @_%2 or error __x"even length parameter list for __x at {where}",
-        where => join(' line ', (caller)[1,2]);
+{   my ($cpkg, $fn, $linenr) = caller;
+    @_%2 or error __x"even length parameter list for __x at {where}",
+        where => "$fn line $linenr";
 
     my $msgid = shift;
     $lrm->new
-     ( _msgid  => $msgid
-     , _expand => 1
-     , _domain => _default_domain(caller)
-     , @_
-     );
+      ( _msgid  => $msgid
+      , _expand => 1
+      , _domain => pkg2domain($cpkg)
+      , _use    => "$fn line $linenr"
+      , @_
+      );
 } 
 
 =function __n $msgid, $plural_msgid, $count, PAIRS
@@ -740,11 +743,13 @@ to be filled in.
 
 sub __n($$$@)
 {   my ($single, $plural, $count) = (shift, shift, shift);
+    my ($cpkg, $fn, $linenr) = caller;
     $lrm->new
      ( _msgid  => $single
      , _plural => $plural
      , _count  => $count
-     , _domain => _default_domain(caller)
+     , _domain => pkg2domain($cpkg)
+     , _use    => "$fn line $linenr"
      , @_
      );
 }
@@ -767,12 +772,14 @@ to be filled in.
 
 sub __nx($$$@)
 {   my ($single, $plural, $count) = (shift, shift, shift);
+    my ($cpkg, $fn, $linenr) = caller;
     $lrm->new
      ( _msgid  => $single
      , _plural => $plural
      , _count  => $count
      , _expand => 1
-     , _domain => _default_domain(caller)
+     , _domain => pkg2domain($cpkg)
+     , _use    => "$fn line $linenr"
      , @_
      );
 }
@@ -783,12 +790,14 @@ Same as M<__nx()>, because we have no preferred order for 'x' and 'n'.
 
 sub __xn($$$@)   # repeated for prototype
 {   my ($single, $plural, $count) = (shift, shift, shift);
+    my ($cpkg, $fn, $linenr) = caller;
     $lrm->new
      ( _msgid  => $single
      , _plural => $plural
      , _count  => $count
      , _expand => 1
-     , _domain => _default_domain(caller)
+     , _domain => pkg2domain($cpkg)
+     , _use    => "$fn line $linenr"
      , @_
      );
 }
@@ -1008,19 +1017,30 @@ sub translator($;$$$$)
     $domain->configure(translator => $translator, where => [$pkg, $fn, $line]);
 }
 
-=function textdomain <[$domain], $config> | <$domain, 'DELETE'>
+=function textdomain <[$name],$config>|<$name, 'DELETE'|'EXISTS'>|$domain
 [1.00] Without CONFIGuration, this returns the M<Log::Report::Domain> object
-which administers the $domain, by default the domain effictive in the scope
+which administers the $domain, by default the domain effective in the scope
 of the package.
 
-A very special case is for "DELETE", which will remove the domain
-configuration.
+A very special case is "DELETE", which will remove the domain
+configuration. [1.20] "EXISTS" will check for existence: when it exists,
+it will be returned, but a domain will not be automagically created.
+
+[1.20] You may also pass a pre-configured domain.
 =cut
 
 sub textdomain(@)
-{   # used for testing
-    return delete $reporter->{textdomains}{$_[0]}
-        if @_==2 && $_[1] eq 'DELETE';
+{   if(@_==1 && blessed $_[0])
+    {   my $domain = shift;
+        $domain->isa('Log::Report::Domain') or panic;
+        return $reporter->{textdomains}{$domain->name} = $domain;
+    }
+
+    if(@_==2)
+    {    # used for 'maintenance' and testing
+		return delete $reporter->{textdomains}{$_[0]} if $_[1] eq 'DELETE';
+		return $reporter->{textdomains}{$_[0]} if $_[1] eq 'EXISTS';
+	}
 
     my $name   = (@_%2 ? shift : _default_domain(caller)) || 'default';
     my $domain = $reporter->{textdomains}{$name}
@@ -1030,6 +1050,7 @@ sub textdomain(@)
     $domain;
 }
 
+#--------------
 =section Reasons
 
 =c_method needs $reason, [$reasons]

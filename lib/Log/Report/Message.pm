@@ -6,6 +6,8 @@ package Log::Report::Message;
 use Log::Report 'log-report';
 use POSIX             qw/locale_h/;
 use List::Util        qw/first/;
+use Scalar::Util      qw/blessed/;
+
 use Log::Report::Util qw/to_html/;
 
 # Work-around for missing LC_MESSAGES on old Perls and Windows
@@ -362,6 +364,7 @@ Translate a message.  If not specified, the default locale is used.
 sub toString(;$)
 {   my ($self, $locale) = @_;
     my $count  = $self->{_count} || 0;
+	$locale    = $self->{_lang} if $self->{_lang};
 
     $self->{_msgid}   # no translation, constant string
         or return (defined $self->{_prepend} ? $self->{_prepend} : '')
@@ -372,14 +375,18 @@ sub toString(;$)
     setlocale(LC_MESSAGES, $locale)
         if defined $locale && (!defined $oldloc || $locale ne $oldloc);
 
-    # create a translation
-    my $text = (textdomain $self->{_domain})
-       ->translate($self, $self->{_lang} || $locale || $oldloc);
-  
-    defined $text or return ();
+    # translate the msgid
+	my $domain = $self->{_domain};
+	$domain    = textdomain $domain
+        unless blessed $domain;
 
-    $text  =~ s/\{([^%}]+)(\%[^}]*)?\}/$self->_expand($1,$2)/ge
-        if $self->{_expand};
+    my $format = $domain->translate($self, $locale || $oldloc);
+    defined $format or return ();
+
+    # fill-in the fields
+	my $text   = $self->{_expand}
+      ? $domain->interpolate($format, $self)
+	  : $format;
 
     $text  = "$self->{_prepend}$text"
         if defined $self->{_prepend};
@@ -393,32 +400,17 @@ sub toString(;$)
     $text;
 }
 
-sub _expand($$)
-{   my ($self, $key, $format) = @_;
-    my $value = $self->{$key} // $self->{_context}{$key};
-
-    $value = $value->($self)
-        while ref $value eq 'CODE';
-
-    defined $value
-        or return "undef";
-
-    use locale;
-    if(ref $value eq 'ARRAY')
-    {   my @values = map {defined $_ ? $_ : 'undef'} @$value;
-        @values or return '(none)';
-        return $format
-             ? join($self->{_join}, map sprintf($format, $_), @values)
-             : join($self->{_join}, @values);
-    }
-
-      $format
-    ? sprintf($format, $value)
-    : "$value";   # enforce stringification on objects
-}
 
 =method toHTML [$locale]
 [1.11] Translate the message, and then entity encode HTML volatile characters.
+
+[1.20] When used in combination with a templating system, you may want to
+use C<<content_for => 'HTML'>> in M<Log::Report::Domain::configure(formatter)>.
+
+=example
+
+  print $msg->toHTML('NL');
+
 =cut
 
 my %tohtml = qw/  > gt   < lt   " quot  & amp /;
