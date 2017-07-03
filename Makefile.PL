@@ -2,7 +2,7 @@ use ExtUtils::MakeMaker;
 
 use 5.008;
 
-my $version = '1.20';
+my $version = '1.21';
 
 my %prereq  =
   ( Test::More               => '0.86'
@@ -47,7 +47,6 @@ sub MY::postamble { <<'__POSTAMBLE' }
 # for OODoc's oodist, DIST
 RAWDIR          = ../public_html/log-report/raw
 DISTDIR         = ../public_html/log-report/source
-LICENSE         = artistic
 SKIP_LINKS      = Dancer2::Config
 
 # for OODoc's oodist, POD

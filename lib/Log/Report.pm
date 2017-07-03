@@ -1038,11 +1038,11 @@ sub textdomain(@)
 
     if(@_==2)
     {    # used for 'maintenance' and testing
-		return delete $reporter->{textdomains}{$_[0]} if $_[1] eq 'DELETE';
-		return $reporter->{textdomains}{$_[0]} if $_[1] eq 'EXISTS';
-	}
+    	return delete $reporter->{textdomains}{$_[0]} if $_[1] eq 'DELETE';
+    	return $reporter->{textdomains}{$_[0]} if $_[1] eq 'EXISTS';
+    }
 
-    my $name   = (@_%2 ? shift : _default_domain(caller)) || 'default';
+    my $name   = (@_%2 ? shift : pkg2domain((caller)[0])) || 'default';
     my $domain = $reporter->{textdomains}{$name}
         ||= Log::Report::Domain->new(name => $name);
 

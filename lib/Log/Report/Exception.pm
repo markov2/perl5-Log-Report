@@ -39,6 +39,7 @@ Produces "reason: message".
 
 use overload
     '""'     => 'toString'
+  , 'bool'   => sub {1}    # avoid accidental serialization of message
   , fallback => 1;
 
 =chapter METHODS
@@ -101,7 +102,8 @@ you have to re-assign the result of the modification.
 sub message(;$)
 {   my $self = shift;
     @_ or return $self->{message};
-    my $msg = shift;
+
+    my $msg  = shift;
     blessed $msg && $msg->isa('Log::Report::Message')
         or panic "message() of exception expects Log::Report::Message";
     $self->{message} = $msg;

@@ -196,10 +196,10 @@ sub new($@)
 
     if($s{_msgid})
     {   $s{_append}  = defined $s{_append} ? $1.$s{_append} : $1
-            if $s{_msgid} =~ s/(\s+)$//;
+            if $s{_msgid} =~ s/(\s+)$//s;
 
         $s{_prepend}.= $1
-            if $s{_msgid} =~ s/^(\s+)//;
+            if $s{_msgid} =~ s/^(\s+)//s;
     }
     if($s{_plural})
     {   s/\s+$//, s/^\s+// for $s{_plural};
@@ -384,15 +384,9 @@ sub toString(;$)
     defined $format or return ();
 
     # fill-in the fields
-	my $text   = $self->{_expand}
+	my $text = $self->{_expand}
       ? $domain->interpolate($format, $self)
-	  : $format;
-
-    $text  = "$self->{_prepend}$text"
-        if defined $self->{_prepend};
-
-    $text .= "$self->{_append}"
-        if defined $self->{_append};
+      : ($self->{_prepend} // '') . $format . ($self->{_append} // '');
 
     setlocale(LC_MESSAGES, $oldloc)
         if defined $oldloc && (!defined $locale || $oldloc ne $locale);
