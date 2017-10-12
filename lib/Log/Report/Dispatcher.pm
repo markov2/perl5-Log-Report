@@ -77,7 +77,7 @@ the initial mode for this dispatcher does not need verbose or debug
 information, then those levels will not be accepted.
 
 When the mode equals "NORMAL" (the default) then C<accept>'s default
-is C<NOTICE->.  In case of "VERBOSE"> it will be C<INFO->, C<ASSERT>
+is C<NOTICE->.  In case of "VERBOSE" it will be C<INFO->, C<ASSERT>
 results in C<ASSERT->, and "DEBUG" in C<ALL>.
 
 =option  locale LOCALE

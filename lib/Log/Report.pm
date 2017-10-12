@@ -12,8 +12,8 @@ use Log::Report::Util;
 my $lrm = 'Log::Report::Message';
 
 ### if you change anything here, you also have to change Log::Report::Minimal
-my @make_msg         = qw/__ __x __n __nx __xn N__ N__n N__w/;
-my @functions        = qw/report dispatcher try textdomain/;
+my @make_msg   = qw/__ __x __n __nx __xn N__ N__n N__w __p __px __np __npx/;
+my @functions  = qw/report dispatcher try textdomain/;
 my @reason_functions = qw/trace assert info notice warning
    mistake error fault alert failure panic/;
 
@@ -25,6 +25,7 @@ sub mistake(@); sub error(@); sub fault(@); sub alert(@); sub failure(@);
 sub panic(@);
 sub __($); sub __x($@); sub __n($$$@); sub __nx($$$@); sub __xn($$$@);
 sub N__($); sub N__n($$); sub N__w(@);
+sub __p($$); sub __px($$@); sub __np($$$$); sub __npx($$$$@);
 
 #
 # Some initiations
@@ -44,8 +45,6 @@ require Log::Report::Exception;
 require Log::Report::Dispatcher;
 require Log::Report::Dispatcher::Try;
 
-#eval "require Log::Report::Translator::POT"; panic $@ if $@;
-#, translator => Log::Report::Translator::POT->new(charset => 'utf-8');
 textdomain 'log-report';
 
 my $default_dispatcher = dispatcher PERL => 'default', accept => 'NOTICE-';
@@ -57,13 +56,13 @@ Log::Report - report a problem, with exceptions and translation support
  # Invocation with 'mode' to get trace and verbose messages
  use Log::Report mode => 'DEBUG';
 
- # Usually invoked with a domain, which groups packages
+ # Usually invoked with a domain, which groups packages for translation
  use Log::Report 'my-domain', %options;
 
  # Interpolation syntax via String::Print
  # First step to translations, once you need it.
  print __x"my name is {name}", name => $n;  # print, so no exception
- print __"Hello World\n";     # (optional) translation, no interpolation
+ print __"Hello World\n";     # no interpolation, optional translation
  print __x'Hello World';      # SYNTAX ERROR!!  ' is alternative for ::
 
  # Functions replacing die/warn/carp, casting exceptions.
@@ -553,6 +552,9 @@ sub try(&@)
       and report {location => [caller 0]}, PANIC =>
           __x"odd length parameter list for try(): forgot the terminating ';'?";
 
+	unshift @_, mode => 'DEBUG'
+        if $reporter->{needs}{TRACE};
+
     my $disp = Log::Report::Dispatcher::Try->new(TRY => 'try', @_);
     push @nested_tries, $disp;
 
@@ -625,7 +627,12 @@ sub alert(@)   {report ALERT   => @_}
 sub failure(@) {report FAILURE => @_}
 sub panic(@)   {report PANIC   => @_}
 
-=section Language Translations
+#-------------
+=section Messages (optionally translatable)
+
+Even when you do not support translations (yet) you may want to use
+message objects to improve the logging feature. For instance,
+you get very powerful interpolation from M<String::Print>.
 
 The language translations are initiate by limited set of functions
 which contain B<two under-scores> (C<__>) in their name.  Most
@@ -853,6 +860,52 @@ words.
 
 sub N__w(@) {split " ", $_[0]}
 
+
+#-------------
+=subsection Messages with msgctxt
+
+In Log::Report, the message context (mgsctxt in the PO-files --in the
+translation tables) can be used in a very powerful way.  Read all about
+it in M<Log::Report::Translator::Context>
+
+The msgctxt versions of the tranditional gettext infrastructure are far
+less useful for Log::Report, because we can easily work with different
+text domains within the same program.  That should avoid most of the
+accidental translation conflicts between components of the code.
+
+Just for compatibility with M<Locale::TextDomain> and completeness, the
+'p' versions of above methods are supported.  See examples for these
+functions in M<Locale::TextDomain>.
+
+B<Warnings:> Functions C<N__p()> and C<N__np()> seem not to be usable in
+reality, hence not implemented.  The script xgettext-perl and
+M<Log::Report::Extract::PerlPPI> (both in the M<Log::Report::Lexicon>
+distribution) do not yet support these functions.
+
+=function __p $msgctxt, $msgid
+=function __px $msgctxt, $msgid, PAIRS
+=function __np $msgctxt, $msgid, $plural, count
+=function __npx $msgctxt, $msgid, $plural, count, PAIRS
+
+=cut
+
+sub __p($$) { __($_[0])->_msgctxt($_[1]) }
+sub __px($$@)
+{   my ($ctxt, $msgid) = (shift, shift);
+    __x($msgid, @_)->_msgctxt($ctxt);
+}
+
+sub __np($$$$)
+{   my ($ctxt, $msgid, $plural, $count) = @_;
+    __n($msgid, $msgid, $plural, $count)->_msgctxt($ctxt);
+}
+
+sub __npx($$$$@)
+{   my ($ctxt, $msgid, $plural, $count) = splice @_, 0, 4;
+    __nx($msgid, $msgid, $plural, $count, @_)->_msgctxt($ctxt);
+}
+
+#-------------
 =section Configuration
 
 =method import [$level,][$domain,] %options
@@ -916,8 +969,7 @@ M<Log::Report::Message>
   , mode            => 'VERBOSE'
   , syntax          => 'REPORT' # report ERROR, not error()
   , translator      => Log::Report::Translator::POT->new
-     ( lexicon => '/home/mine/locale'  # bindtextdomain
-     , charset => 'UTF-8'              # codeset
+     ( lexicon => '/home/mine/locale'  # translation tables
      )
   , native_language => 'nl_NL'; # untranslated msgs are Dutch
 
@@ -1372,9 +1424,16 @@ See M<Log::Report::Dispatcher::Try> and M<Log::Report::Exception>.
 
 =section Comparison
 
+Some notes on differences between the Log::Report approach and other
+Perl concepts.
+
 =subsection die/warn/Carp
 
-A typical perl5 program can look like this:
+Perl's built-in exception system is very primitive: "die" and "warn".
+Most programming languages provide a much more detailed exception
+mechanism.
+
+A typical perl program can look like this:
 
  my $dir = '/etc';
 
@@ -1483,6 +1542,7 @@ This is the way perl programs usually work, but often the cause for
 inconsequent user interaction.
 
 =subsection Locale::gettext and Locate::TextDomain
+
 Both on GNU gettext based implementations can be used as translation
 frameworks.  M<Locale::TextDomain> syntax is supported, with quite some
 extensions. Read the excellent documentation of Locale::Textdomain.

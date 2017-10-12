@@ -181,6 +181,10 @@ or appended translated message object.
 between translations.  Read the DETAILS section in
 M<Log::Report::Translator::Context>
 
+=option  _msgctxt STRING
+=default _msgctxt C<undef>
+[1.22] Message context in the translation file, the traditional use.  Cannot
+be combined with C<_context> on the same msgids.
 =cut
 
 sub new($@)
@@ -207,6 +211,9 @@ sub new($@)
 
     bless \%s, $class;
 }
+
+# internal use only: to simplify __*p* functions
+sub _msgctxt($) {$_[0]->{_msgctxt} = $_[1]; $_[0]}
 
 =method clone %options, $variables
 Returns a new object which copies info from original, and updates it
@@ -273,6 +280,9 @@ alternatives.
 
 =method context
 Returns an HASH if there is a context defined for this message.
+
+=method msgctxt
+The message context for the translation table lookup.
 =cut
 
 sub prepend() {shift->{_prepend}}
@@ -281,6 +291,7 @@ sub append()  {shift->{_append}}
 sub domain()  {shift->{_domain}}
 sub count()   {shift->{_count}}
 sub context() {shift->{_context}}
+sub msgctxt() {shift->{_msgctxt}}
 
 =method classes
 Returns the LIST of classes which are defined for this message; message

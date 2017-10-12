@@ -282,7 +282,10 @@ sub translate($$)
 	    if index($msgid, '<') == -1;
 
     my $msgctxt;
-    if(my $rules = $self->contextRules)
+    if($msgctxt = $msg->msgctxt)
+    {   # msgctxt in traditional gettext style
+    }
+    elsif(my $rules = $self->contextRules)
     {   ($msgid, $msgctxt)
            = $rules->ctxtFor($msg, $lang, $self->defaultContext);
     }
