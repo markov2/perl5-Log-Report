@@ -60,6 +60,7 @@ sub new($@)
     bless \%args, $class;
 }
 
+#----------------
 =section Accessors
 
 =method report_opts
@@ -109,6 +110,7 @@ sub message(;$)
     $self->{message} = $msg;
 }
 
+#----------------
 =section Processing
 
 =method inClass $class|Regexp

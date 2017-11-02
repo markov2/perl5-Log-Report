@@ -4,7 +4,7 @@ use strict;
 package Log::Report::Die;
 use base 'Exporter';
 
-our @EXPORT = qw/die_decode/;
+our @EXPORT = qw/die_decode exception_decode/;
 
 use POSIX  qw/locale_h/;
 
@@ -12,11 +12,13 @@ use POSIX  qw/locale_h/;
 Log::Report::Die - compatibility routines with Perl's die/croak/confess
 
 =chapter SYNOPSIS
+ # use internally only
 
 =chapter DESCRIPTION
 
 This module is used internally, to translate output of 'die' and Carp
-functions into M<Log::Report::Message> objects.
+functions into M<Log::Report::Message> objects.  Also, it tries to
+convert other kinds of exception frameworks into our message object.
 
 =chapter FUNCTIONS
 
@@ -91,6 +93,90 @@ sub die_decode($%)
       :               $args{on_die} || 'ERROR';
 
     ($dietxt, \%opt, $reason, join("\n", @msg));
+}
+
+=function exception_decode $exception, %options
+[1.23] This function attempts to translate object of other exception frameworks
+into information to create a M<Log::Report::Exception>.  It returns the
+same list of parameters as M<die_decode()> does.
+
+Currently supported:
+=over 4
+=item * DBIx::Class::Exception
+=item * XML::LibXML::Error
+=back
+=cut
+
+sub _exception_dbix($$)
+{   my ($exception, $args) = @_;
+	my $on_die = delete $args->{on_die};
+	my %opts   = %$args;
+
+    my @lines  = split /\n/, "$exception";  # accessor missing to get msg
+    my $first  = shift @lines;
+    my ($sub, $message, $fn, $linenr) = $first =~
+       m/^ (?: ([\w:]+?) \(\)\: [ ] | \{UNKNOWN\}\: [ ] )?
+           (.*?) 
+           \s+ at [ ] (.+) [ ] line [ ] ([0-9]+)\.?
+         $/x;
+    my $pkg    = defined $sub && $sub =~ s/^([\w:]+)\:\:// ? $1 : $0;
+
+    $opts{location} ||= [ $pkg, $fn, $linenr, $sub ];
+
+    my @stack;
+    foreach (@lines)
+    {   my ($func, $fn, $linenr)
+           = /^\s+(.*?)\(\)\s+called at (.*?) line ([0-9]+)$/ or next;
+        push @stack, [ $func, $fn, $linenr ];
+    }
+	$opts{stack} ||= \@stack if @stack;
+
+    my $reason
+      = $opts{errno} ? 'FAULT'
+      : @stack       ? 'PANIC'
+      :                $on_die || 'ERROR';
+
+    ('caught '.ref $exception, \%opts, $reason, $message);
+}
+
+my %_libxml_errno2reason = (1 => 'WARNING', 2 => 'MISTAKE', 3 => 'ERROR');
+
+sub _exception_libxml($$)
+{   my ($exc, $args) = @_;
+	my $on_die = delete $args->{on_die};
+	my %opts   = %$args;
+
+	$opts{errno}    ||= $exc->code + 13000;
+	$opts{location} ||= [ 'libxml', $exc->file, $exc->line, $exc->domain ];
+
+	my $msg = $exc->message . $exc->context . "\n"
+            . (' ' x $exc->column) . '^'
+            . ' (' . $exc->domain . ' error ' . $exc->code . ')';
+
+	my $reason = $_libxml_errno2reason{$exc->level} || 'PANIC';
+    ('caught '.ref $exc, \%opts, $reason, $msg);
+}
+
+sub exception_decode($%)
+{   my ($exception, %args) = @_;
+	my $errno = $! + 0;
+
+    return _exception_dbix($exception, \%args)
+	    if $exception->isa('DBIx::Class::Exception');
+
+	return _exception_libxml($exception, \%args)
+	    if $exception->isa('XML::LibXML::Error');
+
+    # Unsupported exception system, sane guesses
+    my %opt =
+    ( classes => [ 'unknown exception', 'die', ref $exception ]
+    , errno   => $errno
+    );
+
+    my $reason = $errno ? 'FAULT' : $args{on_die} || 'ERROR';
+
+    # hopefully stringification is overloaded
+    ( "caught ".ref $exception, \%opt, $reason, "$exception");
 }
 
 "to die or not to die, that's the question";
