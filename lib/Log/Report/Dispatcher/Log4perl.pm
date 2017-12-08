@@ -110,11 +110,17 @@ file.  In that file, you should find a category with the $name.
 =default to_level []
 See M<reasonToLevel()>.
 
-=requires config FILENAME|SCALAR
+=option config FILENAME|SCALAR
+=default config <undef>
 When a SCALAR reference is passed in, that must refer to a string which
 contains the configuration text.  Otherwise, specify an existing FILENAME.
 
+By default, it is expected that M<Log::Log4perl> has been initialized
+externally.  That module uses global variables to communicate, which
+should be present before any logging is attempted.
+
 =default accept 'ALL'
+
 =cut
 
 sub init($)
@@ -123,9 +129,6 @@ sub init($)
     $self->SUPER::init($args);
 
     my $name   = $self->name;
-    my $config = delete $args->{config}
-       or error __x"Log4perl back-end {name} requires a 'config' parameter"
-            , name => $name;
 
     $self->{LRDL_levels}  = { %default_reasonToLevel };
     if(my $to_level = delete $args->{to_level})
@@ -142,8 +145,9 @@ sub init($)
         }
     }
 
-    Log::Log4perl->init($config)
-        or return;
+    if(my $config = delete $args->{config}) {
+    	Log::Log4perl->init($config) or return;
+	}
 
     $self;
 }
