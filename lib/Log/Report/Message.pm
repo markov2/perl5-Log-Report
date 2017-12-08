@@ -380,8 +380,14 @@ sub toString(;$)
     my $prepend = $self->{_prepend} // '';
     my $append  = $self->{_append}  // '';
 
-    $prepend    = "$prepend" if blessed $prepend;
-    $append     = "$append"  if blessed $append;
+	if(blessed $prepend) {
+        $prepend = $prepend->isa(__PACKAGE__) ? $prepend->toString($locale)
+          : "$prepend";
+	}
+	if(blessed $append) {
+        $append  = $append->isa(__PACKAGE__) ? $append->toString($locale)
+          : "$append";
+	}
 
     $self->{_msgid}   # no translation, constant string
         or return "$prepend$append";
