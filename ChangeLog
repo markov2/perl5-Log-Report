@@ -7,7 +7,9 @@ Mark Overmeer.
 TODO:
 	. connect to Message::Passing framework
 
-version 1.26:
+version 1.27:
+
+version 1.26: Tue Jan 23 23:45:55 CET 2018
 
 	Improvements:
 	- convert to GIT
