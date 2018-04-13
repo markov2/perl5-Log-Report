@@ -403,7 +403,7 @@ sub _error_handler($$$$)
         _forward_home($_[0]);
     };
 
-    my $handler = $user_fatal_handler
+    my $fatal_handler = $user_fatal_handler
       ? sub { $user_fatal_handler->(_get_dsl, $message, $reason, $default_handler) }
       : $default_handler;
 
@@ -418,14 +418,14 @@ sub _error_handler($$$$)
         # subroutine, in which case we should continue running
         # of the program. In all other cases, we should bail
         # out.
-      , ERROR   => $handler
+      , ERROR   => $fatal_handler
 
         # 'FAULT', 'ALERT', 'FAILURE', 'PANIC'
         # All these are fatal errors.
-      , FAULT   => $handler
-      , ALERT   => $handler
-      , FAILURE => $handler
-      , PANIC   => $handler
+      , FAULT   => $fatal_handler
+      , ALERT   => $fatal_handler
+      , FAILURE => $fatal_handler
+      , PANIC   => $fatal_handler
       );
 
     my $call = $handler{$reason} || $handler{default};
