@@ -403,28 +403,29 @@ sub _error_handler($$$$)
         _forward_home($_[0]);
     };
 
-    my $custom_handler = $user_fatal_handler
-        && sub { $user_fatal_handler->(_get_dsl, $message, $reason, $default_handler) };
+    my $handler = $user_fatal_handler
+      ? sub { $user_fatal_handler->(_get_dsl, $message, $reason, $default_handler) }
+      : $default_handler;
 
     $message->reason($reason);
 
     my %handler =
       ( # Default do nothing for the moment (TRACE|ASSERT|INFO)
-        default => sub {_message_add $_[0]}
+        default => sub { _message_add $_[0] }
 
         # A user-created error condition that is not recoverable.
         # This could have already been caught by the process
         # subroutine, in which case we should continue running
         # of the program. In all other cases, we should bail
         # out.
-      , ERROR   => $custom_handler || $default_handler
+      , ERROR   => $handler
 
         # 'FAULT', 'ALERT', 'FAILURE', 'PANIC'
         # All these are fatal errors.
-      , FAULT   => $custom_handler || $default_handler
-      , ALERT   => $custom_handler || $default_handler
-      , FAILURE => $custom_handler || $default_handler
-      , PANIC   => $custom_handler || $default_handler
+      , FAULT   => $handler
+      , ALERT   => $handler
+      , FAILURE => $handler
+      , PANIC   => $handler
       );
 
     my $call = $handler{$reason} || $handler{default};
