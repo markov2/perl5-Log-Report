@@ -231,6 +231,56 @@ sub process($$)
 
 register process => \&process;
 
+
+=method fatal_handler
+
+C<fatal_handler()> allows the default redirect handler that is called on a
+fatal error to be overridden.
+
+Calls should be made with 1 parameter: the subroutine to call in the case of a
+fatal error. The subroutine is passed 4 parameters: the DSL, the message in
+question, the reason, and the default handler. The latter allows the subroutine
+to do nothing and call the built-in handler, in which case it should be called
+with the message in question.
+
+For example:
+
+  # Error handler based on URL (e.g. API)
+  fatal_handler sub {
+    my ($dsl, $msg, $reason, $default) = @_;
+    $default->($msg) if $dsl->app->request->uri !~ m!^/api/!;
+    status $reason eq 'PANIC' ? 'Internal Server Error' : 'Bad Request';
+    $dsl->send_as(JSON => {
+        error             => 1,
+        error_description => $msg->toString },
+    { content_type => 'application/json; charset=UTF-8' });
+  };
+
+  # Return JSON responses for requests with content-type of application/json
+  fatal_handler sub {
+    my ($dsl, $msg, $reason, $default) = @_;
+
+    (my $ctype = $dsl->request->header('content-type')) =~ s/;.*//;
+    return $default->($msg) if $ctype ne 'application/json';
+    status $reason eq 'PANIC' ? 'Internal Server Error' : 'Bad Request';
+    $dsl->send_as(JSON => {
+        error       => 1,
+        description => $msg->toString
+    },{
+        content_type => 'application/json; charset=UTF-8'
+    });
+  };
+
+
+=cut
+
+my $user_fatal_handler;
+
+plugin_keywords fatal_handler => sub {
+    my( $plugin, $sub ) = @_;
+    $user_fatal_handler = $sub;
+};
+
 sub _get_dsl()
 {   # Similar trick to Log::Report::Dispatcher::collectStack(), this time to
     # work out which Dancer app we were called from. We then use that app's
@@ -341,7 +391,7 @@ sub _forward_home($)
 sub _error_handler($$$$)
 {   my ($disp, $options, $reason, $message) = @_;
 
-    my $fatal_handler = sub {
+    my $default_handler = sub {
 
         # Check whether this fatal message has been caught, in which case we
         # don't want to redirect
@@ -350,6 +400,9 @@ sub _error_handler($$$$)
 
         _forward_home($_[0]);
     };
+
+    my $custom_handler = $user_fatal_handler
+        && sub { $user_fatal_handler->(_get_dsl, $message, $reason, $default_handler) };
 
     $message->reason($reason);
 
@@ -362,14 +415,14 @@ sub _error_handler($$$$)
         # subroutine, in which case we should continue running
         # of the program. In all other cases, we should bail
         # out.
-      , ERROR   => $fatal_handler
+      , ERROR   => $custom_handler || $default_handler
 
         # 'FAULT', 'ALERT', 'FAILURE', 'PANIC'
         # All these are fatal errors.
-      , FAULT   => $fatal_handler
-      , ALERT   => $fatal_handler
-      , FAILURE => $fatal_handler
-      , PANIC   => $fatal_handler
+      , FAULT   => $custom_handler || $default_handler
+      , ALERT   => $custom_handler || $default_handler
+      , FAILURE => $custom_handler || $default_handler
+      , PANIC   => $custom_handler || $default_handler
       );
 
     my $call = $handler{$reason} || $handler{default};
