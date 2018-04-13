@@ -243,21 +243,23 @@ question, the reason, and the default handler. The latter allows the subroutine
 to do nothing and call the built-in handler, in which case it should be called
 with the message in question.
 
-For example:
+=example Error handler based on URL (e.g. API)
 
-  # Error handler based on URL (e.g. API)
   fatal_handler sub {
     my ($dsl, $msg, $reason, $default) = @_;
     $default->($msg) if $dsl->app->request->uri !~ m!^/api/!;
     status $reason eq 'PANIC' ? 'Internal Server Error' : 'Bad Request';
     $dsl->send_as(JSON => {
         error             => 1,
-        error_description => $msg->toString },
-    { content_type => 'application/json; charset=UTF-8' });
+        error_description => $msg->toString,
+    }, {
+        content_type => 'application/json; charset=UTF-8',
+    });
   };
 
-  # Return JSON responses for requests with content-type of application/json
-  fatal_handler sub {
+=example Return JSON responses for requests with content-type of application/json
+
+fatal_handler sub {
     my ($dsl, $msg, $reason, $default) = @_;
 
     (my $ctype = $dsl->request->header('content-type')) =~ s/;.*//;
@@ -265,9 +267,9 @@ For example:
     status $reason eq 'PANIC' ? 'Internal Server Error' : 'Bad Request';
     $dsl->send_as(JSON => {
         error       => 1,
-        description => $msg->toString
-    },{
-        content_type => 'application/json; charset=UTF-8'
+        description => $msg->toString,
+    }, {
+        content_type => 'application/json; charset=UTF-8',
     });
   };
 
