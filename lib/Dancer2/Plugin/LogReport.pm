@@ -234,20 +234,21 @@ register process => \&process;
 
 =method fatal_handler
 
-C<fatal_handler()> allows the default redirect handler that is called on a
-fatal error to be overridden.
+C<fatal_handler()> allows alternative handlers to be defined in place of (or in
+addition to) the default redirect handler that is called on a fatal error.
 
 Calls should be made with 1 parameter: the subroutine to call in the case of a
-fatal error. The subroutine is passed 4 parameters: the DSL, the message in
-question, the reason, and the default handler. The latter allows the subroutine
-to do nothing and call the built-in handler, in which case it should be called
-with the message in question.
+fatal error. The subroutine is passed 3 parameters: the DSL, the message in
+question, and the reason. The subroutine should return true or false depending
+on whether it handled the error. If it returns false, the next fatal handler is
+called, and if there are no others then the default redirect fatal handler is
+called.
 
 =example Error handler based on URL (e.g. API)
 
   fatal_handler sub {
-    my ($dsl, $msg, $reason, $default) = @_;
-    $default->($msg) if $dsl->app->request->uri !~ m!^/api/!;
+    my ($dsl, $msg, $reason) = @_;
+    return if $dsl->app->request->uri !~ m!^/api/!;
     status $reason eq 'PANIC' ? 'Internal Server Error' : 'Bad Request';
     $dsl->send_as(JSON => {
         error             => 1,
@@ -263,7 +264,7 @@ fatal_handler sub {
     my ($dsl, $msg, $reason, $default) = @_;
 
     (my $ctype = $dsl->request->header('content-type')) =~ s/;.*//;
-    return $default->($msg) if $ctype ne 'application/json';
+    return if $ctype ne 'application/json';
     status $reason eq 'PANIC' ? 'Internal Server Error' : 'Bad Request';
     $dsl->send_as(JSON => {
         error       => 1,
@@ -276,11 +277,11 @@ fatal_handler sub {
 
 =cut
 
-my $user_fatal_handler;
+my @user_fatal_handlers;
 
 plugin_keywords fatal_handler => sub {
     my( $plugin, $sub ) = @_;
-    $user_fatal_handler = $sub;
+    push @user_fatal_handlers, $sub;
 };
 
 sub _get_dsl()
@@ -397,21 +398,29 @@ sub _error_handler($$$$)
 
         # Check whether this fatal message has been caught, in which case we
         # don't want to redirect
-        return _message_add($_[0])
+        return _message_add($message)
             if exists $options->{is_fatal} && !$options->{is_fatal};
 
-        _forward_home($_[0]);
+        _forward_home($message);
     };
 
-    my $fatal_handler = $user_fatal_handler
-      ? sub { $user_fatal_handler->(_get_dsl, $message, $reason, $default_handler) }
+    my $user_fatal_handler = sub {
+        my $return;
+        foreach my $ufh (@user_fatal_handlers)
+        {   last if $return = $ufh->(_get_dsl, $message, $reason);
+        }
+        $default_handler->($message) if !$return;
+    };
+
+    my $fatal_handler = @user_fatal_handlers
+      ? $user_fatal_handler
       : $default_handler;
 
     $message->reason($reason);
 
     my %handler =
       ( # Default do nothing for the moment (TRACE|ASSERT|INFO)
-        default => sub { _message_add $_[0] }
+        default => sub { _message_add $message }
 
         # A user-created error condition that is not recoverable.
         # This could have already been caught by the process
@@ -429,7 +438,7 @@ sub _error_handler($$$$)
       );
 
     my $call = $handler{$reason} || $handler{default};
-    $call->($message);
+    $call->();
 }
 
 sub _report($@) {
