@@ -280,7 +280,7 @@ fatal_handler sub {
 my @user_fatal_handlers;
 
 plugin_keywords fatal_handler => sub {
-    my( $plugin, $sub ) = @_;
+    my ($plugin, $sub) = @_;
     push @user_fatal_handlers, $sub;
 };
 
