@@ -263,7 +263,7 @@ sub wasFatal(@)
 {   my ($self, %args) = @_;
     defined $self->{died} or return ();
 
-    my $ex = $self->{exceptions}[-1];
+    my $ex = $self->{exceptions}[-1] or return ();
     (!$args{class} || $ex->inClass($args{class})) ? $ex : ();
 }
 
