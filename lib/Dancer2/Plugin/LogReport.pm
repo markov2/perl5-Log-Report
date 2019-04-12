@@ -86,7 +86,7 @@ sub import
 {   my $class = shift;
 
      # Import Log::Report into the caller. Import options get passed through
-     my $level = $Dancer2::VERSION > 0.166001 ? '+1' : '+2';
+     my $level = $Dancer2::Plugin::VERSION > 0.166001 ? '+1' : '+2';
      Log::Report->import($level, @_, syntax => 'LONG');
  
      # Ensure the overridden import method is called (from Exporter::Tiny)
