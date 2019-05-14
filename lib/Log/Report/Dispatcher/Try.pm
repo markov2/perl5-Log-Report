@@ -11,6 +11,7 @@ use strict;
 use Log::Report 'log-report', syntax => 'SHORT';
 use Log::Report::Exception ();
 use Log::Report::Util      qw/%reason_code/;
+use List::Util             qw/first/;
 
 =chapter NAME
 Log::Report::Dispatcher::Try - capture all reports as exceptions
@@ -263,7 +264,10 @@ sub wasFatal(@)
 {   my ($self, %args) = @_;
     defined $self->{died} or return ();
 
-    my $ex = $self->{exceptions}[-1] or return ();
+    # An (hidden) eval between LR::try()s may add more messages
+    my $ex = first { $_->isFatal } @{$self->{exceptions}}
+        or return ();
+
     (!$args{class} || $ex->inClass($args{class})) ? $ex : ();
 }
 
