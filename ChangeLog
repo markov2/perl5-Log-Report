@@ -7,7 +7,7 @@ Mark Overmeer.
 TODO:
 	. connect to Message::Passing framework
 
-version 1.28:
+version 1.28: Tue 14 May 09:27:50 CEST 2019
 
 	Fixes:
 	- Dancer2 version 0.166001 is too old as well. [cpantesters]
