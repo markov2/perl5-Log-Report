@@ -6,7 +6,15 @@ use Log::Report::Die qw/die_decode/;
 use Log::Report      qw/log-report/;
 use Carp;
 
-use Test::More tests => 27;
+use Test::More;
+
+BEGIN {
+    plan skip_all => "Error messages on $^O differ too much."
+        if $^O =~ /haiku$/;
+
+    plan tests => 27;
+}
+
 use DieTests;
 
 $! = 3;

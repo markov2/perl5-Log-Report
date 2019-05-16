@@ -9,6 +9,10 @@ TODO:
 
 version 1.29:
 
+	Improvements:
+	- skip tests with error messages for Haiku, because they are quite
+	  different. [cpantesters]
+
 version 1.28: Tue 14 May 09:27:50 CEST 2019
 
 	Fixes:
