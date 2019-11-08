@@ -9,6 +9,10 @@ TODO:
 
 version 1.29:
 
+	Fixes:
+	- error code changed from libxml2 2.9.9 to 2.9.10
+	  rt.cpan.org#130934 [Petr Pisar]
+
 	Improvements:
 	- skip tests with error messages for Haiku, because they are quite
 	  different. [cpantesters]
