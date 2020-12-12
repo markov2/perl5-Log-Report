@@ -177,7 +177,7 @@ sub close()
       : $self->{LRDF_filename} ? $self->{LRDF_output}
       : ();
 
-    $_->close for @close;
+    $_ && $_->close for @close;
     $self;
 }
 
@@ -212,9 +212,20 @@ sub output($)
         $self->{LRDF_filename} = $to;
         my $binmode = $self->{replace} ? '>' : '>>';
 
-        my $f = $self->{LRDF_output} = IO::File->new($to, $binmode)
-            or fault __x"cannot write log into {file} with mode {binmode}"
+        my $f = $self->{LRDF_output} = IO::File->new($to, $binmode);
+        unless($f)
+        {   # avoid logging error to myself (issue #4)
+            my $msg  = __x"cannot write log into {file} with mode '{binmode}'"
                  , binmode => $binmode, file => $to;
+            if(my @disp = grep $_->name ne $name, Log::Report::dispatcher('list'))
+            {   $msg->to($disp[0]->name);
+                error $msg;
+            }
+            else
+            {   die $msg;
+            }
+        }
+
         $f->autoflush;
         return $self->{LRDF_output} = $f;
     }
