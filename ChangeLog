@@ -11,7 +11,7 @@ version 1.30:
 
 	Fixes:
 	- recursive errors when file cannot be written for ::File dispatcher
-	  github issue#4 [Tom Huskins]
+	  github issue#4 [Tom Hukins]
 
 version 1.29: Fri  8 Nov 09:18:01 CET 2019
 
