@@ -7,7 +7,7 @@ Mark Overmeer.
 TODO:
 	. connect to Message::Passing framework
 
-version 1.30:
+version 1.30: Fri 15 Jan 12:46:14 CET 2021
 
 	Fixes:
 	- recursive errors when file cannot be written for ::File dispatcher
