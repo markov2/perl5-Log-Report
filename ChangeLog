@@ -9,6 +9,10 @@ TODO:
 
 version 1.31:
 
+	Fixes:
+	- another attempt on issue #6, exceptions with specific destination
+	  are not caught by ::Try
+
 version 1.30: Fri 15 Jan 12:46:14 CET 2021
 
 	Fixes:

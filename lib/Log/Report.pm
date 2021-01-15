@@ -224,7 +224,7 @@ sub report($@)
     my ($reason, $message) = (shift, shift);
 
     my $stop = exists $opts->{is_fatal} ? $opts->{is_fatal} : is_fatal $reason;
-    my $try  = $nested_tries[-1];
+    my $try  = $nested_tries[-1];  # WARNING: overloaded boolean, use 'defined'
 
     my @disp;
     if(defined $try)
@@ -253,6 +253,7 @@ sub report($@)
         else
         {   @disp    = grep $_->name eq $to, @disp;
         }
+        push @disp, $try if defined $try;
 
         @disp || $stop
             or return;
@@ -293,7 +294,7 @@ sub report($@)
 
     if(my $disp_name = $message->to)
     {   @disp = grep $_->name eq $disp_name, @disp;
-        push @disp, $try if $try && $disp_name ne 'try';
+        push @disp, $try if defined $try && $disp_name ne 'try';
         @disp or return;
     }
 
