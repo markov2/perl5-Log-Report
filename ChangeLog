@@ -15,6 +15,7 @@ version 1.30:
 
 	Improvements:
 	- use ::Util::expand_reasons() for ::Try::hide()
+	- require Log::Report::Options 1.07 for more expand_reasons options
 
 version 1.29: Fri  8 Nov 09:18:01 CET 2019
 
