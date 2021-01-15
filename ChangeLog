@@ -7,7 +7,9 @@ Mark Overmeer.
 TODO:
 	. connect to Message::Passing framework
 
-version 1.31:
+version 1.32:
+
+version 1.31: Fri 15 Jan 16:35:39 CET 2021
 
 	Fixes:
 	- another attempt on issue #6, exceptions with specific destination
