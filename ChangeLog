@@ -14,6 +14,8 @@ version 1.30:
 	  github issue#4 [Tom Huskins]
 	- exceptions with specific destination are not caught by ::Try
 	  github issue#6 [Andy Beverley]
+	- redirected exception messages forget their explicit dispatcher
+	  destination.  Github issue#6
 
 	Improvements:
 	- use ::Util::expand_reasons() for ::Try::hide()

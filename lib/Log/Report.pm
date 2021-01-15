@@ -243,7 +243,8 @@ sub report($@)
     @disp || $stop
         or return;
 
-    if(my $to = delete $opts->{to})
+    my $to = delete $opts->{to};
+    if($to)
     {   # explicit destination, still disp may not need it.
         if(ref $to eq 'ARRAY')
         {   my %disp = map +($_->name => $_), @disp;
@@ -252,6 +253,7 @@ sub report($@)
         else
         {   @disp    = grep $_->name eq $to, @disp;
         }
+
         @disp || $stop
             or return;
     }
@@ -287,9 +289,11 @@ sub report($@)
         $message = $lrm->new(_prepend => $text, @_);
     }
 
-    if(my $to = $message->to)
-    {   @disp = grep $_->name eq $to, @disp;
-        push @disp, $try if $try && $to ne 'try';
+    $message->to(undef) if $to;  # overrule destination of message
+
+    if(my $disp_name = $message->to)
+    {   @disp = grep $_->name eq $disp_name, @disp;
+        push @disp, $try if $try && $disp_name ne 'try';
         @disp or return;
     }
 
