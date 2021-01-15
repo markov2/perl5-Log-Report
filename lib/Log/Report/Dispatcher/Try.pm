@@ -50,18 +50,25 @@ Log::Report::Dispatcher::Try - capture all reports as exceptions
  print $@->exceptions; # no re-cast, just print
 
 =chapter DESCRIPTION
-The M<Log::Report::try()> catches errors in the block (CODE
-reference) which is just following the function name.  All
-dispatchers are temporarily disabled by C<try>, and messages
-which are reported are collected within a temporary dispatcher
-named C<try>.  When the CODE has run, that C<try> dispatcher
-is returned in C<$@>, and all original dispatchers reinstated.
+The B<try> works like Perl's build-in C<eval()>, but implements
+real exception handling which Perl core lacks.
 
-Then, after the C<try> has finished, the routine which used
-the "try" should decide what to do with the collected reports.
-These reports are collected as M<Log::Report::Exception> objects.
-They can be ignored, or thrown to a higher level try... causing
-an exit of the program if there is none.
+The M<Log::Report::try()> function creates this C<::Try> dispatcher
+object with name 'try'.  After the C<try()> is over, you can find
+the object in C<$@>.  The C<$@> as C<::Try> object behaves exactly
+as the C<$@> produced by C<eval>, but has many added features.
+
+The C<try()> function catches fatal errors happening inside the BLOCK
+(CODE reference which is just following the function name) into the
+C<::Try> object C<$@>.  The errors are not automatically progressed to
+active dispatchers.  However, non-fatal exceptions (like info or notice)
+are also collected (unless not accepted, see M<new(accept)>, but also
+immediately passed to the active dispatchers (unless the reason is hidden,
+see M<new(hide)>)
+
+After the C<try()> has run, you can introspect the collected exceptions.
+Typically, you use M<wasFatal()> to get the exception which terminated
+the run of the BLOCK.
 
 =chapter OVERLOADING
 
@@ -146,32 +153,28 @@ sub hides($)
     keys %$h ? $h->{(shift)} : 1;
 }
 
-=method hide REASON|REASONS|ARRAY|'ALL'|'NONE'
+=method hide REASONS
 [1.09] By default, the try will only catch messages which stop the
 execution of the block (errors etc, internally a 'die').  Other messages
-are passed to parent try blocks, if none than to the dispatchers.
+are passed to the parent dispatchers.
 
-This option gives the opportunity to block, for instance, trace messages.
-Those messages are still collected inside the try object, so may get
-passed-on later via M<reportAll()> if you like.
+This option gives the opportunity to stop, for instance, trace messages.
+Those messages are still collected inside the try object (unless excluded
+by M<new(accept)>), so may get passed-on later via M<reportAll()> if
+you like.
 
 Be warned: Using this method will reset the whole 'hide' configuration:
 it's a I<set> not an I<add>.
 
 =example change the setting of the running block
   my $parent_try = dispatcher 'active-try';
-  parent_try->hide('NONE');
+  $parent_try->hide('ALL');
 =cut
 
 sub hide(@)
 {   my $self = shift;
-    my @h = map { ref $_ eq 'ARRAY' ? @$_ : defined($_) ? $_ : () } @_;
-
-    $self->{hides}
-      = @h==0 ? undef
-      : @h==1 && $h[0] eq 'ALL'  ? {}    # empty HASH = ALL
-      : @h==1 && $h[0] eq 'NONE' ? undef
-      :    +{ map +($_ => 1), expand_reasons $h[0] };
+    my @reasons = expand_reasons(@_ > 1 ? \@_ : shift);
+    $self->{hides} = +{ map +($_ => 1), @reasons };
 }
 
 =method die2reason
