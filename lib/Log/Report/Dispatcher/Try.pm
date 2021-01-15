@@ -10,7 +10,7 @@ use strict;
 
 use Log::Report 'log-report', syntax => 'SHORT';
 use Log::Report::Exception ();
-use Log::Report::Util      qw/%reason_code/;
+use Log::Report::Util      qw/%reason_code expand_reasons/;
 use List::Util             qw/first/;
 
 =chapter NAME
@@ -95,7 +95,7 @@ ARRAY of M<Log::Report::Exception> objects.
 =default died C<undef>
 The exit string ($@) of the eval'ed block.
 
-=option  hide REASON|ARRAY|'ALL'|'NONE'
+=option  hide REASONS|ARRAY|'ALL'|'NONE'
 =default hide 'NONE'
 [1.09] see M<hide()>
 
@@ -171,7 +171,7 @@ sub hide(@)
       = @h==0 ? undef
       : @h==1 && $h[0] eq 'ALL'  ? {}    # empty HASH = ALL
       : @h==1 && $h[0] eq 'NONE' ? undef
-      :    +{ map +($_ => 1), @h };
+      :    +{ map +($_ => 1), expand_reasons $h[0] };
 }
 
 =method die2reason

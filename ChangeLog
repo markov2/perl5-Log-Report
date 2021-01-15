@@ -13,6 +13,9 @@ version 1.30:
 	- recursive errors when file cannot be written for ::File dispatcher
 	  github issue#4 [Tom Huskins]
 
+	Improvements:
+	- use ::Util::expand_reasons() for ::Try::hide()
+
 version 1.29: Fri  8 Nov 09:18:01 CET 2019
 
 	Fixes:
