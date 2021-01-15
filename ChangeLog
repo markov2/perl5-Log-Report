@@ -12,6 +12,8 @@ version 1.30:
 	Fixes:
 	- recursive errors when file cannot be written for ::File dispatcher
 	  github issue#4 [Tom Huskins]
+	- exceptions with specific destination are not caught by ::Try
+	  github issue#6 [Andy Beverley]
 
 	Improvements:
 	- use ::Util::expand_reasons() for ::Try::hide()

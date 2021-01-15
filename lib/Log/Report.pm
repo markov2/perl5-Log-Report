@@ -221,11 +221,13 @@ program.
 
 sub report($@)
 {   my $opts = ref $_[0] eq 'HASH' ? +{ %{ (shift) } } : {};
-    my $reason = shift;
+    my ($reason, $message) = (shift, shift);
+
     my $stop = exists $opts->{is_fatal} ? $opts->{is_fatal} : is_fatal $reason;
+    my $try  = $nested_tries[-1];
 
     my @disp;
-    if(defined(my $try = $nested_tries[-1]))
+    if(defined $try)
     {   push @disp, @{$reporter->{needs}{$reason}||[]}
             unless $stop || $try->hides($reason);
         push @disp, $try if $try->needs($reason);
@@ -241,9 +243,6 @@ sub report($@)
     @disp || $stop
         or return;
 
-    $opts->{errno} ||= $!+0 || $? || 1
-        if use_errno($reason) && !defined $opts->{errno};
-
     if(my $to = delete $opts->{to})
     {   # explicit destination, still disp may not need it.
         if(ref $to eq 'ARRAY')
@@ -257,7 +256,8 @@ sub report($@)
             or return;
     }
 
-    my $message = shift;
+    $opts->{errno} ||= $!+0 || $? || 1
+        if use_errno($reason) && !defined $opts->{errno};
 
     unless(Log::Report::Dispatcher->can('collectLocation'))
     {   # internal Log::Report error can result in "deep recursions".
@@ -289,6 +289,7 @@ sub report($@)
 
     if(my $to = $message->to)
     {   @disp = grep $_->name eq $to, @disp;
+        push @disp, $try if $try && $to ne 'try';
         @disp or return;
     }
 
