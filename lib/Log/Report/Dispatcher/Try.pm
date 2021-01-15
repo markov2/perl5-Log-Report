@@ -145,15 +145,13 @@ them may be a fatal one.  The other are non-fatal.
 
 sub exceptions() { @{shift->{exceptions}} }
 
-=method hides REASON
+=method hides $reason
+Check whether the try stops message which were produced for C<$reason>.
 =cut
 
-sub hides($)
-{   my $h = shift->{hides} or return 0;
-    keys %$h ? $h->{(shift)} : 1;
-}
+sub hides($) { $_[0]->{LRDT_hides}{$_[1]} }
 
-=method hide REASONS
+=method hide @reasons
 [1.09] By default, the try will only catch messages which stop the
 execution of the block (errors etc, internally a 'die').  Other messages
 are passed to the parent dispatchers.
@@ -174,7 +172,7 @@ it's a I<set> not an I<add>.
 sub hide(@)
 {   my $self = shift;
     my @reasons = expand_reasons(@_ > 1 ? \@_ : shift);
-    $self->{hides} = +{ map +($_ => 1), @reasons };
+    $self->{LRDT_hides} = +{ map +($_ => 1), @reasons };
 }
 
 =method die2reason
@@ -250,7 +248,6 @@ Returns true if the block exited normally.
 
 sub failed()  {   defined shift->{died}}
 sub success() { ! defined shift->{died}}
-
 
 =method wasFatal %options
 Returns the M<Log::Report::Exception> which caused the "try" block to
