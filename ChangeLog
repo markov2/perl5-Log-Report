@@ -10,6 +10,7 @@ TODO:
 version 1.32:
 
 	Fixes:
+	- ::Dancer2, use correct VERSION, github issue#3
 	- ::Dancer2, fix stacktrace sent to browser with show_errors disabled
 	  by [Andy Beverley], github issue#7
 	  
