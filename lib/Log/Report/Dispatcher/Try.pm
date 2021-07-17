@@ -100,7 +100,7 @@ ARRAY of M<Log::Report::Exception> objects.
 
 =option  died STRING
 =default died C<undef>
-The exit string ($@) of the eval'ed block.
+The exit string or object ($@) of the eval'ed block, in its unprocessed state.
 
 =option  hide REASONS|ARRAY|'ALL'|'NONE'
 =default hide 'NONE'
@@ -129,8 +129,9 @@ sub init($)
 =section Accessors
 
 =method died [STRING]
-The message which was reported by C<eval>, which is used internally
-to catch problems in the try block.
+The exit string or object ($@) of the eval'ed block, in its unprocessed state.
+They will always return true when they where deadly, and it always stringifies
+into something useful.
 =cut
 
 sub died(;$)

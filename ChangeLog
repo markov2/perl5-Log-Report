@@ -9,6 +9,11 @@ TODO:
 
 version 1.33:
 
+	Changes:
+	- the $@->died with always return the original die causing object or
+	  string.  In most cases, you want to use $@->wasFatal, which is the
+	  translated (hence compatible) ::Exception object.  [Andy Beverley]
+
 version 1.32: Tue 26 Jan 09:13:31 CET 2021
 
 	Fixes:

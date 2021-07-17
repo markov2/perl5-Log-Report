@@ -31,7 +31,7 @@ has dispatchers =>
 sub BUILD
 {   my $self     = shift;
     my $configs  = $self->dispatchers || {default => undef};
-    $self->{use} = [keys %$configs];
+    $self->{use} = [ keys %$configs ];
 
     dispatcher 'do-not-reopen';
 

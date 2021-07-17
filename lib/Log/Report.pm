@@ -589,7 +589,7 @@ sub try(&@)
     my $is_exception = blessed $err && $err->isa('Log::Report::Exception');
     if(!$is_exception && $err && !$disp->wasFatal)
     {   # Decode exceptions which do not origin from Log::Report reports
-        ($err, my($opts, $reason, $text)) = blessed $err
+        my($opts, $reason, $text) = blessed $err
            ? Log::Report::Die::exception_decode($err)
            : Log::Report::Die::die_decode($err, on_die => $disp->die2reason);
 

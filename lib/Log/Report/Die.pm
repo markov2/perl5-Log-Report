@@ -32,10 +32,10 @@ croak(), or confess().  This routine tries to convert this into
 parameters for M<Log::Report::report()>.  This is done in a very
 smart way, even trying to find the stringifications of C<$!>.
 
-Return are four elements: the error string which is used to trigger
-a C<Log::Report> compatible C<die()>, and the options, reason, and
-text message.  The options is a HASH which, amongst other things,
-may contain a stack trace and location.
+Returned are four elements: the error string or object which triggered
+the death originally (the original $@), and the opts, reason, and plain
+text message.  The opts is a HASH which, amongst other things, may contain
+a stack trace and location extracted from the death text or object.
 
 Translated components will have exception classes C<perl>, and C<die> or
 C<confess>.  On the moment, the C<croak> cannot be distiguished from the
@@ -66,7 +66,6 @@ sub die_decode($%)
     my %opt    = (errno => $! + 0);
     my $err    = "$!";
 
-    my $dietxt = $text[0];
     if($text[0] =~ s/ at (.+) line (\d+)\.?$// )
     {   $opt{location} = [undef, $1, $2, undef];
     }
@@ -96,7 +95,7 @@ sub die_decode($%)
       : @stack      ? 'PANIC'
       :               $args{on_die} || 'ERROR';
 
-    ($dietxt, \%opt, $reason, join("\n", @msg));
+    (\%opt, $reason, join("\n", @msg));
 }
 
 =function exception_decode $exception, %options
@@ -140,7 +139,7 @@ sub _exception_dbix($$)
       : @stack       ? 'PANIC'
       :                $on_die || 'ERROR';
 
-    ('caught '.ref $exception, \%opts, $reason, $message);
+    (\%opts, $reason, $message);
 }
 
 my %_libxml_errno2reason = (1 => 'WARNING', 2 => 'MISTAKE', 3 => 'ERROR');
@@ -158,7 +157,7 @@ sub _exception_libxml($$)
             . ' (' . $exc->domain . ' error ' . $exc->code . ')';
 
 	my $reason = $_libxml_errno2reason{$exc->level} || 'PANIC';
-    ('caught '.ref $exc, \%opts, $reason, $msg);
+    (\%opts, $reason, $msg);
 }
 
 sub exception_decode($%)
@@ -173,14 +172,14 @@ sub exception_decode($%)
 
     # Unsupported exception system, sane guesses
     my %opt =
-    ( classes => [ 'unknown exception', 'die', ref $exception ]
-    , errno   => $errno
-    );
+      ( classes => [ 'unknown exception', 'die', ref $exception ]
+      , errno   => $errno
+      );
 
     my $reason = $errno ? 'FAULT' : $args{on_die} || 'ERROR';
 
     # hopefully stringification is overloaded
-    ( "caught ".ref $exception, \%opt, $reason, "$exception");
+    (\%opt, $reason, "$exception");
 }
 
 "to die or not to die, that's the question";
