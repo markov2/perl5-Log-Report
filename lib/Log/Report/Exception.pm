@@ -82,13 +82,18 @@ sub reason(;$)
 
 =method isFatal
 Returns whether this exception has a severity which makes it fatal
-when thrown.  See M<Log::Report::Util::is_fatal()>.
+when thrown. [1.34] This can have been overruled with the C<is_fatal>
+attribute.  See M<Log::Report::Util::is_fatal()>.
 =example
   if($ex->isFatal) { $ex->throw(reason => 'ALERT') }
   else { $ex->throw }
 =cut
 
-sub isFatal() { is_fatal shift->{reason} }
+sub isFatal()
+{   my $self = shift;
+    my $opts = $self->report_opts;
+    exists $opts->{is_fatal} ? $opts->{is_fatal} : is_fatal $self->{reason};
+}
 
 =method message [$message]
 Change the $message of the exception, must be a M<Log::Report::Message>

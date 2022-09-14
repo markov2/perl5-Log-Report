@@ -12,6 +12,8 @@ version 1.34:
 	Changes:
 
 	Fixes:
+	- ::Exception::isFatal() did not respect the is_fatal overrule.
+	  Spotted by [Andy Berverley]
 
 version 1.33: Sat Jul 17 10:56:52 CEST 2021
 
