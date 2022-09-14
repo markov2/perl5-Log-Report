@@ -526,7 +526,7 @@ execution is returned.
 
 After the CODE was tried, the C<$@> will contain a
 M<Log::Report::Dispatcher::Try> object, which contains the collected
-messages.
+messages.  Read that manual page to understand C<try>.
 
 Run-time errors from Perl and die's, croak's and confess's within the
 program (which shouldn't appear, but you never know) are collected into an
