@@ -215,9 +215,6 @@ sub log($$$$)
 
     push @{$self->{exceptions}}, $e;
 
-#    $self->{died} ||=
-#        exists $opts->{is_fatal} ? $opts->{is_fatal} : $e->isFatal;
-
     $self;
 }
 
@@ -247,8 +244,8 @@ Returns true if the block was left with an fatal message.
 Returns true if the block exited normally.
 =cut
 
-sub failed()  {   defined shift->{died}}
-sub success() { ! defined shift->{died}}
+sub failed()  {   defined shift->{died} }
+sub success() { ! defined shift->{died} }
 
 =method wasFatal %options
 Returns the M<Log::Report::Exception> which caused the "try" block to
@@ -265,10 +262,10 @@ sub wasFatal(@)
 {   my ($self, %args) = @_;
     defined $self->{died} or return ();
 
-    # An (hidden) eval between LR::try()s may add more messages
     my $ex = first { $_->isFatal } @{$self->{exceptions}}
         or return ();
 
+    # There can only be one fatal exception.  Is it in the class?
     (!$args{class} || $ex->inClass($args{class})) ? $ex : ();
 }
 
