@@ -18,7 +18,7 @@ my $lrm = 'Log::Report::Message';
 my @make_msg   = qw/__ __x __n __nx __xn N__ N__n N__w __p __px __np __npx/;
 my @functions  = qw/report dispatcher try textdomain/;
 my @reason_functions = qw/trace assert info notice warning
-   mistake error fault alert failure panic/;
+    mistake error fault alert failure panic/;
 
 our @EXPORT_OK = (@make_msg, @functions, @reason_functions);
 
@@ -228,9 +228,11 @@ sub report($@)
 
     my @disp;
     if(defined $try)
-    {   push @disp, @{$reporter->{needs}{$reason}||[]}
+    {   push @disp, @{$reporter->{needs}{$reason} || []}
             unless $stop || $try->hides($reason);
-        push @disp, $try if $try->needs($reason);
+
+        push @disp, $try
+            if $try->needs($reason) || $opts->{is_fatal};
     }
     else
     {   @disp = @{$reporter->{needs}{$reason} || []};
@@ -573,6 +575,8 @@ sub try(&@)
         if $reporter->{needs}{TRACE};
 
     my $disp = Log::Report::Dispatcher::Try->new(TRY => 'try', @_);
+
+    # L::R native messages are logged directly in $disp via @nested_tries
     push @nested_tries, $disp;
 
     # user's __DIE__ handlers would frustrate the exception mechanism
@@ -584,14 +588,15 @@ sub try(&@)
     else             { $ret = eval { $code->() } } # SCALAR context
 
     my $err  = $@;
-    pop @nested_tries;
+    pop @nested_tries;   # remove $disp
 
     my $is_exception = blessed $err && $err->isa('Log::Report::Exception');
     if(!$is_exception && $err && !$disp->wasFatal)
-    {   # Decode exceptions which do not origin from Log::Report reports
-        my($opts, $reason, $text) = blessed $err
-           ? Log::Report::Die::exception_decode($err)
-           : Log::Report::Die::die_decode($err, on_die => $disp->die2reason);
+    {   # Decode errors which do not origin from Log::Report reports
+        # Native exceptions are already logged.
+        my ($opts, $reason, $text) = blessed $err
+          ? Log::Report::Die::exception_decode($err)
+          : Log::Report::Die::die_decode($err, on_die => $disp->die2reason);
 
         $disp->log($opts, $reason, __$text);
     }

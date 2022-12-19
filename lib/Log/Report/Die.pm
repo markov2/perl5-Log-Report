@@ -176,7 +176,7 @@ sub exception_decode($%)
       , errno   => $errno
       );
 
-    my $reason = $errno ? 'FAULT' : $args{on_die} || 'ERROR';
+    my $reason = $errno ? 'FAULT' : ($args{on_die} || 'ERROR');
 
     # hopefully stringification is overloaded
     (\%opt, $reason, "$exception");
