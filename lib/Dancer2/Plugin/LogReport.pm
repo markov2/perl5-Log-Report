@@ -215,6 +215,7 @@ can C<use Log::Report> to get useful functions like error and fault.
 
 sub process($$)
 {   my ($dsl, $coderef) = @_;
+    ref $coderef eq 'CODE' or report PANIC => "plugin process() requires a CODE";
     try { $coderef->() } hide => 'ALL', on_die => 'PANIC';
 	my $e = $@;  # fragile
     $e->reportAll(is_fatal => 0);
