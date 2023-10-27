@@ -7,7 +7,10 @@ Mark Overmeer.
 TODO:
 	. connect to Message::Passing framework
 
-version 1.36:
+version 1.36: Fri 27 Oct 15:05:13 CEST 2023
+
+	Fixes:
+	- Adapt test to new Dancer2 numbering scheme. [Petr Pisar]
 
 version 1.35: Fri 27 Oct 08:27:54 CEST 2023
 
