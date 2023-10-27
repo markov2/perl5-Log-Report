@@ -7,6 +7,8 @@ Mark Overmeer.
 TODO:
 	. connect to Message::Passing framework
 
+version 1.36:
+
 version 1.35: Fri 27 Oct 08:27:54 CEST 2023
 
 	Fixes:
