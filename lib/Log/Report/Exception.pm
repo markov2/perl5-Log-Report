@@ -139,7 +139,7 @@ This can be used to overrule a destination.  Also, the reason can
 be changed.
 
 =example overrule defaults to report
- try { print {to => 'stderr'}, ERROR => 'oops!' };
+ try { report {to => 'stderr'}, ERROR => 'oops!' };
  $@->reportFatal(to => 'syslog');
 
  $exception->throw(to => 'syslog');
