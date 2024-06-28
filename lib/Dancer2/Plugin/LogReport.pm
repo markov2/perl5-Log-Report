@@ -397,7 +397,7 @@ sub _forward_home($)
     # handling
     my $req = $dsl->app->request or return;
 
-    $dsl->send_as(plain => "$msg")
+    return $dsl->send_as(plain => "$msg")
         if $req->uri eq $page && $req->is_get;
 
     $dsl->redirect($page);
