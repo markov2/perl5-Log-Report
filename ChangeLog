@@ -7,7 +7,7 @@ Mark Overmeer.
 TODO:
 	. connect to Message::Passing framework
 
-version 1.37:
+version 1.37: Fri 28 Jun 11:08:19 CEST 2024
 
 	Fixes:
 	- Work with Dancer2 change to send_as [Andy Beverley]
