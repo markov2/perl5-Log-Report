@@ -9,6 +9,9 @@ TODO:
 
 version 1.38:
 
+	Fixes:
+	- Require Dancer2 >= 0.207 for test [cpantesters], [GitHub issue #13]
+
 version 1.37: Fri 28 Jun 11:08:19 CEST 2024
 
 	Fixes:
