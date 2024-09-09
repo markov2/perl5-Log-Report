@@ -9,7 +9,7 @@ use strict;
 
 use Log::Report 'log-report';
 use Log::Report::Util qw/parse_locale expand_reasons %reason_code
-  escape_chars/;
+  escape_chars use_errno/;
 
 use POSIX      qw/strerror/;
 use List::Util qw/sum first/;
@@ -299,7 +299,7 @@ sub translate($$$)
         if $locale && $locale ne $oldloc;
 
     my $r = $self->{format_reason}->((__$reason)->toString);
-    my $e = $opts->{errno} ? strerror($opts->{errno}) : undef;
+    my $e = use_errno($reason) ? strerror($opts->{errno} || 1) : undef;
 
     my $format
       = $r && $e ? N__"{reason}: {message}; {error}"

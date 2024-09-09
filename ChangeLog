@@ -9,6 +9,9 @@ TODO:
 
 version 1.39:
 
+	Fixes:
+	- fix output of error [Andy Beverley]
+
 version 1.38: Mon  9 Sep 11:00:15 CEST 2024
 
 	Fixes:
