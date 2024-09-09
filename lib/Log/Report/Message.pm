@@ -318,6 +318,18 @@ sub to(;$)
     @_ ? $self->{_to} = shift : $self->{_to};
 }
 
+=method errno [$errno]
+[1.38] Returns the value of the C<_errno> key, to indicate the error
+number (to be returned from your script).  Usually, this method will
+return undef.  For FAILURE, FAULT, and ALERT, the errno is by default
+taken from C<$!> and C<$?>.
+=cut
+
+sub errno(;$)
+{	my $self = shift;
+	@_ ? $self->{_errno} = shift : $self->{_errno};
+}
+
 =method valueOf $parameter
 Lookup the named $parameter for the message.  All pre-defined names
 have their own method which should be used with preference.
