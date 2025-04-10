@@ -73,10 +73,10 @@ Create a new Domain object.
 =cut
 
 sub init($)
-{   my ($self, $args) = @_;
-    $self->SUPER::init($args);
-    $self->{LRD_ctxt_def} = {};
-    $self;
+{	my ($self, $args) = @_;
+	$self->SUPER::init($args);
+	$self->{LRD_ctxt_def} = {};
+	$self;
 }
 
 #----------------
@@ -131,65 +131,56 @@ running application and F<xgettext-perl>.  See M<readConfig()>
 =cut
 
 sub configure(%)
-{   my ($self, %args) = @_;
+{	my ($self, %args) = @_;
 
-    if(my $config = delete $args{config})
-    {   my $set = $self->readConfig($config);
-        %args   = (%$set, %args);
-    }
+	if(my $config = delete $args{config})
+	{	my $set = $self->readConfig($config);
+		%args   = (%$set, %args);
+	}
 
-    # 'formatter' is mainly handled by the base-class, but documented here.
-    my $format = $args{formatter} || 'PRINTI';
-    $args{formatter} = $format = {} if $format eq 'PRINTI';
+	# 'formatter' is mainly handled by the base-class, but documented here.
+	my $format = $args{formatter} || 'PRINTI';
+	$args{formatter} = $format = {} if $format eq 'PRINTI';
 
-    if(ref $format eq 'HASH')
-    {   $format->{missing_key} = sub {$self->_reportMissingKey(@_)};
-    }
+	if(ref $format eq 'HASH')
+	{	$format->{missing_key} = sub { $self->_reportMissingKey(@_) };
+	}
 
-    $self->SUPER::configure(%args);
+	$self->SUPER::configure(%args);
 
-    my $transl = $args{translator} || Log::Report::Translator->new;
-    $transl    =  Log::Report::Translator->new(%$transl)
-        if ref $transl eq 'HASH';
+	my $transl = $args{translator} || Log::Report::Translator->new;
+	$transl    =  Log::Report::Translator->new(%$transl)
+		if ref $transl eq 'HASH';
 
-    !blessed $transl || $transl->isa('Log::Report::Translator')
-        or panic "translator must be a Log::Report::Translator object";
-    $self->{LRD_transl} = $transl;
+	!blessed $transl || $transl->isa('Log::Report::Translator')
+		or panic "translator must be a Log::Report::Translator object";
+	$self->{LRD_transl} = $transl;
 
-    my $native = $self->{LRD_native}
-      = $args{native_language} || 'en_US';
+	my $native = $self->{LRD_native} = $args{native_language} || 'en_US';
+	my ($lang) = parse_locale $native;
+	defined $lang
+		or error __x"the native_language '{locale}' is not a valid locale", locale => $native;
 
-    my ($lang) = parse_locale $native;
-    defined $lang
-        or error __x"the native_language '{locale}' is not a valid locale"
-            , locale => $native;
+	if(my $cr = $args{context_rules})
+	{	my $tc = 'Log::Report::Translator::Context';
+		eval "require $tc"; panic $@ if $@;
+		if(blessed $cr) { $cr->isa($tc) or panic "context_rules must be a $tc" }
+		elsif(ref $cr eq 'HASH') { $cr = Log::Report::Translator::Context->new(rules => $cr) }
+		else {  panic "context_rules expects object or hash, not {have}", have=>$cr }
 
-    if(my $cr = $args{context_rules})
-    {   my $tc = 'Log::Report::Translator::Context';
-        eval "require $tc"; panic $@ if $@;
-        if(blessed $cr)
-        {   $cr->isa($tc) or panic "context_rules must be a $tc" }
-        elsif(ref $cr eq 'HASH')
-        {   $cr = Log::Report::Translator::Context->new(rules => $cr) }
-        else
-        {   panic "context_rules expects object or hash, not {have}", have=>$cr;
-        }
+		$self->{LRD_ctxt_rules} = $cr;
+	}
 
-        $self->{LRD_ctxt_rules} = $cr;
-    }
-
-    $self;
+	$self;
 }
 
 sub _reportMissingKey($$)
 {   my ($self, $sp, $key, $args) = @_;
 
-    warning
-      __x"Missing key '{key}' in format '{format}', file {use}"
-      , key => $key, format => $args->{_format}
-      , use => $args->{_use};
+	warning __x"Missing key '{key}' in format '{format}', file {use}",
+		key => $key, format => $args->{_format}, use => $args->{_use};
 
-    undef;
+	undef;
 }
 
 =method setContext STRING|HASH|ARRAY|PAIRS
@@ -205,11 +196,11 @@ you do not wish to change settings, you may simply provide a HASH.
 =cut
 
 sub setContext(@)
-{   my $self = shift;
-    my $cr   = $self->contextRules  # ignore context if no rules given
-        or error __x"you need to configure context_rules before setContext";
+{	my $self = shift;
+	my $cr   = $self->contextRules  # ignore context if no rules given
+		or error __x"you need to configure context_rules before setContext";
 
-    $self->{LRD_ctxt_def} = $cr->needDecode(set => @_);
+	$self->{LRD_ctxt_def} = $cr->needDecode(set => @_);
 }
 
 =method updateContext STRING|HASH|ARRAY|PAIRS
@@ -217,14 +208,14 @@ sub setContext(@)
 =cut
 
 sub updateContext(@)
-{   my $self = shift;
-    my $cr   = $self->contextRules  # ignore context if no rules given
-        or return;
+{	my $self = shift;
+	my $cr   = $self->contextRules  # ignore context if no rules given
+		or return;
 
-    my $rules = $cr->needDecode(update => @_);
-    my $r = $self->{LRD_ctxt_def} ||= {};
-    @{$r}{keys %$r} = values %$r;
-    $r;
+	my $rules = $cr->needDecode(update => @_);
+	my $r = $self->{LRD_ctxt_def} ||= {};
+	@{$r}{keys %$r} = values %$r;
+	$r;
 }
 
 =method defaultContext
@@ -248,25 +239,25 @@ M<Log::Report::Translator::Context>.
 =cut
 
 sub readConfig($)
-{   my ($self, $fn) = @_;
-    my $config;
+{	my ($self, $fn) = @_;
+	my $config;
 
-    if($fn =~ m/\.pl$/i)
-    {   $config = do $fn;
-    }
-    elsif($fn =~ m/\.json$/i)
-    {   eval "require JSON"; panic $@ if $@;
-        open my($fh), '<:encoding(utf8)', $fn
-            or fault __x"cannot open JSON file for context at {fn}"
-               , fn => $fn;
-        local $/;
-        $config = JSON->utf8->decode(<$fh>);
-    }
-    else
-    {   error __x"unsupported context file type for {fn}", fn => $fn;
-    }
+	if($fn =~ m/\.pl$/i)
+	{	$config = do $fn;
+	}
+	elsif($fn =~ m/\.json$/i)
+	{	eval "require JSON"; panic $@ if $@;
+		open my($fh), '<:encoding(utf8)', $fn
+			or fault __x"cannot open JSON file for context at {fn}"
+			   , fn => $fn;
+		local $/;
+		$config = JSON->utf8->decode(<$fh>);
+	}
+	else
+	{	error __x"unsupported context file type for {fn}", fn => $fn;
+	}
 
-    $config;
+	$config;
 }
 
 #-------------------
@@ -277,32 +268,30 @@ Translate the $message into the $language.
 =cut
 
 sub translate($$)
-{   my ($self, $msg, $lang) = @_;
-    my $tr    = $self->translator || $self->configure->translator;
+{	my ($self, $msg, $lang) = @_;
+	my $tr    = $self->translator || $self->configure->translator;
 	my $msgid = $msg->msgid;
 
-    # fast route when certainly no context is involved
-    return $tr->translate($msg, $lang) || $msgid
-	    if index($msgid, '<') == -1;
+	# fast route when certainly no context is involved
+	return $tr->translate($msg, $lang) || $msgid
+		if index($msgid, '<') == -1;
 
-    my $msgctxt;
-    if($msgctxt = $msg->msgctxt)
-    {   # msgctxt in traditional gettext style
-    }
-    elsif(my $rules = $self->contextRules)
-    {   ($msgid, $msgctxt)
-           = $rules->ctxtFor($msg, $lang, $self->defaultContext);
-    }
-    else
-    {   1 while $msgid =~
-            s/\{([^}]*)\<\w+([^}]*)\}/length "$1$2" ? "{$1$2}" : ''/e;
-    }
+	my $msgctxt;
+	if($msgctxt = $msg->msgctxt)
+	{	# msgctxt in traditional gettext style
+	}
+	elsif(my $rules = $self->contextRules)
+	{	($msgid, $msgctxt) = $rules->ctxtFor($msg, $lang, $self->defaultContext);
+	}
+	else
+	{	1 while $msgid =~ s/\{([^}]*)\<\w+([^}]*)\}/length "$1$2" ? "{$1$2}" : ''/e;
+	}
 
-    # This is ugly, horrible and worse... but I do not want to mutulate
-    # the message neither to clone it for performance.  We do need to get
-    # rit of {<}
-    local $msg->{_msgid} = $msgid;
-    $tr->translate($msg, $lang, $msgctxt) || $msgid;
+	# This is ugly, horrible and worse... but I do not want to mutulate
+	# the message neither to clone it for performance.  We do need to get
+	# rit of {<}
+	local $msg->{_msgid} = $msgid;
+	$tr->translate($msg, $lang, $msgctxt) || $msgid;
 }
 
 1;
