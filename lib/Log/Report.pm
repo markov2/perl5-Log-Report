@@ -986,12 +986,6 @@ sub import(@)
 	my %opts       = @_;
 
 	my ($pkg, $fn, $linenr) = caller $to_level;
-	my $domain;
-
-	if(defined $textdomain)
-	{	pkg2domain $pkg, $textdomain, $fn, $linenr;
-		$domain = textdomain $textdomain;
-	}
 
 	### Log::Report options
 
@@ -1029,12 +1023,14 @@ sub import(@)
 
 	### Log::Report::Domain configuration
 
-	if(!%opts) { }
-	elsif($domain)
-	{	$domain->configure(%opts, where => [$pkg, $fn, $linenr ]) }
-	else
-	{	error __x"no domain for configuration options in {fn} line {line}"
-		  , fn => $fn, line => $linenr;
+	if(keys %opts)
+	{	if(defined $textdomain)
+		{	pkg2domain $pkg, $textdomain, $fn, $linenr;
+			(textdomain $textdomain)->configure(%opts, where => [$pkg, $fn, $linenr ]);
+		}
+		else
+		{	error __x"no domain for configuration options in {fn} line {line}", fn => $fn, line => $linenr;
+		}
 	}
 }
 
@@ -1071,7 +1067,9 @@ it will be returned, but a domain will not be automagically created.
 =cut
 
 sub textdomain(@)
-{	if(@_==1 && blessed $_[0])
+{
+#warn "TEXTDOMAIN $_[0] \@ ", join ' ', caller;
+	if(@_==1 && blessed $_[0])
 	{	my $domain = shift;
 		$domain->isa('Log::Report::Domain') or panic;
 		return $reporter->{textdomains}{$domain->name} = $domain;

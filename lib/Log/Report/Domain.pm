@@ -352,22 +352,22 @@ When you want your own formatter, or configuration of C<String::Print>,
 you need to pass a CODE.  Be aware that you may loose magic added by
 M<Log::Report> and other layers, like M<Log::Report::Template>:
 
-  textdomain 'some-domain'
-    , formatter => \&my_formatter;
+  textdomain 'some-domain',
+    formatter => \&my_formatter;
 
 =subsection configuring global values
 
 Say, you log for a (Dancer) webserver, where you wish to include the website
 name in some of the log lines.  For this, (ab)use the translation context:
 
-  ### first enabled translation contexts
-  use Log::Report 'my-domain', context_rules => {};
+  ### first, enable translation contexts
+  use Log::Report 'my-domain', context_rules => { ... };
   # or
   use Log::Report 'my-domain';
-  textdomain->configure(context_rules => {});
+  textdomain->configure(context_rules => { ... });
   # or
-  textdomain 'my-domain'
-    , content_rules => {};
+  textdomain 'my-domain',
+    content_rules => { ... };
   
   ### every time you start working for a different virtual host
   (textdomain 'my-domain')->setContext(host => $host);
