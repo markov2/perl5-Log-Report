@@ -1007,8 +1007,8 @@ sub import(@)
 		{	push @export, @reason_functions
 		}
 		elsif($syntax ne 'REPORT' && $syntax ne 'LONG')
-		{	error __x"syntax flag must be either SHORT or REPORT, not `{flag}' in {fn} line {line}"
-			  , flag => $syntax, fn => $fn, line => $linenr;
+		{	error __x"syntax flag must be either SHORT or REPORT, not `{flag}' in {fn} line {line}",
+				flag => $syntax, fn => $fn, line => $linenr;
 		}
 	}
 
@@ -1023,15 +1023,14 @@ sub import(@)
 
 	### Log::Report::Domain configuration
 
-	if(keys %opts)
-	{	if(defined $textdomain)
-		{	pkg2domain $pkg, $textdomain, $fn, $linenr;
-			(textdomain $textdomain)->configure(%opts, where => [$pkg, $fn, $linenr ]);
-		}
-		else
-		{	error __x"no domain for configuration options in {fn} line {line}", fn => $fn, line => $linenr;
-		}
-	}
+    if(defined $textdomain)
+    {   pkg2domain $pkg, $textdomain, $fn, $linenr;
+        my $domain = textdomain $textdomain;
+		$domain->configure(%opts, where => [$pkg, $fn, $linenr ]) if keys %opts;
+    }
+    elsif(keys %opts)
+    {   error __x"no domain for configuration options in {fn} line {line}", fn => $fn, line => $linenr;
+    }
 }
 
 # deprecated, since we have a ::Domain object in 1.00
@@ -1068,7 +1067,6 @@ it will be returned, but a domain will not be automagically created.
 
 sub textdomain(@)
 {
-#warn "TEXTDOMAIN $_[0] \@ ", join ' ', caller;
 	if(@_==1 && blessed $_[0])
 	{	my $domain = shift;
 		$domain->isa('Log::Report::Domain') or panic;

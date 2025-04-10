@@ -390,6 +390,7 @@ Translate a message.  If not specified, the default locale is used.
 
 sub toString(;$)
 {   my ($self, $locale) = @_;
+
     my $count  = $self->{_count} || 0;
 	$locale    = $self->{_lang} if $self->{_lang};
 
@@ -416,7 +417,7 @@ sub toString(;$)
     # translate the msgid
 	my $domain = $self->{_domain};
 	$domain    = textdomain $domain
-        unless blessed $domain;
+        unless blessed $domain && $domain->isa('Log::Report::Minimal::Domain');
 
     my $format = $domain->translate($self, $locale || $oldloc);
     defined $format or return ();
