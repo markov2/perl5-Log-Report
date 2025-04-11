@@ -11,6 +11,7 @@ version 1.40:
 
 	Improvements:
 	- reduce number of textdomain lookups at import.
+	- refer to Dancer2::Template::TTLogReport
 
 version 1.39: Mon  9 Sep 19:57:06 CEST 2024
 

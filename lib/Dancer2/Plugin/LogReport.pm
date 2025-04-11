@@ -54,6 +54,8 @@ Dancer2::Plugin::LogReport - logging and exceptions via Log::Report
 =chapter DESCRIPTION
 
 [The Dancer2 plugin was contributed by Andrew Beverley]
+When you need to translate your templates as well (not only the messages
+in your code) then have a look at M<Dancer2::Template::TTLogReport>.
 
 This module provides easy access to the extensive logging facilities
 provided by M<Log::Report>. Along with M<Dancer2::Logger::LogReport>,
@@ -127,7 +129,6 @@ on_plugin_import
             },
         ),
     );
-
 
     if($settings->{handle_http_errors})
     {   # Need after_error for HTTP errors (eg 404) so as to
@@ -211,7 +212,6 @@ See the L</DETAILS> for an example of how this is expected to be used.
 This module is configured only once in your application. The other modules
 which make your website do not need to require this plugin, instead they
 can C<use Log::Report> to get useful functions like error and fault.
-
 =cut
 
 sub process($$)
@@ -705,6 +705,11 @@ Then in your template (for example the main layout):
 
 The C<bootstrap_color> of the message is compatible with Bootstrap contextual
 colors: C<success>, C<info>, C<warning> or C<danger>.
+
+When you use M<Dancer2::Template::TTLogReport> as well, which enables the
+translations of your whole templates, then add C<locale>:
+
+      [% message.toString(locale) | html_entity %]
 
 Now, anywhere in your application that you have used Log::Report, you can
 
