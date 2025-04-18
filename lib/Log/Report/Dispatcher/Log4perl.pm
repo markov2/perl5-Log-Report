@@ -142,8 +142,7 @@ sub init($)
             my @reasons = expand_reasons $reasons;
 
             $level =~ m/^[0-5]$/
-                or error __x "Log4perl level '{level}' must be in 0-5"
-                     , level => $level;
+                or error __x"Log4perl level '{level}' must be in 0-5", level => $level;
 
             $self->{LRDL_levels}{$_} = $level for @reasons;
         }
