@@ -289,13 +289,13 @@ Returns an HASH if there is a context defined for this message.
 The message context for the translation table lookup.
 =cut
 
-sub prepend() {shift->{_prepend}}
-sub msgid()   {shift->{_msgid}}
-sub append()  {shift->{_append}}
-sub domain()  {shift->{_domain}}
-sub count()   {shift->{_count}}
-sub context() {shift->{_context}}
-sub msgctxt() {shift->{_msgctxt}}
+sub prepend() { $_[0]->{_prepend}}
+sub msgid()   { $_[0]->{_msgid}  }
+sub append()  { $_[0]->{_append} }
+sub domain()  { $_[0]->{_domain} }
+sub count()   { $_[0]->{_count}  }
+sub context() { $_[0]->{_context}}
+sub msgctxt() { $_[0]->{_msgctxt}}
 
 =method classes
 Returns the LIST of classes which are defined for this message; message
@@ -326,8 +326,8 @@ taken from C<$!> and C<$?>.
 =cut
 
 sub errno(;$)
-{	my $self = shift;
-	@_ ? $self->{_errno} = shift : $self->{_errno};
+{   my $self = shift;
+    @_ ? $self->{_errno} = shift : $self->{_errno};
 }
 
 =method valueOf $parameter
@@ -343,7 +343,7 @@ When the message was produced with
                , scalar @files
                , file    => $files[0]
                , files   => \@files
-               , nrfiles => @files+0
+               , nrfiles => @files+0  # or scalar(@files)
                , _class  => 'IO, files'
                , _join   => ', ';
 
@@ -363,7 +363,6 @@ Simplified, the above example can also be written as:
                 , @files      # has scalar context
                 , files   => \@files
                 , _class  => 'IO, files';
-
 
 =cut
 
@@ -391,20 +390,16 @@ Translate a message.  If not specified, the default locale is used.
 sub toString(;$)
 {   my ($self, $locale) = @_;
 
-    my $count  = $self->{_count} || 0;
-	$locale    = $self->{_lang} if $self->{_lang};
-
+    my $count   = $self->{_count} || 0;
+    $locale     = $self->{_lang} if $self->{_lang};
     my $prepend = $self->{_prepend} // '';
     my $append  = $self->{_append}  // '';
 
-	if(blessed $prepend) {
-        $prepend = $prepend->isa(__PACKAGE__) ? $prepend->toString($locale)
-          : "$prepend";
-	}
-	if(blessed $append) {
-        $append  = $append->isa(__PACKAGE__) ? $append->toString($locale)
-          : "$append";
-	}
+    $prepend = $prepend->isa(__PACKAGE__) ? $prepend->toString($locale) : "$prepend"
+       if blessed $prepend;
+
+    $append  = $append->isa(__PACKAGE__)  ? $append->toString($locale)  : "$append"
+       if blessed $append;
 
     $self->{_msgid}   # no translation, constant string
         or return "$prepend$append";
@@ -415,15 +410,15 @@ sub toString(;$)
         if defined $locale && (!defined $oldloc || $locale ne $oldloc);
 
     # translate the msgid
-	my $domain = $self->{_domain};
-	$domain    = textdomain $domain
+    my $domain = $self->{_domain};
+    $domain    = textdomain $domain
         unless blessed $domain && $domain->isa('Log::Report::Minimal::Domain');
 
     my $format = $domain->translate($self, $locale || $oldloc);
     defined $format or return ();
 
     # fill-in the fields
-	my $text = $self->{_expand}
+    my $text = $self->{_expand}
       ? $domain->interpolate($format, $self)
       : "$prepend$format$append";
 
