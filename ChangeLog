@@ -7,7 +7,7 @@ Mark Overmeer.
 TODO:
 	. connect to Message::Passing framework
 
-version 1.40:
+version 1.40: Fri 18 Apr 17:05:09 CEST 2025
 
 	Fixes:
 	- own translation tables contained stuff moved to Lexicon
