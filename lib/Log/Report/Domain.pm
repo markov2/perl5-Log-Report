@@ -183,6 +183,43 @@ sub _reportMissingKey($$)
 	undef;
 }
 
+=ci_method readConfig $filename
+Helper method, which simply parses the content $filename into a HASH to be
+used as parameters to M<configure()>. The filename must end on '.pl',
+to indicate that it uses perl syntax (can be processed with Perl's C<do>
+command) or end on '.json'.  See also chapter L</Configuring> below.
+
+Currently, this file can be in Perl native format (when ending on C<.pl>)
+or JSON (when it ends with C<.json>).  Various modules may explain parts
+of what can be found in these files, for instance
+M<Log::Report::Translator::Context>.
+=cut
+
+sub readConfig($)
+{	my ($thing, $fn) = @_;
+	my $config;
+
+	if($fn =~ m/\.pl$/i)
+	{	$config = do $fn;
+	}
+	elsif($fn =~ m/\.json$/i)
+	{	eval "require JSON"; panic $@ if $@;
+		open my($fh), '<:encoding(utf8)', $fn
+			or fault __x"cannot open JSON file for context at {fn}"
+			   , fn => $fn;
+		local $/;
+		$config = JSON->utf8->decode(<$fh>);
+	}
+	else
+	{	error __x"unsupported context file type for {fn}", fn => $fn;
+	}
+
+	$config;
+}
+
+#--------------
+=section Translating
+
 =method setContext STRING|HASH|ARRAY|PAIRS
 Temporary set the default translation context for messages.  This is used
 when the message is created without a C<_context> parameter. The context
@@ -225,43 +262,6 @@ M<updateContext()>.
 =cut
 
 sub defaultContext() { shift->{LRD_ctxt_def} }
-
-=ci_method readConfig $filename
-Helper method, which simply parses the content $filename into a HASH to be
-used as parameters to M<configure()>. The filename must end on '.pl',
-to indicate that it uses perl syntax (can be processed with Perl's C<do>
-command) or end on '.json'.  See also chapter L</Configuring> below.
-
-Currently, this file can be in Perl native format (when ending on C<.pl>)
-or JSON (when it ends with C<.json>).  Various modules may explain parts
-of what can be found in these files, for instance
-M<Log::Report::Translator::Context>.
-=cut
-
-sub readConfig($)
-{	my ($self, $fn) = @_;
-	my $config;
-
-	if($fn =~ m/\.pl$/i)
-	{	$config = do $fn;
-	}
-	elsif($fn =~ m/\.json$/i)
-	{	eval "require JSON"; panic $@ if $@;
-		open my($fh), '<:encoding(utf8)', $fn
-			or fault __x"cannot open JSON file for context at {fn}"
-			   , fn => $fn;
-		local $/;
-		$config = JSON->utf8->decode(<$fh>);
-	}
-	else
-	{	error __x"unsupported context file type for {fn}", fn => $fn;
-	}
-
-	$config;
-}
-
-#-------------------
-=section Action
 
 =method translate $message, $language
 Translate the $message into the $language.
