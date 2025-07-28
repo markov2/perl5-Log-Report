@@ -9,6 +9,9 @@ TODO:
 
 version 1.41:
 
+	Changes:
+	- require Perl 5.16 (2012)
+
 	Improvements:
 	- reorder docs in ::Domain
 	- remove unused fromTemplateToolkit()
