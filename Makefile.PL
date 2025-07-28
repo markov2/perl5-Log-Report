@@ -1,18 +1,23 @@
 use ExtUtils::MakeMaker;
 
 use 5.010;
+use warnings;
+use strict;
 
 my $version = '1.41';
 
-my %prereq  =
-  ( Test::More               => '0.86'
-  , Sys::Syslog              => '0.27'
-  , Encode                   => '2.00'
-  , Scalar::Util             => 0
-  , Devel::GlobalDestruction => '0.09'
-  , Log::Report::Optional    => '1.07'
-  , String::Print            => '0.91'
-  );
+my %prereq  = (
+	'Test::More'              => '0.86',
+	'Sys::Syslog'             => '0.27',
+	'Encode'                  => '2.00',
+	'Scalar::Util'            => 0,
+	'Devel::GlobalDestruction'=> '0.09',
+	'Log::Report::Optional'   => '1.07',
+	'String::Print'           => '0.91',
+);
+
+eval "require Log::Report::Template";
+$@ or $prereq{'Log::Report::Template'} = 1.02;
 
 # Upgrade L::R::Lexicon if installed
 eval "require Log::Report::Extract";

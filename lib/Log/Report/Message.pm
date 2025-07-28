@@ -93,7 +93,8 @@ translated C<_msgid> string.
 
 =option  _expand BOOLEAN
 =default _expand C<false>
-Indicates whether variables are to be filled-in.
+Indicates whether variables are to be filled-in; whether C<__x> or C<__> was
+used to define the message.
 
 =option  _domain STRING
 =default _domain <from "use Log::Report">
@@ -235,31 +236,6 @@ cached translations are shared between the objects.
 sub clone(@)
 {   my $self = shift;
     (ref $self)->new(%$self, @_);
-}
-
-=c_method fromTemplateToolkit $domain, $msgid, $params
-See M<Log::Report::Extract::Template> on the details how to integrate
-Log::Report translations with Template::Toolkit (version 1 and 2)
-=cut
-
-sub fromTemplateToolkit($$;@)
-{   my ($class, $domain, $msgid) = splice @_, 0, 3;
-    my $plural = $msgid =~ s/\|(.*)// ? $1 : undef;
-    my $args   = @_ && ref $_[-1] eq 'HASH' ? pop : {};
-
-    my $count;
-    if(defined $plural)
-    {   @_==1 or $msgid .= " (ERROR: missing count for plural)";
-        $count = shift || 0;
-        $count = @$count if ref $count eq 'ARRAY';
-    }
-    else
-    {   @_==0 or $msgid .= " (ERROR: only named parameters expected)";
-    }
-
-    $class->new
-      ( _msgid => $msgid, _plural => $plural, _count => $count
-      , %$args, _expand => 1, _domain => $domain);
 }
 
 #----------------
@@ -411,16 +387,14 @@ sub toString(;$)
 
     # translate the msgid
     my $domain = $self->{_domain};
-    $domain    = textdomain $domain
-        unless blessed $domain && $domain->isa('Log::Report::Minimal::Domain');
+    blessed $domain && $domain->isa('Log::Report::Minimal::Domain')
+        or $domain = textdomain $domain;
 
     my $format = $domain->translate($self, $locale || $oldloc);
     defined $format or return ();
 
     # fill-in the fields
-    my $text = $self->{_expand}
-      ? $domain->interpolate($format, $self)
-      : "$prepend$format$append";
+    my $text = $self->{_expand} ? $domain->interpolate($format, $self) : "$prepend$format$append";
 
     setlocale(LC_MESSAGES, $oldloc)
         if defined $oldloc && (!defined $locale || $oldloc ne $locale);
