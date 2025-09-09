@@ -438,7 +438,7 @@ or $object (other C<Log::Report::Message>) needs to prepended, otherwise
 it is appended.
 
 =examples of concatenation
- print __"Hello" . ' ' . __"World!";
+ print __"Hello" . ' ' . __"World!\n";
  print __("Hello")->concat(' ')->concat(__"World!")->concat("\n");
 
 =cut
@@ -474,11 +474,11 @@ which is not a known parameter will be left untouched.
 
  fault __x"cannot open open {filename}", filename => $fn;
 
- print __xn"directory {dir} contains one file"
-          ,"directory {dir} contains {nr_files} files"
-          , scalar(@files)            # (1) (2)
-          , nr_files => scalar @files # (3)
-          , dir      => $dir;
+ print __xn"directory {dir} contains one file",
+           "directory {dir} contains {nr_files} files",
+           scalar(@files),            # (1) (2) (3)
+           nr_files => scalar @files, # (4)
+           dir      => $dir;
 
 (1) this required third parameter is used to switch between the different
 plural forms.  English has only two forms, but some languages have many
@@ -489,10 +489,17 @@ in SCALAR context.  You may also pass C< \@files > there, because ARRAYs
 will be converted into their length.  A HASH will be converted into the
 number of keys in the HASH.
 
-(3) the C<scalar> keyword is required here, because it is LIST context:
+(3) you could also simply pass a reference to the ARRAY: it will take
+the length as counter.
+
+(4) the C<scalar> keyword is required here, because it is LIST context:
 otherwise all filenames will be filled-in as parameters to C<__xn()>.
-See below for the available C<_count> valure, to see how the C<nr_files>
+See below for the available C<_count> value, to see how the C<nr_files>
 parameter can disappear.
+
+ print __xn"directory {dir} contains one file",
+           "directory {dir} contains {_count} files",
+           \@files, dir => $dir;
 
 =subsection Interpolation of VARIABLES
 
@@ -584,7 +591,7 @@ than
 
    print __x("Hello, World!") . "\n";
 
-For the translation tables, however, that trailing new-line is "over
+For the translation tables, however, that trailing new-line is "ignorable
 information"; it is an layout issue, not a translation issue.
 
 Therefore, the first form will automatically be translated into the
@@ -616,7 +623,7 @@ interpolation:
  {   print $s;
  }
 
-Oops, not what you mean because the first value of C<$i> is captured
+B<Oops,> not what you mean because the first value of C<$i> is captured
 in the initial message object.  With Log::Report, you can do it (except
 when you use contexts)
 

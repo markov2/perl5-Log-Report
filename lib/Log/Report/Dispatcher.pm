@@ -8,8 +8,7 @@ use warnings;
 use strict;
 
 use Log::Report 'log-report';
-use Log::Report::Util qw/parse_locale expand_reasons %reason_code
-  escape_chars use_errno/;
+use Log::Report::Util qw/parse_locale expand_reasons %reason_code escape_chars use_errno/;
 
 use POSIX      qw/strerror/;
 use List::Util qw/sum first/;
@@ -215,9 +214,9 @@ sub _set_mode($)
 
     $self->{needs} = [ expand_reasons $default_accept[$mode] ];
 
-    trace __x"switching to run mode {mode} for {pkg}, accept {accept}"
-       , mode => $mode, pkg => ref $self, accept => $default_accept[$mode]
-         unless $self->isa('Log::Report::Dispatcher::Try');
+    $self->isa('Log::Report::Dispatcher::Try')
+        or trace __x"switching to run mode {mode} for {pkg}, accept {accept}",
+            mode => $mode, pkg => ref $self, accept => $default_accept[$mode];
 
     $mode;
 }
