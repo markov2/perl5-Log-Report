@@ -1,4 +1,4 @@
-#!/usr/bin/perl -T
+#!/usr/bin/perl
 
 use strict;
 use warnings;
@@ -8,7 +8,7 @@ print "Content-Type: text/html\r\n\r\n";
 # Get the question
 
 my $to = $ENV{QUERY_STRING} || '';
-my ($manual, $unique) = $to =~ m/([\w:%]+)\&(\d+)/;
+my ($manual, $unique) = $to =~ m#([\w:%]+)\&(id\d+)#;
 $manual =~ s/\%[a-fA-F0-9]{2}/chr hex $1/ge;
 
 # Contact the database
@@ -16,20 +16,20 @@ $manual =~ s/\%[a-fA-F0-9]{2}/chr hex $1/ge;
 my $DB = $0;
 $DB    =~ s/[\w\.]+$/markers/;
 
-open DB, '<', $DB or die "Cannot read markers from $DB: $!\n";
-my $root = <DB>;
+open my $db, '<', $DB or die "Cannot read markers from $DB: $!\n";
+my $root = $db->getline;
 chomp $root;
 
 # Lookup location of item in the manual page
 
 my ($nr, $in, $page);
-while( <DB> )
-{   ($nr, $in, $page) = split " ", $_, 3;
+while(my $line = $db->getline)
+{   ($nr, $in, $page) = split " ", $line, 3;
     last if $nr eq $unique && $in eq $manual;
 }
 
-die "Cannot find id $to for $manual in $DB.\n"
-   unless $nr eq $unique;
+$nr eq $unique
+    or die "cannot find id $to for $manual in $DB\n";
 
 chomp $page;
 

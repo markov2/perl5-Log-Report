@@ -1,6 +1,7 @@
-# This code is part of distribution Log-Report. Meta-POD processed with
-# OODoc into POD and HTML manual-pages.  See README.md
-# Copyright Mark Overmeer.  Licensed under the same terms as Perl itself.
+#oodist: *** DO NOT USE THIS VERSION FOR PRODUCTION ***
+#oodist: This file contains OODoc-style documentation which will get stripped
+#oodist: during its release in the distribution.  You can use this file for
+#oodist: testing, however the code of this development version may be broken!
 
 package Log::Report::Message;
 
@@ -15,38 +16,41 @@ use Scalar::Util      qw/blessed/;
 use Log::Report::Util qw/to_html/;
 
 # Work-around for missing LC_MESSAGES on old Perls and Windows
-{ no warnings;
-  eval "&LC_MESSAGES";
-  *LC_MESSAGES = sub(){5} if $@;
+{	no warnings;
+	eval "&LC_MESSAGES";
+	*LC_MESSAGES = sub(){5} if $@;
 }
 
+#--------------------
 =chapter NAME
+
 Log::Report::Message - a piece of text to be translated
 
 =chapter SYNOPSIS
- # Objects created by Log::Report's __ functions
- # Full feature description in the DETAILS section
 
- # no interpolation
- __"Hello, World";
+  # Objects created by Log::Report's __ functions
+  # Full feature description in the DETAILS section
 
- # with interpolation
- __x"age {years}", years => 12;
+  # no interpolation
+  __"Hello, World";
 
- # interpolation for one or many
- my $nr_files = @files;
- __nx"one file", "{_count} files", $nr_files;
- __nx"one file", "{_count} files", \@files;
+  # with interpolation
+  __x"age {years}", years => 12;
 
- # interpolation of arrays
- __x"price-list: {prices%.2f}", prices => \@prices, _join => ', ';
+  # interpolation for one or many
+  my $nr_files = @files;
+  __nx"one file", "{_count} files", $nr_files;
+  __nx"one file", "{_count} files", \@files;
 
- # white-spacing on msgid preserved
- print __"\tCongratulations,\n";
- print "\t", __("Congratulations,"), "\n";  # same
+  # interpolation of arrays
+  __x"price-list: {prices%.2f}", prices => \@prices, _join => ', ';
+
+  # white-spacing on msgid preserved
+  print __"\tCongratulations,\n";
+  print "\t", __("Congratulations,"), "\n";  # same
 
 =chapter DESCRIPTION
-Any use of a translation function exported by M<Log::Report>, like
+Any use of a translation function exported by Log::Report, like
 C<__()> (the function is named underscore-underscore) or C<__x()>
 (underscore-underscore-x) will result in this object.  It will capture
 some environmental information, and delay the translation until it
@@ -60,45 +64,47 @@ that depends on the front-end, the log dispatcher.
 
 =chapter OVERLOADING
 
-=overload stringification
+=overload "" stringification
 When the object is used in string context, it will get translated.
 Implemented as M<toString()>.
 
-=overload as $function
-When the object is used to call as $function, a new object is
-created with the data from the original one but updated with the
-new parameters.  Implemented in C<clone()>.
+=overload &() function
+When the object is called as function, a new object is created with
+the data from the original one but updated with the new parameters.
+Implemented in C<clone()>.
 
-=overload concatenation
+=overload . concatenation
 An (accidental) use of concatenation (a dot where a comma should be
 used) would immediately stringify the object.  This is avoided by
 overloading that operation.
 =cut
 
 use overload
-    '""'  => 'toString'
-  , '&{}' => sub { my $obj = shift; sub{$obj->clone(@_)} }
-  , '.'   => 'concat'
-  , fallback => 1;
+	'""'  => 'toString',
+	'&{}' => sub { my $obj = shift; sub{$obj->clone(@_)} },
+	'.'   => 'concat',
+	fallback => 1;
 
+#--------------------
 =chapter METHODS
 
 =section Constructors
 
 =c_method new %options
-B<End-users: do not use this method directly>, but use M<Log::Report::__()>
-and friends.  The %options is a mixed list of object initiation parameters
-(all with a leading underscore) and variables to be filled in into the
-translated C<_msgid> string.
+B<End-users: do not use this method directly>, but use
+M<Log::Report::__()>, M<Log::Report::__x()> and friends.  The %options
+is a mixed list of object initiation parameters (all with a leading
+underscore) and variables to be filled in into the translated P<_msgid>
+string.
 
 =option  _expand BOOLEAN
-=default _expand C<false>
+=default _expand false
 Indicates whether variables are to be filled-in; whether C<__x> or C<__> was
 used to define the message.
 
 =option  _domain STRING
 =default _domain <from "use Log::Report">
-The text-domain (translation table) to which this C<_msgid> belongs.
+The text-domain (translation table) to which this P<_msgid> belongs.
 
 With this parameter, your can "borrow" translations from other textdomains.
 Be very careful with this (although there are good use-cases)  The xgettext
@@ -111,49 +117,49 @@ The extractor will not take the msgid when it is an expression.  The '+'
 has no effect on the string at runtime.
 
 =option  _count INTEGER|ARRAY|HASH
-=default _count C<undef>
-When defined, the C<_plural> need to be defined as well.  When an
+=default _count undef
+When defined, the P<_plural> need to be defined as well.  When an
 ARRAY is provided, the length of the ARRAY is taken.  When a HASH
 is given, the number of keys in the HASH is used.
 
-=option  _plural MSGID
-=default _plural C<undef>
-Can be used together with C<_count>.  This plural form of the C<_msgid>
+=option  _plural $msgid
+=default _plural undef
+Can be used together with P<_count>.  This plural form of the P<_msgid>
 text is used to simplify the work of translators, and as fallback when
 no translation is possible: therefore, this can best resemble an
 English message.
 
 White-space at the beginning and end of the string are stripped off.
-The white-space provided by the C<_msgid> will be used.
+The white-space provided by the P<_msgid> will be used.
 
-=option  _msgid MSGID
-=default _msgid C<undef>
+=option  _msgid $msgid
+=default _msgid undef
 The message label, which refers to some translation information.
 Usually a string which is close the English version of the message.
 This will also be used if there is no translation possible/known.
 
-Leading white-space C<\s> will be added to C<_prepend>.  Trailing
-white-space will be added before C<_append>.
+Leading white-space C<\s> will be added to P<_prepend>.  Trailing
+white-space will be added before P<_append>.
 
 =option  _category INTEGER
-=default _category C<undef>
+=default _category undef
 The category when the real gettext library is used, for instance
 LC_MESSAGES.
 
-=option  _prepend STRING|MESSAGE
-=default _prepend C<undef>
-Text as STRING or MESSAGE object to be displayed before the display
+=option  _prepend STRING|$message
+=default _prepend undef
+Text as STRING or $message object to be displayed before the display
 of this message.
 
-=option  _append  STRING|MESSAGE
-=default _append  C<undef>
-Text as STRING or MESSAGE object to be displayed after the display
+=option  _append  STRING|$message
+=default _append  undef
+Text as STRING or $message object to be displayed after the display
 of this message.
 
-=option  _class   STRING|ARRAY
+=option  _class   $label|\@labels
 =default _class   []
 When messages are used for exception based programming, you add
-C<_class> parameters to the argument list.  Later, with for instance
+P<_class> parameters to the argument list.  Later, with for instance
 M<Log::Report::Dispatcher::Try::wasFatal(class)>, you can check the
 category of the message.
 
@@ -161,18 +167,18 @@ One message can be part of multiple classes.  The STRING is used as
 comma- and/or blank separated list of class tokens (barewords), the
 ARRAY lists all tokens separately. See M<classes()>.
 
-=option  _classes STRING|ARRAY
+=option  _classes $label|\@labels
 =default _classes []
-Alternative for C<_class>, which cannot be used at the same time.
+Alternative for P<_class>, which cannot be used at the same time.
 
-=option  _to NAME
+=option  _to $dispatcher
 =default _to <undef>
-Specify the NAME of a dispatcher as destination explicitly. Short
+Specify the $dispatcher as destination explicitly. Short
 for  C<< report {to => NAME}, ... >>  See M<to()>
 
-=option  _join STRING
+=option  _join $separator
 =default _join C<$">  C<$LIST_SEPARATOR>
-Which STRING to be used then an ARRAY is being filled-in.
+Which $separator string to be used then an ARRAY is being filled-in.
 
 =option  _lang ISO
 =default _lang <from locale>
@@ -180,41 +186,41 @@ Which STRING to be used then an ARRAY is being filled-in.
 is not configured correctly (yet).  This does not extend to prepended
 or appended translated message object.
 
-=option  _context WORDS|ARRAY
-=default _context C<undef>
-[1.00] Set keywords which can be used to select alternatives
+=option  _context $keyword|\@keywords
+=default _context undef
+[1.00] Set the @keywords which can be used to select alternatives
 between translations.  Read the DETAILS section in
-M<Log::Report::Translator::Context>
+Log::Report::Translator::Context
 
-=option  _msgctxt STRING
-=default _msgctxt C<undef>
-[1.22] Message context in the translation file, the traditional use.  Cannot
-be combined with C<_context> on the same msgids.
+=option  _msgctxt $context
+=default _msgctxt undef
+[1.22] Message $context in the translation file, the traditional use.  Cannot
+be combined with P<_context> on the same msgids.
 =cut
 
 sub new($@)
-{   my ($class, %s) = @_;
+{	my ($class, %s) = @_;
 
-    if(ref $s{_count})
-    {   my $c        = $s{_count};
-        $s{_count}   = ref $c eq 'ARRAY' ? @$c : keys %$c;
-    }
+	if(ref $s{_count})
+	{	my $c        = $s{_count};
+		$s{_count}   = ref $c eq 'ARRAY' ? @$c : keys %$c;
+	}
 
-    defined $s{_join}
-        or $s{_join} = $";
+	defined $s{_join}
+		or $s{_join} = $";
 
-    if($s{_msgid})
-    {   $s{_append}  = defined $s{_append} ? $1.$s{_append} : $1
-            if $s{_msgid} =~ s/(\s+)$//s;
+	if($s{_msgid})
+	{	$s{_append}  = defined $s{_append} ? $1.$s{_append} : $1
+			if $s{_msgid} =~ s/(\s+)$//s;
 
-        $s{_prepend}.= $1
-            if $s{_msgid} =~ s/^(\s+)//s;
-    }
-    if($s{_plural})
-    {   s/\s+$//, s/^\s+// for $s{_plural};
-    }
+		$s{_prepend}.= $1
+			if $s{_msgid} =~ s/^(\s+)//s;
+	}
+	if($s{_plural})
+	{	s/\s+$//, s/^\s+// for $s{_plural};
+	}
 
-    bless \%s, $class;
+	bless \%s, $class;
 }
 
 # internal use only: to simplify __*p* functions
@@ -226,30 +232,30 @@ with the specified %options and $variables.  The advantage is that the
 cached translations are shared between the objects.
 
 =examples use of clone()
- my $s = __x "found {nr} files", nr => 5;
- my $t = $s->clone(nr => 3);
- my $t = $s->(nr => 3);      # equivalent
- print $s;     # found 5 files
- print $t;     # found 3 files
+  my $s = __x "found {nr} files", nr => 5;
+  my $t = $s->clone(nr => 3);
+  my $t = $s->(nr => 3);      # equivalent
+  print $s;     # found 5 files
+  print $t;     # found 3 files
 =cut
 
 sub clone(@)
-{   my $self = shift;
-    (ref $self)->new(%$self, @_);
+{	my $self = shift;
+	(ref $self)->new(%$self, @_);
 }
 
-#----------------
+#--------------------
 =section Accessors
 
 =method prepend
-Returns the string which is prepended to this one.  Usually C<undef>.
+Returns the string which is prepended to this one.  Usually undef.
 
 =method msgid
 Returns the msgid which will later be translated.
 
 =method append
-Returns the string or M<Log::Report::Message> object which is appended
-after this one.  Usually C<undef>.
+Returns the string or Log::Report::Message object which is appended
+after this one.  Usually undef.
 
 =method domain
 Returns the domain of the first translatable string in the structure.
@@ -279,8 +285,8 @@ group indicators, as often found in exception-based programming.
 =cut
 
 sub classes()
-{   my $class = $_[0]->{_class} || $_[0]->{_classes} || [];
-    ref $class ? @$class : split(/[\s,]+/, $class);
+{	my $class = $_[0]->{_class} || $_[0]->{_classes} || [];
+	ref $class ? @$class : split(/[\s,]+/, $class);
 }
 
 =method to [$name]
@@ -290,8 +296,8 @@ return undef, because usually all dispatchers get all messages.
 =cut
 
 sub to(;$)
-{   my $self = shift;
-    @_ ? $self->{_to} = shift : $self->{_to};
+{	my $self = shift;
+	@_ ? $self->{_to} = shift : $self->{_to};
 }
 
 =method errno [$errno]
@@ -302,8 +308,8 @@ taken from C<$!> and C<$?>.
 =cut
 
 sub errno(;$)
-{   my $self = shift;
-    @_ ? $self->{_errno} = shift : $self->{_errno};
+{	my $self = shift;
+	@_ ? $self->{_errno} = shift : $self->{_errno};
 }
 
 =method valueOf $parameter
@@ -314,14 +320,14 @@ have their own method which should be used with preference.
 When the message was produced with
 
   my @files = qw/one two three/;
-  my $msg = __xn "found one file: {file}"
-               , "found {nrfiles} files: {files}"
-               , scalar @files
-               , file    => $files[0]
-               , files   => \@files
-               , nrfiles => @files+0  # or scalar(@files)
-               , _class  => 'IO, files'
-               , _join   => ', ';
+  my $msg = __xn"found one file: {file}",
+                "found {nrfiles} files: {files}",
+                scalar @files,
+                file    => $files[0],
+                files   => \@files,
+                nrfiles => @files+0,  # or scalar(@files)
+                _class  => 'IO, files',
+                _join   => ', ';
 
 then the values can be takes from the produced message as
 
@@ -334,17 +340,17 @@ then the values can be takes from the produced message as
 Simplified, the above example can also be written as:
 
   local $" = ', ';
-  my $msg  = __xn "found one file: {files}"
-                , "found {_count} files: {files}"
-                , @files      # has scalar context
-                , files   => \@files
-                , _class  => 'IO, files';
+  my $msg  = __xn"found one file: {files}",
+                 "found {_count} files: {files}",
+                 @files,      # has scalar context
+                 files   => \@files,
+                 _class  => 'IO, files';
 
 =cut
 
 sub valueOf($) { $_[0]->{$_[1]} }
 
-#--------------
+#--------------------
 =section Processing
 
 =method inClass $class|Regexp
@@ -353,53 +359,51 @@ matches the Regexp.  The trueth value is the (first matching) class.
 =cut
 
 sub inClass($)
-{   my @classes = shift->classes;
-       ref $_[0] eq 'Regexp'
-    ? (first { $_ =~ $_[0] } @classes)
-    : (first { $_ eq $_[0] } @classes);
+{	my @classes = shift->classes;
+	ref $_[0] eq 'Regexp' ? (first { $_ =~ $_[0] } @classes) : (first { $_ eq $_[0] } @classes);
 }
-    
+
 =method toString [$locale]
 Translate a message.  If not specified, the default locale is used.
 =cut
 
 sub toString(;$)
-{   my ($self, $locale) = @_;
+{	my ($self, $locale) = @_;
 
-    my $count   = $self->{_count} || 0;
-    $locale     = $self->{_lang} if $self->{_lang};
-    my $prepend = $self->{_prepend} // '';
-    my $append  = $self->{_append}  // '';
+	my $count   = $self->{_count} || 0;
+	$locale     = $self->{_lang} if $self->{_lang};
+	my $prepend = $self->{_prepend} // '';
+	my $append  = $self->{_append}  // '';
 
-    $prepend = $prepend->isa(__PACKAGE__) ? $prepend->toString($locale) : "$prepend"
-       if blessed $prepend;
+	$prepend = $prepend->isa(__PACKAGE__) ? $prepend->toString($locale) : "$prepend"
+		if blessed $prepend;
 
-    $append  = $append->isa(__PACKAGE__)  ? $append->toString($locale)  : "$append"
-       if blessed $append;
+	$append  = $append->isa(__PACKAGE__)  ? $append->toString($locale)  : "$append"
+		if blessed $append;
 
-    $self->{_msgid}   # no translation, constant string
-        or return "$prepend$append";
+	$self->{_msgid}   # no translation, constant string
+		or return "$prepend$append";
 
-    # assumed is that switching locales is expensive
-    my $oldloc = setlocale(LC_MESSAGES);
-    setlocale(LC_MESSAGES, $locale)
-        if defined $locale && (!defined $oldloc || $locale ne $oldloc);
+	# assumed is that switching locales is expensive
+	my $oldloc = setlocale(LC_MESSAGES);
+	setlocale(LC_MESSAGES, $locale)
+		if defined $locale && (!defined $oldloc || $locale ne $oldloc);
 
-    # translate the msgid
-    my $domain = $self->{_domain};
-    blessed $domain && $domain->isa('Log::Report::Minimal::Domain')
-        or $domain = textdomain $domain;
+	# translate the msgid
+	my $domain = $self->{_domain};
+	blessed $domain && $domain->isa('Log::Report::Minimal::Domain')
+		or $domain = textdomain $domain;
 
-    my $format = $domain->translate($self, $locale || $oldloc);
-    defined $format or return ();
+	my $format = $domain->translate($self, $locale || $oldloc);
+	defined $format or return ();
 
-    # fill-in the fields
-    my $text = $self->{_expand} ? $domain->interpolate($format, $self) : "$prepend$format$append";
+	# fill-in the fields
+	my $text = $self->{_expand} ? $domain->interpolate($format, $self) : "$prepend$format$append";
 
-    setlocale(LC_MESSAGES, $oldloc)
-        if defined $oldloc && (!defined $locale || $oldloc ne $locale);
+	setlocale(LC_MESSAGES, $oldloc)
+		if defined $oldloc && (!defined $locale || $oldloc ne $locale);
 
-    $text;
+	$text;
 }
 
 
@@ -425,10 +429,10 @@ expansions within the msgid is not performed.
 =cut
 
 sub untranslated()
-{  my $self = shift;
-     (defined $self->{_prepend} ? $self->{_prepend} : '')
-   . (defined $self->{_msgid}   ? $self->{_msgid}   : '')
-   . (defined $self->{_append}  ? $self->{_append}  : '');
+{	my $self = shift;
+	  (defined $self->{_prepend} ? $self->{_prepend} : '')
+	. (defined $self->{_msgid}   ? $self->{_msgid}   : '')
+	. (defined $self->{_append}  ? $self->{_append}  : '');
 }
 
 =method concat STRING|$object, [$prepend]
@@ -438,27 +442,27 @@ or $object (other C<Log::Report::Message>) needs to prepended, otherwise
 it is appended.
 
 =examples of concatenation
- print __"Hello" . ' ' . __"World!\n";
- print __("Hello")->concat(' ')->concat(__"World!")->concat("\n");
+  print __"Hello" . ' ' . __"World!\n";
+  print __("Hello")->concat(' ')->concat(__"World!")->concat("\n");
 
 =cut
 
 sub concat($;$)
-{   my ($self, $what, $reversed) = @_;
-    if($reversed)
-    {   $what .= $self->{_prepend} if defined $self->{_prepend};
-        return ref($self)->new(%$self, _prepend => $what);
-    }
+{	my ($self, $what, $reversed) = @_;
+	if($reversed)
+	{	$what .= $self->{_prepend} if defined $self->{_prepend};
+		return ref($self)->new(%$self, _prepend => $what);
+	}
 
-    $what = $self->{_append} . $what if defined $self->{_append};
-    ref($self)->new(%$self, _append => $what);
+	$what = $self->{_append} . $what if defined $self->{_append};
+	ref($self)->new(%$self, _append => $what);
 }
 
-#----------------
+#--------------------
 =chapter DETAILS
 
 =section OPTIONS and VARIABLES
-The M<Log::Report> functions which define translation request can all
+The Log::Report functions which define translation request can all
 have OPTIONS.  Some can have VARIABLES to be interpolated in the string as
 well.  To distinguish between the OPTIONS and VARIABLES (both a list
 of key-value pairs), the keys of the OPTIONS start with an underscore C<_>.
@@ -472,13 +476,13 @@ translated MSGID string.  The translation can contain the VARIABLE
 and OPTION names between curly brackets.  Text between curly brackets
 which is not a known parameter will be left untouched.
 
- fault __x"cannot open open {filename}", filename => $fn;
+  fault __x"cannot open open {filename}", filename => $fn;
 
- print __xn"directory {dir} contains one file",
-           "directory {dir} contains {nr_files} files",
-           scalar(@files),            # (1) (2) (3)
-           nr_files => scalar @files, # (4)
-           dir      => $dir;
+  print __xn"directory {dir} contains one file",
+            "directory {dir} contains {nr_files} files",
+            scalar(@files),            # (1) (2) (3)
+            nr_files => scalar @files, # (4)
+            dir      => $dir;
 
 (1) this required third parameter is used to switch between the different
 plural forms.  English has only two forms, but some languages have many
@@ -497,9 +501,9 @@ otherwise all filenames will be filled-in as parameters to C<__xn()>.
 See below for the available C<_count> value, to see how the C<nr_files>
 parameter can disappear.
 
- print __xn"directory {dir} contains one file",
-           "directory {dir} contains {_count} files",
-           \@files, dir => $dir;
+  print __xn"directory {dir} contains one file",
+            "directory {dir} contains {_count} files",
+            \@files, dir => $dir;
 
 =subsection Interpolation of VARIABLES
 
@@ -515,26 +519,29 @@ For interpolating, the following rules apply:
 =over 4
 =item *
 Simple scalar values are interpolated "as is"
+
 =item *
 References to SCALARs will collect the value on the moment that the
 output is made.  The C<Log::Report::Message> object which is created with
 the C<__xn> can be seen as a closure.  The translation can be reused.
 See example below.
+
 =item *
 Code references can be used to create the data "under fly".  The
 C<Log::Report::Message> object which is being handled is passed as
 only argument.  This is a hash in which all OPTIONS and VARIABLES
 can be found.
+
 =item *
 When the value is an ARRAY, all members will be interpolated with C<$">
 between the elements.  Alternatively (maybe nicer), you can pass an
 interpolation parameter via the C<_join> OPTION.
 =back
 
- local $" = ', ';
- error __x"matching files: {files}", files => \@files;
+  local $" = ', ';
+  error __x"matching files: {files}", files => \@files;
 
- error __x"matching files: {files}", files => \@files, _join => ', ';
+  error __x"matching files: {files}", files => \@files, _join => ', ';
 
 =subsection Interpolation of OPTIONS
 
@@ -559,21 +566,21 @@ M<Log::Report::Dispatcher::Try::wasFatal()>.
 =back
 
 =example using the _count
-With M<Locale::TextDomain>, you have to do
+With Locale::TextDomain, you have to do
 
   use Locale::TextDomain;
-  print __nx ( "One file has been deleted.\n"
-             , "{num} files have been deleted.\n"
-             , $num_files
-             , num => $num_files
+  print __nx ( "One file has been deleted.\n",
+               "{num} files have been deleted.\n",
+               $num_files,
+               num => $num_files
              );
 
 With C<Log::Report>, you can do
 
   use Log::Report;
-  print __nx ( "One file has been deleted.\n"
-             , "{_count} files have been deleted.\n"
-             , $num_files
+  print __nx ( "One file has been deleted.\n",
+               "{_count} files have been deleted.\n",
+               $num_files
              );
 
 Of course, you need to be aware that the name used to reference the
@@ -585,11 +592,11 @@ is more verbose.
 In above examples, the msgid and plural form have a trailing new-line.
 In general, it is much easier to write
 
-   print __x"Hello, World!\n";
+  print __x"Hello, World!\n";
 
 than
 
-   print __x("Hello, World!") . "\n";
+  print __x("Hello, World!") . "\n";
 
 For the translation tables, however, that trailing new-line is "ignorable
 information"; it is an layout issue, not a translation issue.
@@ -608,41 +615,41 @@ be used.
 This way of translating is somewhat expensive, because an object to
 handle the C<__x()> is created each time.
 
- for my $i (1..100_000)
- {   print __x "Hello World {i}\n", i => $i;
- }
+  for my $i (1..100_000)
+  {   print __x "Hello World {i}\n", i => $i;
+  }
 
-The suggestion that M<Locale::TextDomain> makes to improve performance,
+The suggestion that Locale::TextDomain makes to improve performance,
 is to get the translation outside the loop, which only works without
 interpolation:
 
- use Locale::TextDomain;
- my $i = 42;
- my $s = __x("Hello World {i}\n", i => $i);
- foreach $i (1..100_000)
- {   print $s;
- }
+  use Locale::TextDomain;
+  my $i = 42;
+  my $s = __x("Hello World {i}\n", i => $i);
+  foreach $i (1..100_000)
+  {   print $s;
+  }
 
 B<Oops,> not what you mean because the first value of C<$i> is captured
 in the initial message object.  With Log::Report, you can do it (except
 when you use contexts)
 
- use Log::Report;
- my $i;
- my $s = __x("Hello World {i}\n", i => \$i);
- foreach $i (1..100_000)
- {   print $s;
- }
+  use Log::Report;
+  my $i;
+  my $s = __x("Hello World {i}\n", i => \$i);
+  foreach $i (1..100_000)
+  {   print $s;
+  }
 
 Mind you not to write: C<for my $i> in above case!!!!
 
 You can also write an incomplete translation:
 
- use Log::Report;
- my $s = __x "Hello World {i}\n";
- foreach my $i (1..100_000)
- {   print $s->(i => $i);
- }
+  use Log::Report;
+  my $s = __x "Hello World {i}\n";
+  foreach my $i (1..100_000)
+  {   print $s->(i => $i);
+  }
 
 In either case, the translation will be looked-up only once.
 

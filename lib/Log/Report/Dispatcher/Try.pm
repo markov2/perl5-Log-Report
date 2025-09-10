@@ -1,6 +1,14 @@
-# This code is part of distribution Log-Report. Meta-POD processed with
-# OODoc into POD and HTML manual-pages.  See README.md
-# Copyright Mark Overmeer.  Licensed under the same terms as Perl itself.
+#oodist: *** DO NOT USE THIS VERSION FOR PRODUCTION ***
+#oodist: This file contains OODoc-style documentation which will get stripped
+#oodist: during its release in the distribution.  You can use this file for
+#oodist: testing, however the code of this development version may be broken!
+
+#oorestyle: not found P for overload boolean($@)
+#oorestyle: not found P for overload stringify($@)
+#oorestyle: not found P for method reportFatal(%options)
+#oorestyle: not found P for method reportFatal(%options)
+#oorestyle: not found P for method showStatus($@)
+#oorestyle: not found P for method showStatus($@)
 
 package Log::Report::Dispatcher::Try;
 use base 'Log::Report::Dispatcher';
@@ -13,41 +21,42 @@ use Log::Report::Exception ();
 use Log::Report::Util      qw/%reason_code expand_reasons/;
 use List::Util             qw/first/;
 
+#--------------------
 =chapter NAME
 Log::Report::Dispatcher::Try - capture all reports as exceptions
 
 =chapter SYNOPSIS
- try { ... };       # mind the ';' !!
- if($@) {           # signals something went wrong
+  try { ... };       # mind the ';' !!
+  if($@) {           # signals something went wrong
 
- if(try {...}) {    # block ended normally
+  if(try {...}) {    # block ended normally
 
- my $x = try { read_temperature() };
- my @x = try { read_lines_from_file() };
+  my $x = try { read_temperature() };
+  my @x = try { read_lines_from_file() };
 
- try { ... }        # no comma!!
-    mode => 'DEBUG', accept => 'ERROR-';
+  try { ... }        # no comma!!
+     mode => 'DEBUG', accept => 'ERROR-';
 
- try sub { ... },   # with comma
-    mode => 'DEBUG', accept => 'ALL';
+  try sub { ... },   # with comma
+     mode => 'DEBUG', accept => 'ALL';
 
- try \&myhandler, accept => 'ERROR-';
- try { ... } hide => 'TRACE';
+  try \&myhandler, accept => 'ERROR-';
+  try { ... } hide => 'TRACE';
 
- print ref $@;      # Log::Report::Dispatcher::Try
+  print ref $@;      # Log::Report::Dispatcher::Try
 
- $@->reportFatal;   # re-dispatch result of try block
- $@->reportAll;     # ... also warnings etc
- if($@) {...}       # if errors
- if($@->failed) {   # same       # }
- if($@->success) {  # no errors  # }
+  $@->reportFatal;   # re-dispatch result of try block
+  $@->reportAll;     # ... also warnings etc
+  if($@) {...}       # if errors
+  if($@->failed) {   # same       # }
+  if($@->success) {  # no errors  # }
 
- try { # something causes an error report, which is caught
-       failure 'no network';
-     };
- $@->reportFatal(to => 'syslog');  # overrule destination
+  try { # something causes an error report, which is caught
+        failure 'no network';
+      };
+  $@->reportFatal(to => 'syslog');  # overrule destination
 
- print $@->exceptions; # no re-cast, just print
+  print $@->exceptions; # no re-cast, just print
 
 =chapter DESCRIPTION
 The B<try> works like Perl's build-in C<eval()>, but implements
@@ -72,60 +81,61 @@ the run of the BLOCK.
 
 =chapter OVERLOADING
 
-=overload boolean
+=overload bool boolean
 Returns true if the previous try block did produce a terminal
 error.  This "try" object is assigned to C<$@>, and the usual
 perl syntax is C<if($@) {...error-handler...}>.
 
-=overload stringify
+=overload "" stringify
 When C<$@> is used the traditional way, it is checked to have
 a string content.  In this case, stringify into the fatal error
 or nothing.
 =cut
 
 use overload
-    bool     => 'failed'
-  , '""'     => 'showStatus'
-  , fallback => 1;
+	bool     => 'failed',
+	'""'     => 'showStatus',
+	fallback => 1;
 
-#-----------------
+#--------------------
 =chapter METHODS
 
 =section Constructors
 
 =c_method new $type, $name, %options
-=option  exceptions ARRAY
+=option  exceptions \@objects
 =default exceptions []
-ARRAY of M<Log::Report::Exception> objects.
+ARRAY of Log::Report::Exception objects.
 
 =option  died STRING
-=default died C<undef>
+=default died undef
 The exit string or object ($@) of the eval'ed block, in its unprocessed state.
 
-=option  hide REASONS|ARRAY|'ALL'|'NONE'
+=option  hide $reasons|\@reasons|'ALL'|'NONE'
 =default hide 'NONE'
 [1.09] see M<hide()>
 
 =option  on_die 'ERROR'|'PANIC'
 =default on_die 'ERROR'
 When code which runs in this block exits with a die(), it will get
-translated into a M<Log::Report::Exception> using
+translated into a Log::Report::Exception using
 M<Log::Report::Die::die_decode()>.  How serious are we about these
 errors?
 
 =cut
 
 sub init($)
-{   my ($self, $args) = @_;
-    defined $self->SUPER::init($args) or return;
-    $self->{exceptions} = delete $args->{exceptions} || [];
-    $self->{died}       = delete $args->{died};
-    $self->hide($args->{hide} // 'NONE');
-    $self->{on_die}     = $args->{on_die} // 'ERROR';
-    $self;
+{	my ($self, $args) = @_;
+	defined $self->SUPER::init($args) or return;
+
+	$self->{exceptions} = delete $args->{exceptions} || [];
+	$self->{died}       = delete $args->{died};
+	$self->hide($args->{hide} // 'NONE');
+	$self->{on_die}     = $args->{on_die} // 'ERROR';
+	$self;
 }
 
-#-----------------
+#--------------------
 =section Accessors
 
 =method died [STRING]
@@ -135,8 +145,8 @@ into something useful.
 =cut
 
 sub died(;$)
-{   my $self = shift;
-    @_ ? ($self->{died} = shift) : $self->{died};
+{	my $self = shift;
+	@_ ? ($self->{died} = shift) : $self->{died};
 }
 
 =method exceptions
@@ -144,10 +154,10 @@ Returns all collected C<Log::Report::Exceptions>.  The last of
 them may be a fatal one.  The other are non-fatal.
 =cut
 
-sub exceptions() { @{shift->{exceptions}} }
+sub exceptions() { @{ $_[0]->{exceptions}} }
 
 =method hides $reason
-Check whether the try stops message which were produced for C<$reason>.
+Check whether the try stops message which were produced for $reason.
 =cut
 
 sub hides($) { $_[0]->{LRDT_hides}{$_[1]} }
@@ -171,18 +181,18 @@ it's a I<set> not an I<add>.
 =cut
 
 sub hide(@)
-{   my $self = shift;
-    my @reasons = expand_reasons(@_ > 1 ? \@_ : shift);
-    $self->{LRDT_hides} = +{ map +($_ => 1), @reasons };
+{	my $self = shift;
+	my @reasons = expand_reasons(@_ > 1 ? \@_ : shift);
+	$self->{LRDT_hides} = +{ map +($_ => 1), @reasons };
 }
 
 =method die2reason
 Returns the value of M<new(on_die)>.
 =cut
 
-sub die2reason() { shift->{on_die} }
+sub die2reason() { $_[0]->{on_die} }
 
-#-----------------
+#--------------------
 =section Logging
 
 =method log $opts, $reason, $message
@@ -191,31 +201,26 @@ program.  However, messages in a "try" block are only captured in
 an intermediate layer: they may never be presented to an end-users.
 And for sure, we do not know the language yet.
 
-The $message is either a STRING or a M<Log::Report::Message>.
+The $message is either a STRING or a Log::Report::Message.
 =cut
 
 sub log($$$$)
-{   my ($self, $opts, $reason, $message, $domain) = @_;
+{	my ($self, $opts, $reason, $message, $domain) = @_;
 
-    unless($opts->{stack})
-    {   my $mode = $self->mode;
-        $opts->{stack} = $self->collectStack
-            if $reason eq 'PANIC'
-            || ($mode==2 && $reason_code{$reason} >= $reason_code{ALERT})
-            || ($mode==3 && $reason_code{$reason} >= $reason_code{ERROR});
-    }
+	unless($opts->{stack})
+	{	my $mode = $self->mode;
+		$opts->{stack} = $self->collectStack
+			if $reason eq 'PANIC'
+			|| ($mode==2 && $reason_code{$reason} >= $reason_code{ALERT})
+			|| ($mode==3 && $reason_code{$reason} >= $reason_code{ERROR});
+	}
 
-    $opts->{location} ||= '';
+	$opts->{location} ||= '';
 
-    my $e = Log::Report::Exception->new
-      ( reason      => $reason
-      , report_opts => $opts
-      , message     => $message
-      );
+	push @{$self->{exceptions}},
+		Log::Report::Exception->new(reason => $reason, report_opts => $opts, message => $message);
 
-    push @{$self->{exceptions}}, $e;
-
-    $self;
+	$self;
 }
 
 =method reportAll %options
@@ -224,17 +229,17 @@ dispatchers, which were disabled during the try block. The %options
 will end-up as HASH of %options to M<Log::Report::report()>; see
 M<Log::Report::Exception::throw()> which does the job.
 
-=method reportFatal
+=method reportFatal %options
 Re-cast only the fatal message to the defined dispatchers.  If the
 block was left without problems, then nothing will be done.  The %options
 will end-up as HASH of %options to M<Log::Report::report()>; see
 M<Log::Report::Exception::throw()> which does the job.
 =cut
 
-sub reportFatal(@) { $_->throw(@_) for shift->wasFatal   }
-sub reportAll(@)   { $_->throw(@_) for shift->exceptions }
+sub reportFatal(@) { my $s = shift; $_->throw(@_) for $s->wasFatal   }
+sub reportAll(@)   { my $s = shift; $_->throw(@_) for $s->exceptions }
 
-#-----------------
+#--------------------
 =section Status
 
 =method failed
@@ -248,25 +253,25 @@ sub failed()  {   defined shift->{died} }
 sub success() { ! defined shift->{died} }
 
 =method wasFatal %options
-Returns the M<Log::Report::Exception> which caused the "try" block to
+Returns the Log::Report::Exception which caused the "try" block to
 die, otherwise an empty LIST (undef).
 
 =option  class CLASS|REGEX
-=default class C<undef>
+=default class undef
 Only return the exception if it was fatal, and in the same time in
 the specified CLASS (as string) or matches the REGEX.
 See M<Log::Report::Message::inClass()>
 =cut
 
 sub wasFatal(@)
-{   my ($self, %args) = @_;
-    defined $self->{died} or return ();
+{	my ($self, %args) = @_;
+	defined $self->{died} or return ();
 
-    my $ex = first { $_->isFatal } @{$self->{exceptions}}
-        or return ();
+	my $ex = first { $_->isFatal } @{$self->{exceptions}}
+		or return ();
 
-    # There can only be one fatal exception.  Is it in the class?
-    (!$args{class} || $ex->inClass($args{class})) ? $ex : ();
+	# There can only be one fatal exception.  Is it in the class?
+	(!$args{class} || $ex->inClass($args{class})) ? $ex : ();
 }
 
 =method showStatus
@@ -279,11 +284,9 @@ using M<reportAll()> or M<reportFatal()>.
 =cut
 
 sub showStatus()
-{   my $self  = shift;
-    my $fatal = $self->wasFatal or return '';
-    __x"try-block stopped with {reason}: {text}"
-      , reason => $fatal->reason
-      , text   => $self->died;
+{	my $self  = shift;
+	my $fatal = $self->wasFatal or return '';
+	__x"try-block stopped with {reason}: {text}", reason => $fatal->reason, text => $self->died;
 }
 
 1;

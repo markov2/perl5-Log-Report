@@ -1,6 +1,7 @@
-# This code is part of distribution Log-Report. Meta-POD processed with
-# OODoc into POD and HTML manual-pages.  See README.md
-# Copyright Mark Overmeer.  Licensed under the same terms as Perl itself.
+#oodist: *** DO NOT USE THIS VERSION FOR PRODUCTION ***
+#oodist: This file contains OODoc-style documentation which will get stripped
+#oodist: during its release in the distribution.  You can use this file for
+#oodist: testing, however the code of this development version may be broken!
 
 package Log::Report::Translator;
 
@@ -9,18 +10,21 @@ use strict;
 
 use Log::Report 'log-report';
 
+#--------------------
 =chapter NAME
+
 Log::Report::Translator - base implementation for translating messages
 
 =chapter SYNOPSIS
- # internal infrastructure
- my $msg = Log::Report::Message->new(_msgid => "Hello World\n");
- print Log::Report::Translator->new(...)->translate($msg);
 
- # normal use
- textdomain 'my-domain'
-   , translator => Log::Report::Translator->new;  # default
- print __"Hello World\n";
+  # internal infrastructure
+  my $msg = Log::Report::Message->new(_msgid => "Hello World\n");
+  print Log::Report::Translator->new(...)->translate($msg);
+
+  # normal use
+  textdomain 'my-domain',
+    translator => Log::Report::Translator->new;  # default
+  print __"Hello World\n";
 
 =chapter DESCRIPTION
 A module (or distribution) has a certain way of translating messages,
@@ -41,18 +45,18 @@ language packs are not installed.
 =cut
 
 sub new(@) { my $class = shift; (bless {}, $class)->init({@_}) }
-sub init($) { shift }
+sub init($) { $_[0] }
 
-#------------
+#--------------------
 =section Accessors
 
 =cut
 
-#------------
+#--------------------
 =section Translating
 
 =method translate $message, [$language, $ctxt]
-Returns the translation of the $message, a C<Log::Report::Message> object,
+Returns the translation of the $message, a Log::Report::Message object,
 based on the current locale.
 
 Translators are permitted to peek into the internal HASH of the
@@ -62,11 +66,8 @@ message object, for performance reasons.
 # this is called as last resort: if a translator cannot find
 # any lexicon or has no matching language.
 sub translate($$$)
-{   my $msg = $_[1];
-
-      defined $msg->{_count} && $msg->{_count} != 1
-    ? $msg->{_plural}
-    : $msg->{_msgid};
+{	my $msg = $_[1];
+	defined $msg->{_count} && $msg->{_count} != 1 ? $msg->{_plural} : $msg->{_msgid};
 }
 
 =method load $domain, $locale

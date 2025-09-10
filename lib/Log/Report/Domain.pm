@@ -1,6 +1,7 @@
-# This code is part of distribution Log-Report. Meta-POD processed with
-# OODoc into POD and HTML manual-pages.  See README.md
-# Copyright Mark Overmeer.  Licensed under the same terms as Perl itself.
+#oodist: *** DO NOT USE THIS VERSION FOR PRODUCTION ***
+#oodist: This file contains OODoc-style documentation which will get stripped
+#oodist: during its release in the distribution.  You can use this file for
+#oodist: testing, however the code of this development version may be broken!
 
 package Log::Report::Domain;
 use base 'Log::Report::Minimal::Domain';
@@ -14,39 +15,40 @@ use Scalar::Util       qw/blessed/;
 
 use Log::Report::Translator;
 
+#--------------------
 =chapter NAME
 Log::Report::Domain - administer one text-domain
 
 =chapter SYNOPSIS
 
- # internal usage
- use Log::Report::Domain;
- my $domain = Log::Report::Domain->new(name => $name);
+  # internal usage
+  use Log::Report::Domain;
+  my $domain = Log::Report::Domain->new(name => $name);
 
- # find a ::Domain object
- use Log::Report 'my-domain';
- my $domain = textdomain 'my-domain'; # find domain config
- my $domain = textdomain;             # config of this package
+  # find a ::Domain object
+  use Log::Report 'my-domain';
+  my $domain = textdomain 'my-domain'; # find domain config
+  my $domain = textdomain;             # config of this package
 
- # explicit domain configuration
- package My::Package;
- use Log::Report 'my-domain';         # set textdomain for package
+  # explicit domain configuration
+  package My::Package;
+  use Log::Report 'my-domain';         # set textdomain for package
 
- textdomain $name, %configure;        # set config, once per program
- (textdomain $name)->configure(%configure); # same
- textdomain->configure(%configure);   # same if current package in $name
+  textdomain $name, %configure;        # set config, once per program
+  (textdomain $name)->configure(%configure); # same
+  textdomain->configure(%configure);   # same if current package in $name
 
- # implicit domain configuration
- package My::Package;
- use Log::Report 'my-domain', %configure;
- 
- # external file for configuration (perl or json format)
- use Log::Report 'my-domain', config => $filename;
+  # implicit domain configuration
+  package My::Package;
+  use Log::Report 'my-domain', %configure;
 
- use Log::Report 'my-domain';
- textdomain->configure(config => $filename);
+  # external file for configuration (perl or json format)
+  use Log::Report 'my-domain', config => $filename;
 
-=chapter DESCRIPTION 
+  use Log::Report 'my-domain';
+  textdomain->configure(config => $filename);
+
+=chapter DESCRIPTION
 
 L<Log::Report> can handle multiple sets of packages at the same
 time: in the usual case a program consists of more than one software
@@ -79,18 +81,17 @@ sub init($)
 	$self;
 }
 
-#----------------
+#--------------------
 =section Attributes
 =method nativeLanguage
 =method translator
 =method contextRules
 =cut
 
-sub nativeLanguage() {shift->{LRD_native}}
-sub translator()     {shift->{LRD_transl}}
-sub contextRules()   {shift->{LRD_ctxt_rules}}
+sub nativeLanguage() { $_[0]->{LRD_native} }
+sub translator()     { $_[0]->{LRD_transl} }
+sub contextRules()   { $_[0]->{LRD_ctxt_rules} }
 
-#----------------
 =method configure %options
 The import is automatically called when the package is compiled.  For all
 but one packages in your distribution, it will only contain the name of
@@ -104,11 +105,11 @@ Selects the formatter used for the errors messages.  The default is C<PRINTI>,
 which will use M<String::Print::printi()>: interpolation with curly
 braces around the variable names.
 
-=option  translator M<Log::Report::Translator>|HASH
+=option  translator Log::Report::Translator|HASH
 =default translator C<created internally>
 Set the object which will do the translations for this domain.
 
-=option  native_language CODESET 
+=option  native_language CODESET
 =default native_language 'en_US'
 This is the language which you have used to write the translatable and
 the non-translatable messages in.  In case no translation is needed,
@@ -116,18 +117,22 @@ you still wish the system error messages to be in the same language
 as the report.  Of course, each textdomain can define its own.
 
 =option  context_rules HASH|OBJECT
-=default context_rules C<undef>
+=default context_rules undef
 When rules are provided, the translator will use the C<msgctxt> fields
 as provided by PO-files (gettext).  This parameter is used to initialize
-a M<Log::Report::Translator::Context> helper object.
+a Log::Report::Translator::Context helper object.
 
-=option  config FILENAME
-=default config C<undef>
-Read the settings from the file.  The parameters found in the file are
+=option  config $file
+=default config undef
+Read the settings from the $file.  The parameters found in the file are
 used as default for the parameters above.  This parameter is especially
-useful for the C<context_rules>, which need to be shared between the
+useful for the P<context_rules>, which need to be shared between the
 running application and F<xgettext-perl>.  See M<readConfig()>
 
+=cut
+
+=error the native_language '$locale' is not a valid locale
+=warning Missing key '$key' in format '$format', file $use
 =cut
 
 sub configure(%)
@@ -175,7 +180,7 @@ sub configure(%)
 }
 
 sub _reportMissingKey($$)
-{   my ($self, $sp, $key, $args) = @_;
+{	my ($self, $sp, $key, $args) = @_;
 
 	warning __x"Missing key '{key}' in format '{format}', file {use}",
 		key => $key, format => $args->{_format}, use => $args->{_use};
@@ -192,7 +197,11 @@ command) or end on '.json'.  See also chapter L</Configuring> below.
 Currently, this file can be in Perl native format (when ending on C<.pl>)
 or JSON (when it ends with C<.json>).  Various modules may explain parts
 of what can be found in these files, for instance
-M<Log::Report::Translator::Context>.
+Log::Report::Translator::Context.
+=cut
+
+=fault cannot open JSON file for context at $fn: $!
+=error unsupported context file type for $fn
 =cut
 
 sub readConfig($)
@@ -205,8 +214,7 @@ sub readConfig($)
 	elsif($fn =~ m/\.json$/i)
 	{	eval "require JSON"; panic $@ if $@;
 		open my($fh), '<:encoding(utf8)', $fn
-			or fault __x"cannot open JSON file for context at {fn}"
-			   , fn => $fn;
+			or fault __x"cannot open JSON file for context at {fn}", fn => $fn;
 		local $/;
 		$config = JSON->utf8->decode(<$fh>);
 	}
@@ -217,7 +225,7 @@ sub readConfig($)
 	$config;
 }
 
-#--------------
+#--------------------
 =section Translating
 
 =method setContext STRING|HASH|ARRAY|PAIRS
@@ -229,7 +237,9 @@ Contexts are totally ignored then there are no C<context_rules>.  When
 you do not wish to change settings, you may simply provide a HASH.
 
 =example
-   use Log::Report 'my-domain', context_rules => {};
+  use Log::Report 'my-domain', context_rules => {};
+
+=error you need to configure context_rules before setContext
 =cut
 
 sub setContext(@)
@@ -261,7 +271,7 @@ not modify the content of that HASH: change it by called M<setContext()> or
 M<updateContext()>.
 =cut
 
-sub defaultContext() { shift->{LRD_ctxt_def} }
+sub defaultContext() { $_[0]->{LRD_ctxt_def} }
 
 =method translate $message, $language
 Translate the $message into the $language.
@@ -297,6 +307,7 @@ sub translate($$)
 1;
 
 __END__
+#--------------------
 =chapter DETAILS
 
 =section Configuring
@@ -304,42 +315,42 @@ __END__
 Configuration of a domain can happen in many ways: either explicitly or
 implicitly.  The explicit form:
 
-   package My::Package;
-   use Log::Report 'my-domain';
+  package My::Package;
+  use Log::Report 'my-domain';
 
-   textdomain 'my-domain', %configuration;
-   textdomain->configure(%configuration);
-   textdomain->configure(\%configuration);
+  textdomain 'my-domain', %configuration;
+  textdomain->configure(%configuration);
+  textdomain->configure(\%configuration);
 
-   textdomain->configure(conf => $filename);
+  textdomain->configure(conf => $filename);
 
 The implicit form is (no variables possible, only constants!)
 
-   package My::Package;
-   use Log::Report 'my-domain', %configuration;
-   use Log::Report 'my-domain', conf => '/filename';
+  package My::Package;
+  use Log::Report 'my-domain', %configuration;
+  use Log::Report 'my-domain', conf => '/filename';
 
 You can only configure your domain in one place in your program.  The
 textdomain setup is then used for all packages in the same domain.
 
-This also works for M<Log::Report::Optional>, which is a dressed-down
-version of M<Log::Report>.
+This also works for Log::Report::Optional, which is a dressed-down
+version of Log::Report.
 
 =subsection configuring your own formatter
 
 [0.91] The C<PRINTI> is a special constants for M<configure(formatter)>, and
-will use M<String::Print> function C<printi()>, with the standard tricks.
+will use String::Print function C<printi()>, with the standard tricks.
 
   textdomain 'some-domain'
     formatter =>
-      { class     => 'String::Print'    # default
-      , method    => 'sprinti'          # default
-      , %options    # constructor options for the class
+      { class     => 'String::Print',    # default
+        method    => 'sprinti',          # default
+        %options    # constructor options for the class
       );
 
 When you want your own formatter, or configuration of C<String::Print>,
 you need to pass a CODE.  Be aware that you may loose magic added by
-M<Log::Report> and other layers, like M<Log::Report::Template>:
+Log::Report and other layers, like Log::Report::Template:
 
   textdomain 'some-domain',
     formatter => \&my_formatter;
@@ -357,7 +368,7 @@ name in some of the log lines.  For this, (ab)use the translation context:
   # or
   textdomain 'my-domain',
     content_rules => { ... };
-  
+
   ### every time you start working for a different virtual host
   (textdomain 'my-domain')->setContext(host => $host);
 

@@ -24,3 +24,12 @@ UL {
 DL {
    margin-top: 1ex;
 }
+
+DD > P, DD > PRE {
+	margin-top: 0;
+}
+
+TD, TH {
+	padding: 2px 5px;
+}
+

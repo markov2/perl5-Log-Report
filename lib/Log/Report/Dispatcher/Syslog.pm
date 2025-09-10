@@ -1,6 +1,7 @@
-# This code is part of distribution Log-Report. Meta-POD processed with
-# OODoc into POD and HTML manual-pages.  See README.md
-# Copyright Mark Overmeer.  Licensed under the same terms as Perl itself.
+#oodist: *** DO NOT USE THIS VERSION FOR PRODUCTION ***
+#oodist: This file contains OODoc-style documentation which will get stripped
+#oodist: during its release in the distribution.  You can use this file for
+#oodist: testing, however the code of this development version may be broken!
 
 package Log::Report::Dispatcher::Syslog;
 use base 'Log::Report::Dispatcher';
@@ -16,37 +17,40 @@ use Encode             qw/encode/;
 
 use File::Basename qw/basename/;
 
-my %default_reasonToPrio =
-  ( TRACE   => LOG_DEBUG
-  , ASSERT  => LOG_DEBUG
-  , INFO    => LOG_INFO
-  , NOTICE  => LOG_NOTICE
-  , WARNING => LOG_WARNING
-  , MISTAKE => LOG_WARNING
-  , ERROR   => LOG_ERR
-  , FAULT   => LOG_ERR
-  , ALERT   => LOG_ALERT
-  , FAILURE => LOG_EMERG
-  , PANIC   => LOG_CRIT
-  );
+my %default_reasonToPrio = (
+	TRACE   => LOG_DEBUG,
+	ASSERT  => LOG_DEBUG,
+	INFO    => LOG_INFO,
+	NOTICE  => LOG_NOTICE,
+	WARNING => LOG_WARNING,
+	MISTAKE => LOG_WARNING,
+	ERROR   => LOG_ERR,
+	FAULT   => LOG_ERR,
+	ALERT   => LOG_ALERT,
+	FAILURE => LOG_EMERG,
+	PANIC   => LOG_CRIT,
+);
 
 @reasons==keys %default_reasonToPrio
-    or panic __"not all reasons have a default translation";
+	or panic __"not all reasons have a default translation";
 
+#--------------------
 =chapter NAME
 Log::Report::Dispatcher::Syslog - send messages to syslog
 
 =chapter SYNOPSIS
- # add syslog dispatcher
- dispatcher SYSLOG => 'syslog', accept => 'NOTICE-'
-   , format_reason => 'IGNORE'
-   , to_prio => [ 'ALERT-' => 'err' ];
 
- # disable default dispatcher, when daemon
- dispatcher close => 'default';
+  # add syslog dispatcher
+  dispatcher SYSLOG => 'syslog', accept => 'NOTICE-',
+    format_reason => 'IGNORE',
+    to_prio => [ 'ALERT-' => 'err' ];
+
+  # disable default dispatcher, when daemon
+  dispatcher close => 'default';
 
 =chapter DESCRIPTION
-This dispatchers produces output to syslog, based on the M<Sys::Syslog>
+
+This dispatchers produces output to syslog, based on the Sys::Syslog
 module (which will NOT be automatically installed for you, because some
 systems have a problem with this dependency).
 
@@ -80,15 +84,15 @@ of the message.
 
 =default format_reason 'IGNORE'
 
-=option  identity STRING
+=option  identity $program
 =default identity <basename $0>
 
-=option  flags STRING
+=option  flags $flags
 =default flags 'pid,nowait'
-Any combination of flags as defined by M<Sys::Syslog>, for instance
-C<pid>, C<ndelay>, and C<nowait>.
+Any combination of $flags as defined by Sys::Syslog, as comma-separated
+string.  Examples for flags are: C<pid>, C<ndelay>, and C<nowait>.
 
-=option  facility STRING
+=option  facility $facility
 =default facility 'user'
 The possible values for this depend (a little) on the system.  POSIX
 only defines C<user>, and C<local0> up to C<local7>.
@@ -98,7 +102,7 @@ only defines C<user>, and C<local0> up to C<local7>.
 See M<reasonToPrio()>.
 
 =option  logsocket 'unix'|'inet'|'stream'|HASH
-=default logsocket C<undef>
+=default logsocket undef
 If specified, the log socket type will be initialized to this before
 C<openlog()> is called.  If not specified, the system default is used.
 
@@ -106,9 +110,9 @@ C<openlog()> is called.  If not specified, the system default is used.
 =default include_domain <false>
 [1.00] Include the text-domain of the message in each logged message.
 
-=option  charset CHARSET
+=option  charset $charset
 =default charset 'utf8'
-Translate the text-strings into the specified charset, otherwise the
+Translate the text-strings into the specified $charset, otherwise the
 sysadmin may get unreadable text.
 
 =option  format CODE
@@ -122,60 +126,62 @@ use context information from the latter.
 pairs (named parameters) with additional info.  This may contain a
 C<location> with an ARRAY of information produced by caller() about the
 origin of the exception.
+
+=error max one active syslog dispatcher, attempt for $new have $old
+=error syslog level '$level' not understood
 =cut
 
 my $active;
 
 sub init($)
-{   my ($self, $args) = @_;
-    $args->{format_reason} ||= 'IGNORE';
+{	my ($self, $args) = @_;
+	$args->{format_reason} ||= 'IGNORE';
 
-    $self->SUPER::init($args);
+	$self->SUPER::init($args);
 
-    error __x"max one active syslog dispatcher, attempt for {new} have {old}"
-      , new => $self->name, old => $active
-        if $active;
-    $active   = $self->name;
+	! $active
+		or error __x"max one active syslog dispatcher, attempt for {new} have {old}", new => $self->name, old => $active;
+	$active   = $self->name;
 
-    setlogsock(delete $args->{logsocket})
-        if $args->{logsocket};
+	setlogsock(delete $args->{logsocket})
+		if $args->{logsocket};
 
-    my $ident = delete $args->{identity} || basename $0;
-    my $flags = delete $args->{flags}    || 'pid,nowait';
-    my $fac   = delete $args->{facility} || 'user';
-    openlog $ident, $flags, $fac;   # doesn't produce error.
+	my $ident = delete $args->{identity} || basename $0;
+	my $flags = delete $args->{flags}    || 'pid,nowait';
+	my $fac   = delete $args->{facility} || 'user';
+	openlog $ident, $flags, $fac;   # doesn't produce error.
 
-    $self->{LRDS_incl_dom} = delete $args->{include_domain};
-    $self->{LRDS_charset}  = delete $args->{charset} || "utf-8";
-    $self->{LRDS_format}   = $args->{format} || sub {$_[0]};
+	$self->{LRDS_incl_dom} = delete $args->{include_domain};
+	$self->{LRDS_charset}  = delete $args->{charset} || "utf-8";
+	$self->{LRDS_format}   = $args->{format} || sub {$_[0]};
 
-    $self->{prio} = +{ %default_reasonToPrio };
-    if(my $to_prio = delete $args->{to_prio})
-    {   my @to = @$to_prio;
-        while(@to)
-        {   my ($reasons, $level) = splice @to, 0, 2;
-            my @reasons = expand_reasons $reasons;
+	$self->{prio} = +{ %default_reasonToPrio };
+	if(my $to_prio = delete $args->{to_prio})
+	{	my @to = @$to_prio;
+		while(@to)
+		{	my ($reasons, $level) = splice @to, 0, 2;
+			my @reasons = expand_reasons $reasons;
 
-            my $prio    = Sys::Syslog::xlate($level);
-            error __x"syslog level '{level}' not understood", level => $level
-                if $prio eq -1;
+			my $prio    = Sys::Syslog::xlate($level);
+			$prio != -1
+				or error __x"syslog level '{level}' not understood", level => $level;
 
-            $self->{prio}{$_} = $prio for @reasons;
-        }
-    }
+			$self->{prio}{$_} = $prio for @reasons;
+		}
+	}
 
-    $self;
+	$self;
 }
 
 sub close()
-{   my $self = shift;
-    undef $active;
-    closelog;
+{	my $self = shift;
+	undef $active;
+	closelog;
 
-    $self->SUPER::close;
+	$self->SUPER::close;
 }
 
-#--------------
+#--------------------
 =section Accessors
 
 =method format [CODE]
@@ -183,33 +189,33 @@ Returns the CODE ref which formats the syslog line.
 =cut
 
 sub format(;$)
-{   my $self = shift;
-    @_ ? $self->{LRDS_format} = shift : $self->{LRDS_format};
+{	my $self = shift;
+	@_ ? $self->{LRDS_format} = shift : $self->{LRDS_format};
 }
 
-#--------------
+#--------------------
 =section Logging
 =cut
 
 sub log($$$$$)
-{   my ($self, $opts, $reason, $msg, $domain) = @_;
-    my $text   = $self->translate($opts, $reason, $msg) or return;
-    my $format = $self->format;
+{	my ($self, $opts, $reason, $msg, $domain) = @_;
+	my $text    = $self->translate($opts, $reason, $msg) or return;
+	my $format  = $self->format;
 
-    # handle each line in message separately
-    $text    =~ s/\s+$//s;
-    my @text = split /\n/, $format->($text, $domain, $msg, %$opts);
+	# handle each line in message separately
+	$text       =~ s/\s+$//s;
+	my @text    = split /\n/, $format->($text, $domain, $msg, %$opts);
 
-    my $prio    = $self->reasonToPrio($reason);
-    my $charset = $self->{LRDS_charset};
+	my $prio    = $self->reasonToPrio($reason);
+	my $charset = $self->{LRDS_charset};
 
-    if($self->{LRDS_incl_dom} && $domain)
-    {   $domain  =~ s/\%//g;    # security
-        syslog $prio, "$domain %s", encode($charset, shift @text);
-    }
+	if($self->{LRDS_incl_dom} && $domain)
+	{	$domain =~ s/\%//g;    # security
+		syslog $prio, "$domain %s", encode($charset, shift @text);
+	}
 
-    syslog $prio, "%s", encode($charset, $_)
-        for @text;
+	syslog $prio, "%s", encode($charset, $_)
+		for @text;
 }
 
 =method reasonToPrio $reason

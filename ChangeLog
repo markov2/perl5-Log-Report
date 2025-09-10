@@ -15,6 +15,7 @@ version 1.41:
 	Improvements:
 	- reorder docs in ::Domain
 	- remove unused fromTemplateToolkit()
+	- convert to OODoc 3.03
 
 version 1.40: Fri 18 Apr 17:05:09 CEST 2025
 

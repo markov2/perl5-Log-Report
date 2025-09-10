@@ -1,6 +1,7 @@
-# This code is part of distribution Log-Report. Meta-POD processed with
-# OODoc into POD and HTML manual-pages.  See README.md
-# Copyright Mark Overmeer.  Licensed under the same terms as Perl itself.
+#oodist: *** DO NOT USE THIS VERSION FOR PRODUCTION ***
+#oodist: This file contains OODoc-style documentation which will get stripped
+#oodist: during its release in the distribution.  You can use this file for
+#oodist: testing, however the code of this development version may be broken!
 
 package Dancer::Logger::LogReport;
 use base 'Dancer::Logger::Abstract', 'Exporter';
@@ -15,18 +16,19 @@ use Log::Report::Dispatcher ();
 our $AUTHORITY = 'cpan:MARKOV';
 
 our @EXPORT    = qw/
-    trace
-    assert
-    notice
-    alert
-    panic
-    /;
+	trace
+	assert
+	notice
+	alert
+	panic
+/;
 
 my %level_dancer2lr =
-  ( core  => 'TRACE'
-  , debug => 'TRACE'
-  );
+( core  => 'TRACE',
+	debug => 'TRACE'
+);
 
+#--------------------
 =chapter NAME
 
 Dancer::Logger::LogReport - reroute Dancer logs into Log::Report
@@ -58,8 +60,8 @@ Dancer::Logger::LogReport - reroute Dancer logs into Log::Report
 
 =chapter DESCRIPTION
 
-The M<Log::Report> exception/translation framework defines a large
-number of logging back-ends.  The same log messages can be sent to 
+The Log::Report exception/translation framework defines a large
+number of logging back-ends.  The same log messages can be sent to
 multiple destinations at the same time via flexible dispatchers.
 When you use this logger in your Dancer application, it will nicely
 integrate with non-Dancer modules which need logging.
@@ -72,7 +74,7 @@ program... its just a better name than 'debug'.
 
 You probably want to set a very simple C<logger_format>, because the
 dispatchers do already add some of the fields that the default
-C<simple> format adds.  For instance, to get the filename/line-number 
+C<simple> format adds.  For instance, to get the filename/line-number
 in messages depends on the dispatcher 'mode' (f.i. 'DEBUG').
 
 You also want to set the log level to C<debug>, because level filtering
@@ -87,44 +89,32 @@ sub notice  { goto &Dancer::Logger::notice }
 sub panic   { goto &Dancer::Logger::panic  }
 sub alert   { goto &Dancer::Logger::alert  }
 
-sub Dancer::Logger::assert
-{ my $l = logger(); $l && $l->_log(assert => _serialize(@_)) }
+sub Dancer::Logger::assert { my $l = logger(); $l && $l->_log(assert => _serialize(@_)) }
+sub Dancer::Logger::notice { my $l = logger(); $l && $l->_log(notice => _serialize(@_)) }
+sub Dancer::Logger::alert  { my $l = logger(); $l && $l->_log(alert  => _serialize(@_)) }
+sub Dancer::Logger::panic  { my $l = logger(); $l && $l->_log(panic  => _serialize(@_)) }
 
-sub Dancer::Logger::notice
-{ my $l = logger(); $l && $l->_log(notice => _serialize(@_)) }
-
-sub Dancer::Logger::alert
-{ my $l = logger(); $l && $l->_log(alert  => _serialize(@_)) }
-
-sub Dancer::Logger::panic
-{ my $l = logger(); $l && $l->_log(panic  => _serialize(@_)) }
- 
-#sub init(@)
-#{   my $self = shift;
-#    $self->SUPER::init(@_);
-#}
- 
 sub _log {
-    my ($self, $level, $params) = @_;
+	my ($self, $level, $params) = @_;
 
-    # all dancer levels are the same as L::R levels, except:
-    my $msg;
-    if(blessed $params && $params->isa('Log::Report::Message'))
-    {   $msg = $params;
-    }
-    else
-    {   $msg = $self->format_message($level => $params);
-        $msg =~ s/\n+$//;
-    }
+	# all dancer levels are the same as L::R levels, except:
+	my $msg;
+	if(blessed $params && $params->isa('Log::Report::Message'))
+	{	$msg = $params;
+	}
+	else
+	{	$msg = $self->format_message($level => $params);
+		$msg =~ s/\n+$//;
+	}
 
-    # The levels are nearly the same.
-    my $reason = $level_dancer2lr{$level} // uc $level;
+	# The levels are nearly the same.
+	my $reason = $level_dancer2lr{$level} // uc $level;
 
-    # Gladly, report() does not get confused between Dancer's use of
-    # Try::Tiny and Log::Report's try() which starts a new dispatcher.
-    report {is_fatal => 0}, $reason => $msg;
+	# Gladly, report() does not get confused between Dancer's use of
+	# Try::Tiny and Log::Report's try() which starts a new dispatcher.
+	report +{ is_fatal => 0 }, $reason => $msg;
 
-    undef;
+	undef;
 }
- 
+
 1;
