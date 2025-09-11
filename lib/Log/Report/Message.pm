@@ -62,7 +62,7 @@ is produced, we do not yet know in what language to translate it to:
 that depends on the front-end, the log dispatcher.
 
 
-=chapter OVERLOADING
+=chapter OVERLOADED
 
 =overload "" stringification
 When the object is used in string context, it will get translated.

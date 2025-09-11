@@ -79,7 +79,7 @@ After the C<try()> has run, you can introspect the collected exceptions.
 Typically, you use M<wasFatal()> to get the exception which terminated
 the run of the BLOCK.
 
-=chapter OVERLOADING
+=chapter OVERLOADED
 
 =overload bool boolean
 Returns true if the previous try block did produce a terminal

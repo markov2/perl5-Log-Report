@@ -38,25 +38,31 @@ languages as Java: you do not create classes for them.  The only
 thing an exception object does, is capture some information about
 an (untranslated) report.
 
-=chapter OVERLOADING
+=chapter OVERLOADED
 
 =overload "" stringification
-Produces "reason: message".
+Produces "reason: message" via M<toString()>.
+
+=overload bool boolean condition
+Always returns true: the exception object exists.
 =cut
 
 use overload
 	'""'     => 'toString',
-	'bool'   => sub {1},    # avoid accidental serialization of message
+	bool     => sub {1},    # avoid accidental serialization of message
 	fallback => 1;
 
 #--------------------
 =chapter METHODS
 
 =section Constructors
+
 =c_method new %options
+Create a new exception object, which is basically a P<message> which
+was produced for a P<reason>.
 
 =option  report_opts \%opts
-=default report_opts {}
+=default report_opts +{ }
 
 =requires reason $reason
 =requires message Log::Report::Message
@@ -110,7 +116,8 @@ you have to re-assign the result of the modification.
 =examples
   $e->message->concat('!!')); # will not work!
   $e->message($e->message->concat('!!'));
-  $e->message(__x"some message {msg}", msg => $xyz);
+
+  $e->message(__x"some message {xyz}", xyz => $xyz);
 =cut
 
 sub message(;$)
@@ -134,39 +141,39 @@ Check whether any of the classes listed in the message match $class
 sub inClass($) { $_[0]->message->inClass($_[1]) }
 
 =method throw %options
-Insert the message contained in the exception into the currently
-defined dispatchers.  The C<throw> name is commonly known
-exception related terminology for C<report>.
+Insert the message contained in the exception into the currently defined
+dispatchers.  The C<throw> as method name is commonly known exception
+related terminology for C<report>.
 
 The %options overrule the captured options to M<Log::Report::report()>.
 This can be used to overrule a destination.  Also, the reason can
 be changed.
 
+Returned is the LIST of dispatchers which have accepted the forwarded
+exception.
+
 =example overrule defaults to report
-  try { report {to => 'stderr'}, ERROR => 'oops!' };
+  try { report {to => 'default'}, ERROR => 'oops!' };
   $@->reportFatal(to => 'syslog');
 
-  $exception->throw(to => 'syslog');
-
-  $@->wasFatal->throw(reason => 'WARNING');
+  my ($syslog) = $exception->throw(to => 'syslog');
+  my @disps = $@->wasFatal->throw(reason => 'WARNING');
 =cut
 
 sub throw(@)
 {	my $self    = shift;
-	my $opts    = @_ ? { %{$self->{report_opts}}, @_ } : $self->{report_opts};
+	my %opts    = ( %{$self->{report_opts}}, @_ );
 
 	my $reason;
-	if($reason = delete $opts->{reason})
-	{	$self->{reason} = $reason;
-		$opts->{is_fatal} = is_fatal $reason
-			unless exists $opts->{is_fatal};
+	if($reason = delete $opts{reason})
+	{	exists $opts{is_fatal} or $opts{is_fatal} = is_fatal $reason;
 	}
 	else
 	{	$reason = $self->{reason};
 	}
 
-	$opts->{stack} ||= Log::Report::Dispatcher->collectStack;
-	report $opts, $reason, $self;
+	$opts{stack} ||= Log::Report::Dispatcher->collectStack;
+	report \%opts, $reason, $self;
 }
 
 # where the throw is handled is not interesting
@@ -189,7 +196,7 @@ sub toString(;$)
 }
 
 =method toHTML [$locale]
-[1.11] as M<toString()>, and escape HTML volatile characters.
+[1.11] Calls M<toString()> and then escapes HTML volatile characters.
 =cut
 
 sub toHTML(;$) { to_html($_[0]->toString($_[1])) }
@@ -197,7 +204,7 @@ sub toHTML(;$) { to_html($_[0]->toString($_[1])) }
 =method print [$fh]
 The default filehandle is STDOUT.
 
-=examples
+=example
   print $exception;  # via overloading
   $exception->print; # OO style
 =cut
