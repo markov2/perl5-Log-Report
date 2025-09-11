@@ -258,10 +258,10 @@ sub report($@)
 	{	# explicit destination, still disp may not need it.
 		if(ref $to eq 'ARRAY')
 		{	my %disp = map +($_->name => $_), @disp;
-			@disp	= grep defined, @disp{@$to};
+			@disp	 = grep defined, @disp{@$to};
 		}
 		else
-		{	@disp	= grep $_->name eq $to, @disp;
+		{	@disp	 = grep $_->name eq $to, @disp;
 		}
 		push @disp, $try if defined $try;
 
@@ -279,7 +279,7 @@ sub report($@)
 	if(!blessed $message)
 	{	# untranslated message into object
 		@_%2 and error __x"odd length parameter list with '{msg}'", msg => $message;
-		$message  = $lrm->new(_prepend => $message, @_);
+		$message   = $lrm->new(_prepend => $message, @_);
 	}
 	elsif($message->isa('Log::Report::Exception'))
 	{	$exception = $message;
@@ -296,7 +296,7 @@ sub report($@)
 		$message = $lrm->new(_prepend => $text, @_);
 	}
 
-	$message->to(undef) if $to;  # overrule destination of message
+	$message->to($to) if $to;  # overrule destination of message
 	if(my $disp_name = $message->to)
 	{	@disp = grep $_->name eq $disp_name, @disp;
 		push @disp, $try if defined $try && $disp_name ne 'try';

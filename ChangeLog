@@ -12,6 +12,10 @@ version 1.41:
 	Changes:
 	- require Perl 5.16 (2012)
 
+	Fixes:
+	- remember message 'to' within try
+	  [Andy Beverley] github issue #9
+
 	Improvements:
 	- reorder docs in ::Domain
 	- remove unused fromTemplateToolkit()
@@ -37,7 +41,7 @@ version 1.39: Mon  9 Sep 19:57:06 CEST 2024
 version 1.38: Mon  9 Sep 11:00:15 CEST 2024
 
 	Fixes:
-	- Require Dancer2 >= 0.207 for test [cpantesters], [GitHub issue #13]
+	- Require Dancer2 >= 0.207 for test [cpantesters], GitHub issue #13
 	- error code must be set when the script exists with error or panic
 	  [Any Beverley]
 
