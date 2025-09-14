@@ -42,8 +42,20 @@ BEGIN {
 
     dispatcher close => 'default';
 
+    # Whether to bork on the root URL
+    our $always_bork_before;
+    our $always_bork_after;
+
     hook before => sub {
-        if (query_parameters->get('is_fatal'))
+        if ($always_bork_before || query_parameters->get('hook_before_exception'))
+        {
+            my $foo;
+            $foo->bar;
+        }
+    };
+
+    hook after => sub {
+        if ($always_bork_after || query_parameters->get('hook_after_exception'))
         {
             my $foo;
             $foo->bar;
@@ -62,11 +74,9 @@ BEGIN {
         eval qq($level "$text");
     };
 
-    get '/read_message' => sub {
+    get '/read_messages' => sub {
         my $all = session 'messages';
-        my $message = pop @$all
-            or return '';
-        "$message";
+        join "", map "$_", @$all;
     };
 
     get '/process' => sub {
@@ -105,6 +115,17 @@ my $url = 'http://localhost';
 my $jar  = HTTP::Cookies->new();
 my $test = Plack::Test->create( TestApp->to_app );
 
+sub read_messages
+{   my $res = shift;
+    $jar->extract_cookies($res);
+    my $req = GET "$url/read_messages";
+    $jar->add_cookie_header($req);
+    $res = $test->request( $req );
+    my $m = $res->content;
+    $jar->clear;
+    $m;
+}
+
 # Basic tests to log messages and read from session
 subtest 'Basic messages' => sub {
 
@@ -114,13 +135,9 @@ subtest 'Basic messages' => sub {
         $jar->add_cookie_header($req);
         my $res = $test->request( $req );
         ok $res->is_success, "get /write_message";
-        $jar->extract_cookies($res);
 
         # Get the message
-        $req = GET "$url/read_message";
-        $jar->add_cookie_header($req);
-        $res = $test->request( $req );
-        is ($res->content, 'notice_text');
+        is (read_messages($res), 'notice_text');
     }
 
     # Log a trace message
@@ -129,13 +146,9 @@ subtest 'Basic messages' => sub {
         $jar->add_cookie_header($req);
         my $res = $test->request( $req );
         ok $res->is_success, "get /write_message";
-        $jar->extract_cookies($res);
 
         # This time it shouldn't make it to the messages session
-        $req = GET "$url/read_message";
-        $jar->add_cookie_header($req);
-        $res = $test->request( $req );
-        is ($res->content, '');
+        is (read_messages($res), '');
     }
 };
 
@@ -158,11 +171,7 @@ subtest 'Throw error' => sub {
         is $res->content, '0';
 
         # Check caught message is in session
-        $jar->extract_cookies($res);
-        $req = GET "$url/read_message";
-        $jar->add_cookie_header($req);
-        $res = $test->request( $req );
-        is ($res->content, 'Fatal error text');
+        is (read_messages($res), 'Fatal error text');
     }
 };
 
@@ -196,10 +205,38 @@ subtest 'Unexpected exception default page' => sub {
     # anything as the request hasn't been populated yet. Therefore we should
     # expect Dancer's default error handling
     {
-        my $req = GET "$url/?is_fatal=1";
+        my $req = GET "$url/?hook_before_exception=1";
+        $jar->add_cookie_header($req);
+        my $res = $test->request( $req );
+        ok $res->is_redirect, "get /write_message";
+        is (read_messages($res), 'An unexpected error has occurred');
+    }
+    {
+        my $req = GET "$url/?hook_after_exception=1";
+        $jar->add_cookie_header($req);
+        my $res = $test->request( $req );
+        ok $res->is_redirect, "get /write_message";
+        is (read_messages($res), 'An unexpected error has occurred');
+    }
+    {
+        local $TestApp::always_bork_before = 1;
+        my $req = GET "$url/";
+        $jar->add_cookie_header($req);
         my $res = $test->request( $req );
         ok !$res->is_redirect, "get /write_message";
-        like $res->content, qr/Error 500 - Internal Server Error/;
+        like $res->content, qr/An unexpected error has occurred/;
+        local $TestApp::always_bork_before = 0;
+        is (read_messages($res), 'An unexpected error has occurred');
+    }
+    {
+        local $TestApp::always_bork_after = 1;
+        my $req = GET "$url/";
+        $jar->add_cookie_header($req);
+        my $res = $test->request( $req );
+        ok !$res->is_redirect, "get /write_message";
+        like $res->content, qr/An unexpected error has occurred/;
+        local $TestApp::always_bork_after = 0;
+        is (read_messages($res), 'An unexpected error has occurred');
     }
 };
 

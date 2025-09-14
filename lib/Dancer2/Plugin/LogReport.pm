@@ -125,8 +125,41 @@ on_plugin_import
 				# and Dancer will not handle an exception cleanly (which will
 				# result in a stacktrace to the browser, a potential security
 				# vulnerability). Therefore in this case do not raise as fatal.
+				# Note: Dancer2 always seem to have a request at this point
+				# now, so this has probably been overtaken by events. Also, the
+				# hook_exception below is now used instead to avoid any stack
+				# information in the browser.
 				my $is_fatal = $app->request ? 1 : 0;
+				# Use a flag to avoid the panic here throwing a second panic in
+				# the exception hook below.
+				$app->request->var(_lr_panic_thrown => 1)
+					if $app->request;
 				report {is_fatal => $is_fatal}, 'PANIC' => $error;
+			},
+		),
+	);
+
+	$dsl->app->add_hook(
+		Dancer2::Core::Hook->new(
+			name => 'core.app.hook_exception',
+			code => sub {
+				my ($app, $error, $hook_name) = @_;
+				my $fatal_error_message = _fatal_error_message();
+				# If we are after the request then we need to override the
+				# content now (which will likely be an ugly exception message).
+				# This is because no further changes are made to the content
+				# after the request (unlike at other times of the response
+				# cycle)
+				if ($hook_name =~ /after_request/)
+				{
+					$app->response->content($fatal_error_message);
+					# Prevent dancer throwing in its own ugly messages
+					$app->response->halt
+				}
+
+				# See comment above about not throwing same panic twice
+				report 'PANIC' => $error
+				unless $app->request->var('_lr_panic_thrown');
 			},
 		),
 	);
@@ -292,6 +325,19 @@ sub _get_dsl()
 	$ref ? $_all_dsls{$ref} : undef;
 }
 
+sub _fatal_error_message
+{
+	# In a production server, we don't want the end user seeing (unexpected)
+	# exception messages, for both security and usability. If we detect
+	# that this is a production server (show_errors is 0), then we change
+	# the specific error to a generic error, when displayed to the user.
+	# The message can be customised in the config file.
+	# We evaluate this each message to allow show_errors to be set in the
+	# application (specifically makes testing a lot easier)
+	my $dsl = _get_dsl();
+	!$dsl->app->config->{show_errors}
+		&& ($_settings->{fatal_error_message} // "An unexpected error has occurred");
+}
 
 sub _message_add($)
 {	my $msg = shift;
@@ -315,16 +361,7 @@ sub _message_add($)
 	# for request(), which is used to access the cookies of a session.
 	$app->request or return;
 
-	# In a production server, we don't want the end user seeing (unexpected)
-	# exception messages, for both security and usability. If we detect
-	# that this is a production server (show_errors is 0), then we change
-	# the specific error to a generic error, when displayed to the user.
-	# The message can be customised in the config file.
-	# We evaluate this each message to allow show_errors to be set in the
-	# application (specifically makes testing a lot easier)
-
-	my $fatal_error_message = !$dsl->app->config->{show_errors}
-		&& ($_settings->{fatal_error_message} // "An unexpected error has occurred");
+	my $fatal_error_message = _fatal_error_message();
 
 	$hide_real_message->{$_} = $fatal_error_message
 		for qw/FAULT ALERT FAILURE PANIC/;
