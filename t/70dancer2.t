@@ -178,6 +178,9 @@ subtest 'Throw error' => sub {
 # Tests to check unexpected exceptions
 subtest 'Unexpected exception default page' => sub {
 
+    plan skip_all => "Dancer2 v2.0 needed for handling exceptions in hooks"
+        if version->parse($Dancer2::VERSION) < 2;
+
     # An exception generated from the default route which cannot redirect to
     # the default route, so it throws a plain text error
     {

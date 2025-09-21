@@ -162,7 +162,7 @@ on_plugin_import
 				unless $app->request->var('_lr_panic_thrown');
 			},
 		),
-	);
+	) if version->parse($Dancer2::Plugin::VERSION) >= 2;
 
 	if($settings->{handle_http_errors})
 	{	# Need after_error for HTTP errors (eg 404) so as to
