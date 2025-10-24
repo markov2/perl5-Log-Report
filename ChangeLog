@@ -9,6 +9,13 @@ TODO:
 
 version 1.42:
 
+	Changes:
+	- the Dancer* modules moved to separate distribution Dancer2-Plugin-LogReport
+
+	Fixes:
+	- report to multiple dispatchers
+	  [Sam Kingston] github issue #17
+
 version 1.41: Thu 11 Sep 13:01:50 CEST 2025
 
 	Changes:

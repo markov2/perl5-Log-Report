@@ -144,7 +144,7 @@ L<https://perl.overmeer.net/log-report/papers/201306-PerlMagazine-article-en.htm
 
 =chapter FUNCTIONS
 
-=section Report Production and Configuration
+=section Report production and configuration
 
 =function report [%options], $reason, $message|<STRING,$params>,
 
@@ -297,9 +297,10 @@ sub report($@)
 	}
 
 	$message->to($to) if $to;  # overrule destination of message
-	if(my $disp_name = $message->to)
-	{	@disp = grep $_->name eq $disp_name, @disp;
-		push @disp, $try if defined $try && $disp_name ne 'try';
+	if(my $disp_names = $message->to)
+	{	my %select = map +($_ => 1), ref $disp_names eq 'ARRAY' ? @$disp_names : $disp_names;
+		@disp = grep $select{$_->name}, @disp;
+		push @disp, $try if defined $try && $select{try};
 		@disp or return;
 	}
 
@@ -862,9 +863,9 @@ sub N__w(@) {split " ", $_[0]}
 
 
 #--------------------
-=subsection Messages with msgctxt
+=section Messages with Context
 
-In Log::Report, the message context (mgsctxt in the PO-files --in the
+In Log::Report, the message context (C<mgsctxt> in the PO-files --in the
 translation tables) can be used in a very powerful way.  Read all about
 it in Log::Report::Translator::Context
 
@@ -1417,7 +1418,7 @@ untranslated, with all unprocessed parameters still at hand.
 
 See Log::Report::Dispatcher::Try and Log::Report::Exception.
 
-=section Comparison
+=section Compared to other solutions in Perl
 
 Some notes on differences between the Log::Report approach and other
 Perl concepts.
