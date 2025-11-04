@@ -2,11 +2,6 @@
 #oodist: This file contains OODoc-style documentation which will get stripped
 #oodist: during its release in the distribution.  You can use this file for
 #oodist: testing, however the code of this development version may be broken!
-#oorestyle: old style disclaimer to be removed.
-
-# This code is part of distribution Log-Report. Meta-POD processed with
-# OODoc into POD and HTML manual-pages.  See README.md
-# Copyright Mark Overmeer.  Licensed under the same terms as Perl itself.
 
 package Log::Report::Dispatcher::LogDispatch;
 use base 'Log::Report::Dispatcher';
@@ -78,7 +73,7 @@ parameters, so you will need to restrict the options to what is supported
 for the specific back-end.  See their respective manual-pages.  The errors
 produced by the back-ends quite horrible and untranslated, sorry.
 
-=option  to_level ARRAY-of-PAIRS
+=option  to_level \@PAIRS
 =default to_level []
 See M<reasonToLevel()>.
 
@@ -92,7 +87,7 @@ LEVEL.  The default will use Log::Report restrictions only.
 =default max_level undef
 Like P<min_level>.
 
-=option  callbacks CODE|ARRAY-of-CODE
+=option  callbacks CODE|\@CODE
 =default callbacks []
 See Log::Dispatch::Output.
 

@@ -99,13 +99,13 @@ the DOMAIN.  For one package, it will contain configuration information.
 These %options are used for all packages which use the same DOMAIN.
 See chapter L</Configuring> below.
 
-=option  formatter CODE|HASH|'PRINTI'
+=option  formatter CODE|\%config|'PRINTI'
 =default formatter C<PRINTI>
-Selects the formatter used for the errors messages.  The default is C<PRINTI>,
-which will use M<String::Print::printi()>: interpolation with curly
-braces around the variable names.
+Selects the formatter used for the errors messages.  The default is the
+string C<PRINTI>, which will use M<String::Print::printi()>: interpolation
+with curly braces around the variable names.
 
-=option  translator Log::Report::Translator|HASH
+=option  translator Log::Report::Translator|\%config
 =default translator C<created internally>
 Set the object which will do the translations for this domain.
 
@@ -116,9 +116,9 @@ the non-translatable messages in.  In case no translation is needed,
 you still wish the system error messages to be in the same language
 as the report.  Of course, each textdomain can define its own.
 
-=option  context_rules HASH|OBJECT
+=option  context_rules \%rules|OBJECT
 =default context_rules undef
-When rules are provided, the translator will use the C<msgctxt> fields
+When %rules are provided, the translator will use the C<msgctxt> fields
 as provided by PO-files (gettext).  This parameter is used to initialize
 a Log::Report::Translator::Context helper object.
 
@@ -128,8 +128,6 @@ Read the settings from the $file.  The parameters found in the file are
 used as default for the parameters above.  This parameter is especially
 useful for the P<context_rules>, which need to be shared between the
 running application and F<xgettext-perl>.  See M<readConfig()>
-
-=cut
 
 =error the native_language '$locale' is not a valid locale
 =warning Missing key '$key' in format '$format', file $use
@@ -234,7 +232,7 @@ when the message is created without a C<_context> parameter. The context
 can be retrieved with M<defaultContext()>.
 
 Contexts are totally ignored then there are no C<context_rules>.  When
-you do not wish to change settings, you may simply provide a HASH.
+you do not wish to change settings, you may simply provide an empty HASH.
 
 =example
   use Log::Report 'my-domain', context_rules => {};
@@ -306,7 +304,6 @@ sub translate($$)
 
 1;
 
-__END__
 #--------------------
 =chapter DETAILS
 
@@ -341,7 +338,7 @@ version of Log::Report.
 [0.91] The C<PRINTI> is a special constants for M<configure(formatter)>, and
 will use String::Print function C<printi()>, with the standard tricks.
 
-  textdomain 'some-domain'
+  textdomain 'some-domain',
     formatter =>
       { class     => 'String::Print',    # default
         method    => 'sprinti',          # default
@@ -352,8 +349,7 @@ When you want your own formatter, or configuration of C<String::Print>,
 you need to pass a CODE.  Be aware that you may loose magic added by
 Log::Report and other layers, like Log::Report::Template:
 
-  textdomain 'some-domain',
-    formatter => \&my_formatter;
+  textdomain 'some-domain', formatter => \&my_formatter;
 
 =subsection configuring global values
 
@@ -362,12 +358,13 @@ name in some of the log lines.  For this, (ab)use the translation context:
 
   ### first, enable translation contexts
   use Log::Report 'my-domain', context_rules => { ... };
+
   # or
   use Log::Report 'my-domain';
   textdomain->configure(context_rules => { ... });
+
   # or
-  textdomain 'my-domain',
-    content_rules => { ... };
+  textdomain 'my-domain', content_rules => { ... };
 
   ### every time you start working for a different virtual host
   (textdomain 'my-domain')->setContext(host => $host);

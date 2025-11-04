@@ -128,9 +128,9 @@ Get messages to users and logs.  C<Log::Report> combines three tasks
 which are closely related in one:
 
 =over 4
-=item . logging (like L<Log::Log4Perl> and syslog), and
-=item . exceptions (like error and info), with
-=item . translations (like C<gettext> and L<Locale::TextDomain>)
+=item 1. logging (like L<Log::Log4Perl> and syslog), and
+=item 2. exceptions (like 'error' and 'info'), with
+=item 3. translations (like C<gettext> and L<Locale::TextDomain>)
 =back
 
 You B<do not need> to use this module for all three reasons: pick what
@@ -705,7 +705,7 @@ If you need options for M<Log::Report::Message::new()> then use M<__x()>;
 the prototype of this function does not permit parameters: it is a
 prefix operator!
 
-=examples how to use __()
+=examples how to use C<__()>
   print __"Hello World";      # translated into user's language
   print __'Hello World';      # syntax error!
   print __('Hello World');    # ok, translated
@@ -730,7 +730,13 @@ Both OPTIONS and VARIABLES are key-value pairs.
 
 The PAIRS are options for M<Log::Report::Message::new()> and variables
 to be filled in.
-=cut
+
+=example how to use C<__x()>
+This is by far the most used message constructor.
+
+  print __x"Name {person.name}", person => $person_obj;
+  error __x"Too many options: max 5, got {count}", count => $c;
+  fault __x"Cannot open file {f}", f => $input_filename;
 
 =error even length parameter list for __x at $where
 =cut
@@ -753,7 +759,7 @@ However, some languages have more complex schemes than English.
 The PAIRS are options for M<Log::Report::Message::new()> and variables
 to be filled in.
 
-=examples how to use __n()
+=examples how to use C<__n()>
   print __n "one", "more", $a;
   print __n("one", "more", $a), "\n";
   print +(__n "one", "more", $a), "\n";
@@ -784,7 +790,7 @@ the VARIABLES will be filled-in.
 The PAIRS are options for M<Log::Report::Message::new()> and variables
 to be filled in.
 
-=examples how to use __nx()
+=examples how to use C<__nx()>
   print __nx "one file", "{_count} files", $nr_files;
   print __nx "one file", "{_count} files", @files;
 
@@ -817,7 +823,7 @@ later.  The function itself does nothing.  See also M<N__w()>.
 This no-op function is used as label to the xgettext program to build the
 translation tables.
 
-=example how to use N__()
+=example how to use C<N__()>
   # add three msgids to the translation table
   my @colors = (N__"red", N__"green", N__"blue");
   my @colors = N__w "red green blue";   # same
@@ -848,12 +854,12 @@ fragments to be translated.  The function itself does nothing.
 
 sub N__n($$) {@_}
 
-=function N__w STRING
+=function N__w $string
 This extension to the Locale::TextDomain syntax, is a combined
 C<qw> (list of quoted words) and M<N__()> into a list of translatable
 words.
 
-=example of M<N__w()>
+=examples of M<N__w()>
   my @colors = (N__"red", N__"green", N__"blue");
   my @colors = N__w"red green blue";  # same
   print __ $colors[1];
@@ -879,7 +885,7 @@ Just for compatibility with Locale::TextDomain and completeness, the
 functions in Locale::TextDomain.
 
 B<Warnings:> Functions C<N__p()> and C<N__np()> seem not to be usable in
-reality, hence not implemented.  The script xgettext-perl and
+reality, hence not implemented.  The script F<xgettext-perl> and
 Log::Report::Extract::PerlPPI (both in the Log::Report::Lexicon
 distribution) do not yet support these functions.
 
@@ -891,6 +897,7 @@ distribution) do not yet support these functions.
 =cut
 
 sub __p($$) { __($_[0])->_msgctxt($_[1]) }
+
 sub __px($$@)
 {	my ($ctxt, $msgid) = (shift, shift);
 	__x($msgid, @_)->_msgctxt($ctxt);
@@ -1129,9 +1136,9 @@ is that three tasks which are strongly related are merged into one simple
 syntax.  The three tasks:
 
 =over 4
-=item produce some text on a certain condition,
-=item translate it to the proper language, and
-=item deliver it in some way to a user.
+=item *  produce some text on a certain condition,
+=item * translate it to the proper language, and
+=item * deliver it in some way to a user.
 =back
 
 Text messages in Perl are produced by commands like C<print>, C<die>,
@@ -1367,21 +1374,22 @@ provide all these options to the user: make a choice.
 
 =example run-time change mode of a dispatcher
 To change the running mode of the dispatcher, you can do
+
   dispatcher mode => DEBUG => 'myname';
 
 However, be warned that this does not change the types of messages
 accepted by the dispatcher!  So: probably you will not receive
 the trace, assert, and info messages after all.  So, probably you
 need to replace the dispatcher with a new one with the same name:
+
   dispatcher FILE => 'myname', to => ..., mode => 'DEBUG';
 
 This may reopen connections (depends on the actual dispatcher), which
 might be not what you wish to happened.  In that case, you must take
 the following approach:
 
-  # at the start of your program
-  dispatcher FILE => 'myname', to => ...,
-        accept => 'ALL';    # overrule the default 'NOTICE-' !!
+  # at the start of your program, overrule the default 'NOTICE-' !!
+  dispatcher FILE => 'myname', to => ..., accept => 'ALL';
 
   # now it works
   dispatcher mode => DEBUG => 'myname';    # debugging on

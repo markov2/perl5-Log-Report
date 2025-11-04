@@ -58,8 +58,6 @@ parameter of M<Log::Report::report()> (read over there).  The C<reason>
 is a capitized string like C<ERROR>. Then, the C<message> (is a
 Log::Report::Message).  Finally the text-domain of the message.
 
-=cut
-
 =error dispatcher $name needs a 'callback'
 =cut
 

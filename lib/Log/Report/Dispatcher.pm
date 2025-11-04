@@ -3,12 +3,6 @@
 #oodist: during its release in the distribution.  You can use this file for
 #oodist: testing, however the code of this development version may be broken!
 
-#oorestyle: not found P for method type($type)
-
-# This code is part of distribution Log-Report. Meta-POD processed with
-# OODoc into POD and HTML manual-pages.  See README.md
-# Copyright Mark Overmeer.  Licensed under the same terms as Perl itself.
-
 package Log::Report::Dispatcher;
 
 use warnings;
@@ -263,7 +257,7 @@ sub close()
 	$self;
 }
 
-=method log HASH-$of-%options, $reason, $message, $domain
+=method log \%options, $reason, $message, $domain
 This method is called by M<Log::Report::report()> and should not be called
 directly.  Internally, it will call M<translate()>, which does most $of
 the work.
@@ -273,7 +267,7 @@ sub log($$$$)
 {	panic "method log() must be extended per back-end";
 }
 
-=method translate HASH-$of-%options, $reason, $message
+=method translate \%options, $reason, $message
 See L</Processing the message>, which describes the actions taken by
 this method.  A string is returned, which ends on a new-line, and
 may be multi-line (in case a stack trace is produced).

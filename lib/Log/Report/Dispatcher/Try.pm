@@ -3,13 +3,6 @@
 #oodist: during its release in the distribution.  You can use this file for
 #oodist: testing, however the code of this development version may be broken!
 
-#oorestyle: not found P for overload boolean($@)
-#oorestyle: not found P for overload stringify($@)
-#oorestyle: not found P for method reportFatal(%options)
-#oorestyle: not found P for method reportFatal(%options)
-#oorestyle: not found P for method showStatus($@)
-#oorestyle: not found P for method showStatus($@)
-
 package Log::Report::Dispatcher::Try;
 use base 'Log::Report::Dispatcher';
 
@@ -107,9 +100,9 @@ use overload
 =default exceptions []
 ARRAY of Log::Report::Exception objects.
 
-=option  died STRING
+=option  died $text
 =default died undef
-The exit string or object ($@) of the eval'ed block, in its unprocessed state.
+The exit string or object (C<$@>) of the eval'ed block, in its unprocessed state.
 
 =option  hide $reasons|\@reasons|'ALL'|'NONE'
 =default hide 'NONE'
@@ -138,8 +131,8 @@ sub init($)
 #--------------------
 =section Accessors
 
-=method died [STRING]
-The exit string or object ($@) of the eval'ed block, in its unprocessed state.
+=method died [$text]
+The exit $text or object (C<$@>) of the eval'ed block, in its unprocessed state.
 They will always return true when they where deadly, and it always stringifies
 into something useful.
 =cut
@@ -150,7 +143,7 @@ sub died(;$)
 }
 
 =method exceptions
-Returns all collected C<Log::Report::Exceptions>.  The last of
+Returns all collected Log::Report::Exception objects.  The last of
 them may be a fatal one.  The other are non-fatal.
 =cut
 
@@ -256,10 +249,10 @@ sub success() { ! defined shift->{died} }
 Returns the Log::Report::Exception which caused the "try" block to
 die, otherwise an empty LIST (undef).
 
-=option  class CLASS|REGEX
+=option  class $class|REGEX
 =default class undef
 Only return the exception if it was fatal, and in the same time in
-the specified CLASS (as string) or matches the REGEX.
+the specified $class (as string) or matches the REGEX.
 See M<Log::Report::Message::inClass()>
 =cut
 

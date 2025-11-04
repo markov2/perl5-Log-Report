@@ -97,7 +97,7 @@ string.  Examples for flags are: C<pid>, C<ndelay>, and C<nowait>.
 The possible values for this depend (a little) on the system.  POSIX
 only defines C<user>, and C<local0> up to C<local7>.
 
-=option  to_prio ARRAY-of-PAIRS
+=option  to_prio \@PAIRS
 =default to_prio []
 See M<reasonToPrio()>.
 
@@ -107,7 +107,7 @@ If specified, the log socket type will be initialized to this before
 C<openlog()> is called.  If not specified, the system default is used.
 
 =option  include_domain BOOLEAN
-=default include_domain <false>
+=default include_domain false
 [1.00] Include the text-domain of the message in each logged message.
 
 =option  charset $charset

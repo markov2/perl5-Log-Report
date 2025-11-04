@@ -29,8 +29,7 @@ Log::Report::Dispatcher::File - send messages to a file or file-handle
   dispatcher close => 'stderr';
 
   # let dispatcher open and close the file
-  dispatcher FILE => 'mylog', to => '/var/log/mylog',
-    charset => 'utf-8';
+  dispatcher FILE => 'mylog', to => '/var/log/mylog', charset => 'utf-8';
   ...
   dispatcher close => 'mylog';  # will close file
 
@@ -147,42 +146,20 @@ sub init($)
 	$self->SUPER::init($args);
 
 	my $name = $self->name;
-	$self->{to}      = $args->{to}
-		or error __x"dispatcher {name} needs parameter 'to'", name => $name;
+	$self->{to}      = $args->{to} or error __x"dispatcher {name} needs parameter 'to'", name => $name;
 	$self->{replace} = $args->{replace} || 0;
 
 	my $format = $args->{format} || sub { '['.localtime()."] $_[0]" };
 	$self->{LRDF_format}
-	= ref $format eq 'CODE' ? $format
-	: $format eq 'LONG'
-	? sub {	my $msg    = shift;
+	  = ref $format eq 'CODE' ? $format
+	  : $format eq 'LONG'     ? sub {
+			my $msg    = shift;
 			my $domain = shift || '-';
 			my $stamp  = strftime "%Y-%m-%dT%H:%M:%S", gmtime;
-			"[$stamp $$] $domain $msg";
-	  }
-	: error __x"unknown format parameter `{what}'", what => ref $format || $format;
+	 		"[$stamp $$] $domain $msg";
+	    }
+	  : error __x"unknown format parameter `{what}'", what => ref $format || $format;
 
-	$self;
-}
-
-
-=method close
-Only when initiated with a FILENAME, the file will be closed.  In any
-other case, nothing will be done.
-=cut
-
-sub close()
-{	my $self = shift;
-	$self->SUPER::close
-		or return;
-
-	my $to = $self->{to};
-	my @fh_to_close
-	  = ref $to eq 'CODE'      ? values %{$self->{LRDF_out}}
-	  : $self->{LRDF_filename} ? $self->{LRDF_output}
-	  : ();
-
-	$_ && $_->close for @fh_to_close;
 	$self;
 }
 
@@ -212,7 +189,7 @@ sub output($)
 	my $name = $self->name;
 
 	my $to   = $self->{to};
-	if(!ref $to)
+	unless(ref $to)
 	{	# constant file name
 		$self->{LRDF_filename} = $to;
 		my $binmode = $self->{replace} ? '>' : '>>';
@@ -263,7 +240,7 @@ sub rotate($)
 	my $logs = ref $to eq 'CODE' ? $self->{LRDF_out} : +{ $self->{to} => $self->{LRDF_output} };
 
 	while(my ($log, $fh) = each %$logs)
-	{	!ref $log
+	{	! ref $log
 			or error __x"cannot rotate log file which was opened as file-handle";
 
 		my $oldfn = ref $old eq 'CODE' ? $old->($log) : $old;
@@ -297,6 +274,26 @@ sub log($$$$)
 	flock $out, LOCK_EX;
 	$out->print($text);
 	flock $out, LOCK_UN;
+}
+
+=method close
+Only when initiated with a FILENAME, the file will be closed.  In any
+other case, nothing will be done.
+=cut
+
+sub close()
+{	my $self = shift;
+	$self->SUPER::close
+		or return;
+
+	my $to = $self->{to};
+	my @fh_to_close
+	  = ref $to eq 'CODE' ? values %{$self->{LRDF_out}}
+	  : $self->filename   ? $self->{LRDF_output}
+	  : ();
+
+	$_ && $_->close for @fh_to_close;
+	$self;
 }
 
 1;
