@@ -1,28 +1,49 @@
 
 BODY {
-   font-family: Arial, Herlvetica, sans-serif
+	font-family: Arial, Herlvetica, sans-serif;
+	counter-reset: chapter section subsection;
 }
 
 H2 {
-   font-variant: small-caps;
+	font-variant: small-caps;
+	counter-increment: chapter;
+	counter-reset: section subsection;
+}
+H2::before {
+	content: counter(chapter) ". ";
+}
+
+H3 {
+	counter-increment: section;
+	counter-reset: subsection;
+}
+H3::before {
+	content: counter(chapter) "." counter(section) ". ";
+}
+
+H4 {
+	counter-increment: subsection;
+}
+H4::before {
+	content: counter(chapter) "." counter(section) "." counter(subsection) ". ";
 }
 
 A:link {
-   color: green;
-   text-decoration: none;
+	color: green;
+	text-decoration: none;
 }
 
 A:visited {
-   color: blue;
-   text-decoration: none;
+	color: blue;
+	text-decoration: none;
 }
 
 UL {
-   margin-top: 0;
+	margin-top: 0;
 }
 
 DL {
-   margin-top: 1ex;
+	margin-top: 1ex;
 }
 
 DD > P, DD > PRE {

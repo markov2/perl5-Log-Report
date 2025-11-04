@@ -81,7 +81,7 @@ All %options which are not consumed by this base constructor are passed
 to the wrapped back-end.  Some of them will check whether all %options
 are understood, other ignore unknown %options.
 
-=option  accept REASONS
+=option  accept $reasons|\@reasons
 =default accept C<depend on mode>
 See M<Log::Report::Util::expand_reasons()> for possible values.  If
 the initial mode for this dispatcher does not need verbose or debug
@@ -93,7 +93,7 @@ results in C<ASSERT->, and "DEBUG" in C<ALL>.
 
 =option  locale LOCALE
 =default locale <system locale>
-Overrules the global setting.  Can be overruled by
+Overrules the global locale setting.  Can be overruled itself by
 M<Log::Report::report(locale)>.
 
 =option  mode 'NORMAL'|'VERBOSE'|'ASSERT'|'DEBUG'|0..3
@@ -114,7 +114,7 @@ a CODE is specified, it will be called with a translated text and the
 returned text is used.
 
 =option  charset CHARSET
-=default charset <undef>
+=default charset undef
 Convert the messages in the specified character-set (codeset).  By
 default, no conversion will take place, because the right choice cannot
 be determined automatically.
@@ -169,19 +169,6 @@ sub init($)
 	}
 
 	$self->{charset_enc} = $csenc || sub { $_[0] };
-	$self;
-}
-
-=method close
-Terminate the dispatcher activities.  The dispatcher gets disabled,
-to avoid the case that it is accidentally used.  Returns undef (false)
-if the dispatcher was already closed.
-=cut
-
-sub close()
-{	my $self = shift;
-	$self->{closed}++ and return undef;
-	$self->{disabled}++;
 	$self;
 }
 
@@ -262,6 +249,19 @@ sub needs(;$)
 
 #--------------------
 =section Logging
+
+=method close
+Terminate this dispatcher activities.  The dispatcher gets disabled,
+to avoid the case it accidentally gets used.  Returns undef (false)
+if the dispatcher was already closed.
+=cut
+
+sub close()
+{	my $self = shift;
+	$self->{closed}++ and return undef;
+	$self->{disabled}++;
+	$self;
+}
 
 =method log HASH-$of-%options, $reason, $message, $domain
 This method is called by M<Log::Report::report()> and should not be called
