@@ -259,7 +259,7 @@ sub close()
 
 =method log \%options, $reason, $message, $domain
 This method is called by M<Log::Report::report()> and should not be called
-directly.  Internally, it will call M<translate()>, which does most $of
+directly.  Internally, it will call M<translate()>, which does most of
 the work.
 =cut
 

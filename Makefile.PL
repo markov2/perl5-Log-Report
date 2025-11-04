@@ -5,11 +5,11 @@ use warnings;
 use strict;
 
 # Use command 'oodist' to produce your whole software release.
-my $version  = '1.42';
-my $webpages = "../public_html";
-my $git      = "https://github.com/markov2/perl5-Log-Report";
-my $publish  = "../public_html/log-report";
-my $homepage = "http://perl.overmeer.net/CPAN/";
+my $version  = '1.43';
+my $webpages = '../public_html';
+my $git      = 'https://github.com/markov2/perl5-Log-Report';
+my $publish  = '../public_html/log-report';
+my $homepage = 'http://perl.overmeer.net/CPAN/';
 
 my %oodist   = (
 	oodoc_version => 3.04,
