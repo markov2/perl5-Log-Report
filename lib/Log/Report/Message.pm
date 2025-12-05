@@ -156,23 +156,30 @@ message object.
 Some $text or other $message object which need to be pasted after this
 message object.
 
-=option  _class   $label|\@labels
-=default _class   []
-When messages are used for exception based programming, you add
-P<_class> parameters to the argument list.  Later, with for instance
-M<Log::Report::Dispatcher::Try::wasFatal(class)>, you can check the
-category of the message.
+=option  _tag   $tags|\@tags
+=default _tag   []
+When messages are used for exception based programming, you add a
+P<_tag> parameter to the argument list.  Later, with for instance
+M<Log::Report::Dispatcher::Try::wasFatal(tag)>, you can check the
+category (group, class) of the exception.
 
-One message can be part of multiple classes.  The STRING is used as
-comma- and/or blank separated list of class tokens (barewords), the
-ARRAY lists all tokens separately. See M<classes()>.
+The $tags is interpreted as comma- and/or blank separated list of class
+tokens (barewords), the ARRAY lists all tags separately. See M<tags()>.
 
-=option  _classes $label|\@labels
-=default _classes []
-Alternative for P<_class>, which cannot be used at the same time.
+=option  _tags $tags|\@tags
+=default _tags undef
+Alternative name for P<_tag>
+
+=option  _classes $tags|\@tags
+=default _classes undef
+Deprecated alternative for P<_tag>.
+
+=option  _class   $tags|\@tags
+=default _class   undef
+Deprecated alternative for P<_tag>.
 
 =option  _to $dispatcher
-=default _to <undef>
+=default _to undef
 Specify the $dispatcher as destination explicitly. Short
 for  C<< report {to => NAME}, ... >>  See M<to()>
 
@@ -219,6 +226,9 @@ sub new($@)
 	if($s{_plural})
 	{	s/\s+$//, s/^\s+// for $s{_plural};
 	}
+
+	my $tags  = delete $s{_tag} // delete $s{_tags} // delete $s{_class} // delete $s{_classes};
+	$s{_tags} = ! ref $tags && length $tags ? [ split /[,\s]+/, $tags ] : $tags;
 
 	bless \%s, $class;
 }
@@ -279,15 +289,16 @@ sub count()   { $_[0]->{_count}  }
 sub context() { $_[0]->{_context}}
 sub msgctxt() { $_[0]->{_msgctxt}}
 
-=method classes
-Returns the LIST of classes which are defined for this message; message
+=method tags
+Returns the LIST of tags which are defined for this message; message
 group indicators, as often found in exception-based programming.
+
+=method classes
+Deprecated alternative for M<tags()>.
 =cut
 
-sub classes()
-{	my $class = $_[0]->{_class} || $_[0]->{_classes} || [];
-	ref $class ? @$class : split(/[\s,]+/, $class);
-}
+sub tags() { @{$_[0]->{_tags}} }
+*classes = \&tags;
 
 =method to [$name]
 Returns the $name of a dispatcher if explicitly specified with
@@ -327,26 +338,26 @@ When the message was produced with
      file    => $files[0],
      files   => \@files,
      nrfiles => @files+0,  # or scalar(@files)
-     _class  => 'IO, files',
+     _tags   => [ 'IO', 'files' ],
      _join   => ', ';
 
 then the values can be takes from the produced message as
 
   my $files = $msg->valueOf('files');  # returns ARRAY reference
-  print @$files;              # 3
-  my $count = $msg->count;    # 3
-  my @class = $msg->classes;  # 'IO', 'files'
-  if($msg->inClass('files'))  # true
+  print @$files;                 # 3
+  my $count = $msg->count;       # 3
+  my @tags  = $msg->tags;        # 'IO', 'files'
+  if($msg->taggedWith('files'))  # true
 
 Simplified, the above example can also be written as:
 
-  local $" = ', ';
+  local $" = ', ';  # Perl default
   my $msg  = __xn
      "found one file: {files}",
      "found {_count} files: {files}",
      @files,      # has scalar context
      files   => \@files,
-     _class  => 'IO, files';
+     _tags   => 'IO, files';
 
 =cut
 
@@ -355,15 +366,21 @@ sub valueOf($) { $_[0]->{$_[1]} }
 #--------------------
 =section Processing
 
-=method inClass $class|Regexp
-Returns true if the message is in the specified $class (string) or
-matches the Regexp.  The trueth value is the (first matching) class.
+=method taggedWith $tag|Regexp
+Returns true if the message carries the specified $tag (string) or
+matches the Regexp.  The trueth value is the (first matching) tag.
 =cut
 
-sub inClass($)
-{	my @classes = shift->classes;
-	ref $_[0] eq 'Regexp' ? (first { $_ =~ $_[0] } @classes) : (first { $_ eq $_[0] } @classes);
+sub taggedWith($)
+{	my ($self, $match) = @_;
+	ref $match eq 'Regexp' ? (first { $_ =~ $$match } $self->tags) : (first { $_ eq $match } $self->tags);
 }
+
+=method inClass $tag|Regexp
+Deprecated alternative for M<taggedWith()>.
+=cut
+
+*inClass = \&taggedWith;
 
 =method toString [$locale]
 Translate a message.  If not specified, the default locale is used.
@@ -630,10 +647,11 @@ The label of the textdomain in which the translation takes place.
 The string which is used between elements of an ARRAY, when it gets
 interpolated in a single field.
 
-=item _class or _classes
-Are to be used to group exceptions, and can be queried with M<inClass()>,
-M<Log::Report::Exception::inClass()>, or
-M<Log::Report::Dispatcher::Try::wasFatal()>.
+=item _tags
+[1.44] Tags are to be used to group exceptions, and can be queried with M<taggedWith()>,
+M<Log::Report::Exception::taggedWith()>, or
+M<Log::Report::Dispatcher::Try::wasFatal(tag)>.
+
 =back
 
 =example using the _count

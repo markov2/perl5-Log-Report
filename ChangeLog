@@ -9,6 +9,9 @@ TODO:
 
 version 1.44:
 
+	Changes:
+	- rename exception 'classes' into exception 'tags'.  Backwards compatible.
+
 	Improvements:
 	- move documentation about format strings to ::Message.
 

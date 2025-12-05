@@ -28,9 +28,9 @@ Log::Report::Exception - a single generated event
 
   my $message = $exception->message;   # the Log::Report::Message
 
-  if($message->inClass('die')) ...
-  if($exception->inClass('die')) ...   # same
-  if($@->wasFatal(class => 'die')) ... # same
+  if($message->taggedWith('die')) ...
+  if($exception->taggedWith('die')) ...   # same
+  if($@->wasFatal(tag => 'die')) ... # same
 
 =chapter DESCRIPTION
 In Log::Report, exceptions are not as extended as available in
@@ -136,12 +136,18 @@ sub message(;$)
 #--------------------
 =section Processing
 
-=method inClass $class|Regexp
-Check whether any of the classes listed in the message match $class
-(string) or the Regexp.  This uses M<Log::Report::Message::inClass()>.
+=method taggedWith $tag|Regexp
+[1.44] Check whether any of the classes listed in the message match $tag
+(string) or the Regexp.  This uses M<Log::Report::Message::taggedWith()>.
 =cut
 
-sub inClass($) { $_[0]->message->inClass($_[1]) }
+sub taggedWith($) { $_[0]->message->taggedWith($_[1]) }
+
+=method inClass $tag|Regexp
+Deprecated name for M<taggedWith()>.
+=cut
+
+*inClass = \&taggedWith;
 
 =method throw %options
 Insert the message contained in the exception into the currently defined

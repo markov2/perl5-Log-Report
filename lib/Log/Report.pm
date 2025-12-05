@@ -119,8 +119,8 @@ Log::Report - report a problem, with exceptions and translation support
   info __"Hello World!";      # in Dutch, if translation table found
 
   # Exception classes, see Log::Report::Exception
-  try { error __x"something", _class => 'parsing,schema' };
-  if($@->wasFatal->inClass('parsing')) ...
+  try { error __x"something", _tags => 'parsing,schema' };
+  if($@->wasFatal->taggedWith('parsing')) ...
 
 =chapter DESCRIPTION
 

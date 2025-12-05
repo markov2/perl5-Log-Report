@@ -249,11 +249,15 @@ sub success() { ! defined shift->{died} }
 Returns the Log::Report::Exception which caused the "try" block to
 die, otherwise an empty LIST (undef).
 
+=option  tag $tag|REGEX
+=default tag undef
+[1.44] Only return the exception if it was fatal, and in the same time in
+the specified $tag (as string) or matches the REGEX.
+See M<Log::Report::Message::taggedWith()>
+
 =option  class $class|REGEX
 =default class undef
-Only return the exception if it was fatal, and in the same time in
-the specified $class (as string) or matches the REGEX.
-See M<Log::Report::Message::inClass()>
+Deprecated alternative for C<tag>.
 =cut
 
 sub wasFatal(@)
@@ -263,8 +267,10 @@ sub wasFatal(@)
 	my $ex = first { $_->isFatal } @{$self->{exceptions}}
 		or return ();
 
+	my $tag = $args{tag} // $args{class};
+
 	# There can only be one fatal exception.  Is it in the class?
-	(!$args{class} || $ex->inClass($args{class})) ? $ex : ();
+	(! $tag || $ex->taggedWith($tag)) ? $ex : ();
 }
 
 =method showStatus
