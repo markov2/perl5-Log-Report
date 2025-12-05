@@ -78,7 +78,7 @@ my %requires  = (
 );
 
 WriteMakefile
-	NAME      => 'Log-Report',
+	NAME      => 'Log::Report',
 	VERSION   => $version,
 	AUTHOR    => 'Mark Overmeer <markov@cpan.org>',
 	ABSTRACT  => 'report a problem, pluggable handlers and language support',

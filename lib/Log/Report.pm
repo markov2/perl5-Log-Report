@@ -1358,9 +1358,10 @@ to indicate the reason for the message to be produced.
   croak   7,emergency emerg  fatal    failure
   confess 7,emergency emerg  fatal    panic
 
-=subsection Run modes, verbosity
-The run-mode change which messages are passed to a dispatcher, but
-from a different angle than the dispatch filters; the mode changes
+=subsection Run modes
+
+The run-mode change which messages are passed to a dispatcher, the verbosity.
+It takes a different angle than the dispatch filters: the mode changes
 behavioral aspects of the messages, which are described in detail in
 L<Log::Report::Dispatcher/Processing the message>.  However, it should
 behave as you expect: the DEBUG mode shows more than the VERBOSE mode,
