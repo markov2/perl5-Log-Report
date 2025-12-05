@@ -65,7 +65,7 @@ sub die_decode($%)
 	chomp $text[-1];
 
 	# Try to catch the error directly, to remove it from the error text
-	my %opt    = (errno => $! + 0);
+	my %opt    = (errno => $! + 0, _tags => 'die');
 	my $err    = "$!";
 
 	if($text[0] =~ s/ at (.+) line (\d+)\.?$// )

@@ -12,6 +12,9 @@ version 1.44:
 	Changes:
 	- rename exception 'classes' into exception 'tags'.  Backwards compatible.
 
+	Fixes:
+	- converted die message get a 'die' tag, as the docs promissed.
+
 	Improvements:
 	- move documentation about format strings to ::Message.
 
