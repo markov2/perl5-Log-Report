@@ -8,7 +8,7 @@ package Log::Report::Translator;
 use warnings;
 use strict;
 
-use Log::Report 'log-report';
+use Log::Report 'log-report', import => [ ];
 
 #--------------------
 =chapter NAME

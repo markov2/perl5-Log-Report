@@ -9,7 +9,7 @@ use base 'Log::Report::Dispatcher';
 use warnings;
 use strict;
 
-use Log::Report 'log-report';
+use Log::Report 'log-report', import => [ ];
 
 my $singleton = 0;   # can be only one (per thread)
 

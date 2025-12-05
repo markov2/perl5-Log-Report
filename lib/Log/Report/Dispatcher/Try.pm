@@ -9,7 +9,8 @@ use base 'Log::Report::Dispatcher';
 use warnings;
 use strict;
 
-use Log::Report 'log-report', syntax => 'SHORT';
+use Log::Report 'log-report', import => [ qw/__x error/ ];
+
 use Log::Report::Exception ();
 use Log::Report::Util      qw/%reason_code expand_reasons/;
 use List::Util             qw/first/;

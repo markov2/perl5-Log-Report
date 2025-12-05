@@ -9,7 +9,7 @@ use base 'Log::Report::Dispatcher';
 use warnings;
 use strict;
 
-use Log::Report 'log-report';
+use Log::Report 'log-report', import => [ qw/__x error/ ];
 
 #--------------------
 =chapter NAME

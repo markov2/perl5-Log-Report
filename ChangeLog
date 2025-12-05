@@ -17,6 +17,7 @@ version 1.44:
 
 	Improvements:
 	- move documentation about format strings to ::Message.
+	- minimize LR imports.
 
 version 1.43: Fri  5 Dec 11:32:36 CET 2025
 

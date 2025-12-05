@@ -9,11 +9,11 @@ use base 'Log::Report::Minimal::Domain';
 use warnings;
 use strict;
 
-use Log::Report        'log-report';
+use Log::Report        'log-report', import => [ qw/__x error fault panic warning/ ];
 use Log::Report::Util  qw/parse_locale/;
-use Scalar::Util       qw/blessed/;
+use Log::Report::Translator ();
 
-use Log::Report::Translator;
+use Scalar::Util       qw/blessed/;
 
 #--------------------
 =chapter NAME

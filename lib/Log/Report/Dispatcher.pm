@@ -8,7 +8,7 @@ package Log::Report::Dispatcher;
 use warnings;
 use strict;
 
-use Log::Report 'log-report';
+use Log::Report 'log-report', import => [ qw/__x N__ __ alert error info panic textdomain trace/ ];
 use Log::Report::Util qw/parse_locale expand_reasons %reason_code escape_chars use_errno/;
 
 use POSIX      qw/strerror/;

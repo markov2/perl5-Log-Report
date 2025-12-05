@@ -9,7 +9,7 @@ use base 'Log::Report::Dispatcher';
 use warnings;
 use strict;
 
-use Log::Report 'log-report', syntax => 'SHORT';
+use Log::Report 'log-report', import => [ qw/__ __x error panic/ ];
 use Log::Report::Util  qw/@reasons expand_reasons/;
 
 use Log::Dispatch 2.00;

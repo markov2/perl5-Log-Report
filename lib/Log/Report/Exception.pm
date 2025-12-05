@@ -8,8 +8,9 @@ package Log::Report::Exception;
 use warnings;
 use strict;
 
-use Log::Report      'log-report';
+use Log::Report      'log-report', import => [ qw/__x error report/ ];
 use Log::Report::Util qw/is_fatal to_html/;
+
 use POSIX             qw/locale_h/;
 use Scalar::Util      qw/blessed/;
 

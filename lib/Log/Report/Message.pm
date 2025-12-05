@@ -8,7 +8,8 @@ package Log::Report::Message;
 use warnings;
 use strict;
 
-use Log::Report 'log-report';
+use Log::Report       'log-report', import => [ qw/textdomain/ ];
+
 use POSIX             qw/locale_h/;
 use List::Util        qw/first/;
 use Scalar::Util      qw/blessed/;

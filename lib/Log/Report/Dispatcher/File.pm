@@ -9,9 +9,9 @@ use base 'Log::Report::Dispatcher';
 use warnings;
 use strict;
 
-use Log::Report  'log-report';
-use POSIX        qw/strftime/;
+use Log::Report  'log-report', import => [ qw/__x error fault trace/ ];
 
+use POSIX        qw/strftime/;
 use Encode       qw/find_encoding/;
 use Fcntl        qw/:flock/;
 

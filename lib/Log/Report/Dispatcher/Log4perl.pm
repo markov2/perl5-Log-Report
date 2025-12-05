@@ -9,7 +9,7 @@ use base 'Log::Report::Dispatcher';
 use warnings;
 use strict;
 
-use Log::Report 'log-report';
+use Log::Report 'log-report', import => [ qw/__ __x error panic/ ];
 
 use Log::Report::Util qw/@reasons expand_reasons/;
 use Log::Log4perl     qw/:levels/;
