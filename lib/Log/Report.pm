@@ -67,7 +67,7 @@ Log::Report - report a problem, with exceptions and translation support
   # First step to translations, once you need it.
   print __x"my name is {name}", name => $n;  # print, so no exception
   print __"Hello World\n";      # no interpolation, optional translation
-  print __x'Hello World';       # SYNTAX ERROR!!  ' is alternative for ::
+  print __x'Hello World';       # SYNTAX ERROR: quote is alternative for ::
 
   # Functions replacing die/warn/carp, casting exceptions.
   error "oops";                 # exception like die(), no translation
@@ -146,21 +146,23 @@ L<https://perl.overmeer.net/log-report/papers/201306-PerlMagazine-article-en.htm
 
 =section Report production and configuration
 
-=function report [%options], $reason, $message|<STRING,$params>,
+=function report [\%options], $reason, $message|<$text,%params>,
 
 The C<report> function is sending (for some $reason) a $message to be
 displayed or logged (by a `dispatcher').  This function is the core
 for M<error()>, M<info()> etc functions, which are nicer names for this
 exception throwing: better use those short names.
 
-The $reason is a string like 'ERROR' (for function C<error()>).
-The $message is a Log::Report::Message object (which are created with
-the special translation syntax like M<__x()>).  The $message may also
-be a plain string, or an Log::Report::Exception object. The optional
-first parameter is a HASH which can be used to influence the dispatchers.
-
 The optional %options are listed below.  Quite differently from other
 functions and methods, they have to be passed in a HASH as first parameter.
+
+The $reason is a string like 'ERROR' (for function C<error()>).
+The $message is a Log::Report::Message object (which is created with
+the special translation syntax like M<__x()>).
+
+The message may also be a plain piece of $text, or a
+Log::Report::Exception object. The %params can be used to influence
+the dispatchers, like real message objects can.
 
 This function returns the LIST of dispatchers which accepted the $message.
 When empty, no back-end has accepted it so the $message was "lost".
@@ -181,12 +183,12 @@ defaults to C<1> (historical UNIX behavior). When the message $reason
 this value as return code of the program.  The use of this option itself
 will not trigger an C<die()>.
 
-=option  stack ARRAY
+=option  stack \@trace
 =default stack undef
 When defined, that data is used to display the call stack.  Otherwise,
 it is collected via C<caller()> if needed.
 
-=option  location STRING
+=option  location $location
 =default location undef
 When defined, this location is used in the display.  Otherwise, it
 is determined automatically if needed.  An empty string will disable
@@ -221,10 +223,10 @@ program.
   report {locale => 'pt_BR'},
         WARNING => "do this at home!";
 
-=error token '$token' not recognized as reason
-=error odd length parameter list with '$msg'
-=error a message object is reported with more parameters
-=error odd length parameter list with object '$msg'
+=error token '$token' not recognized as reason.
+=error odd length parameter list with '$msg'.
+=error a message object is reported with more parameters.
+=error odd length parameter list with object '$msg'.
 =cut
 
 sub report($@)
@@ -247,7 +249,7 @@ sub report($@)
 	}
 
 	is_reason $reason
-		or error __x"token '{token}' not recognized as reason", token=>$reason;
+		or error __x"token '{token UNKNOWN}' not recognized as reason.", token => $reason;
 
 	# return when no-one needs it: skip unused trace() fast!
 	@disp || $stop
@@ -278,7 +280,7 @@ sub report($@)
 	my $exception;
 	if(!blessed $message)
 	{	# untranslated message into object
-		@_%2 and error __x"odd length parameter list with '{msg}'", msg => $message;
+		@_%2 and error __x"odd length parameter list with '{msg}'.", msg => $message;
 		$message   = $lrm->new(_prepend => $message, @_);
 	}
 	elsif($message->isa('Log::Report::Exception'))
@@ -286,13 +288,13 @@ sub report($@)
 		$message   = $exception->message;
 	}
 	elsif($message->isa('Log::Report::Message'))
-	{	@_==0 or error __x"a message object is reported with more parameters";
+	{	@_==0 or error __x"a message object is reported with more parameters.";
 	}
 	else
 	{	# foreign object
 		my $text = "$message";  # hope stringification is overloaded
 		$text	=~ s/\s*$//gs;
-		@_%2 and error __x"odd length parameter list with object '{msg}'", msg => $text;
+		@_%2 and error __x"odd length parameter list with object '{msg}'.", msg => $text;
 		$message = $lrm->new(_prepend => $text, @_);
 	}
 
@@ -382,10 +384,11 @@ involved are returned as LIST, non-existing ones skipped.  In SCALAR
 context with only one name, the one object is returned.
 
 =examples play with dispatchers
+
   dispatcher Log::Dispatcher::File => mylog =>,
     accept   => 'MISTAKE-',    # for wrapper
     locale   => 'pt_BR',       # other language
-    filename => 'logfile';    # for back-end
+    filename => 'logfile';     # for back-end
 
   dispatcher close => 'mylog';  # cleanup
   my $obj = dispatcher find => 'mylog';
@@ -404,14 +407,14 @@ context with only one name, the one object is returned.
   dispatcher PERL => 'default', mode => 'DEBUG', accept => 'ALL'
      if $debug;
 
-=error only one dispatcher name accepted in SCALAR context
+=error only one dispatcher name accepted in SCALAR context.
 In SCALAR context, only one dispatcher name accepted
 The M<dispatcher()> method returns the Log::Report::Dispatcher
 objects which it has accessed.  When multiple names where given, it
 wishes to return a LIST of objects, not the count of them.
 
-=error the 'needs' sub-command parameter '$need' is not a reason
-=error the 'filter' sub-command needs a CODE reference
+=error the 'needs' sub-command parameter '$need' is not a reason.
+=error the 'filter' sub-command needs a CODE reference.
 =cut
 
 my %disp_actions = map +($_ => 1), qw/close find list disable enable mode needs filter active-try do-not-reopen/;
@@ -428,7 +431,7 @@ sub dispatcher($@)
 		{	my $has = first {$_->name eq $name} @$disps;
 			if(defined $has && $has ne $default_dispatcher)
 			{	my $default = $name eq 'default' ? ' (refreshing configuration instead)' : '';
-				trace "not reopening $name$default";
+				trace "not reopening $name$default.";
 				return $has;
 			}
 		}
@@ -447,7 +450,7 @@ sub dispatcher($@)
 
 	my $command = shift;
 	if($command eq 'list')
-	{	@_ and mistake __"the 'list' sub-command doesn't expect additional parameters";
+	{	@_ and mistake __"the 'list' sub-command doesn't expect additional parameters.";
 		my @disp = @{$reporter->{dispatchers}};
 		push @disp, $nested_tries[-1] if @nested_tries;
 		return @disp;
@@ -455,14 +458,14 @@ sub dispatcher($@)
 	if($command eq 'needs')
 	{	my $reason = shift || 'undef';
 		is_reason $reason
-			or error __x"the 'needs' sub-command parameter '{need}' is not a reason", need => $reason;
+			or error __x"the 'needs' sub-command parameter '{need}' is not a reason.", need => $reason;
 		my $disp = $reporter->{needs}{$reason};
 		return $disp ? @$disp : ();
 	}
 	if($command eq 'filter')
 	{	my $code = shift;
 		ref $code eq 'CODE'
-			or error __"the 'filter' sub-command needs a CODE reference";
+			or error __"the 'filter' sub-command needs a CODE reference.";
 		my %names = map +($_ => 1), @_;
 		push @{$reporter->{filters}}, [ $code, \%names ];
 		return ();
@@ -487,8 +490,8 @@ sub dispatcher($@)
 		for my $n (@_) { push @disps, grep $_->name eq $n, @$disps }
 	}
 
-	error __"only one dispatcher name accepted in SCALAR context"
-		if @disps > 1 && !wantarray && defined wantarray;
+	wantarray || @disps < 2
+		or  error __"only one dispatcher name accepted in SCALAR context.";
 
 	if($command eq 'close')
 	{	my %kill = map +($_->name => 1), @disps;
@@ -572,7 +575,7 @@ sub try(&@)
 {	my $code = shift;
 
 	@_ % 2 and report +{ location => [caller 0] },
-		PANIC => __x"odd length parameter list for try(): forgot the terminating ';'?";
+		PANIC => __"odd length parameter list for try(): forgot the terminating ';'?";
 
 	unshift @_, mode => 'DEBUG'
 		if $reporter->{needs}{TRACE};
@@ -969,13 +972,13 @@ your messages need extra attributes.  The provided CLASS must extend
 Log::Report::Message
 
 =examples of import
-  use Log::Report mode => 3;     # '3' or 'DEBUG'
+  use Log::Report mode => 3;      # '3' or 'DEBUG', no domain given
 
-  use Log::Report 'my-domain';   # in each package producing messages
+  use Log::Report 'my-domain';    # in each package producing messages
 
   use Log::Report 'my-domain',    # in one package, top of distr
     mode            => 'VERBOSE',
-    syntax          => 'REPORT', # report ERROR, not error()
+    syntax          => 'REPORT',  # report ERROR, not error()
     translator      => Log::Report::Translator::POT->new
       ( lexicon => '/home/mine/locale'  # translation tables
       ),
@@ -1136,7 +1139,7 @@ is that three tasks which are strongly related are merged into one simple
 syntax.  The three tasks:
 
 =over 4
-=item *  produce some text on a certain condition,
+=item * produce some text on a certain condition,
 =item * translate it to the proper language, and
 =item * deliver it in some way to a user.
 =back
@@ -1160,7 +1163,7 @@ the graphical interface of the user may show the text in the language
 of the user --say Chinese in utf8--, but at the same time syslog may
 write the latin1 English version of the same message.
 
-=section Background ideas
+=subsection Background ideas
 
 The following ideas are the base of this implementation:
 
@@ -1325,7 +1328,8 @@ of different reasons.  There is no need for C<confess> and C<croak>
 either, because the dispatcher can be configured to produce stack-trace
 information (for a limited sub-set of dispatchers)
 
-=subsection Report levels
+=subsubsection Report level comparison
+
 Various frameworks used with perl programs define different labels
 to indicate the reason for the message to be produced.
 
@@ -1342,7 +1346,7 @@ to indicate the reason for the message to be produced.
   croak   7,emergency emerg  fatal    failure
   confess 7,emergency emerg  fatal    panic
 
-=subsection Run modes
+=subsection Run modes, verbosity
 The run-mode change which messages are passed to a dispatcher, but
 from a different angle than the dispatch filters; the mode changes
 behavioral aspects of the messages, which are described in detail in
@@ -1425,6 +1429,95 @@ untranslated, with all unprocessed parameters still at hand.
   }
 
 See Log::Report::Dispatcher::Try and Log::Report::Exception.
+
+=section Formats for interpolation and translation
+
+In above examples, you see C<__x()> everywhere.  When you use this,
+you get two benefits:
+
+=over 4
+=item 1. interpolation
+=item 2. optional translation
+=back
+
+Simple perl scripts will use C<print()> with variables in the string.
+However, when the content of the variable gets more unpredictable or
+needs some pre-processing, then it gets tricky.  When you do want to
+introduce translations (in the far future of your successful project)
+it gets impossible.  Let me give you some examples:
+
+  print "product: $name\n";    # simple perl
+
+  # Will not work because "$name" is interpolated too early
+  print translate("product: $name"), "\n";
+
+  # This is the gettext solution, with formats
+  printf translate("product: %s\n"), $name;
+
+  # With named in stead of positional parameters
+  print translate("product: {p}\n", p => $name);
+
+  # With Log::Report, the translate() is hidden in __x()
+  print __x"product: {p}\n", p => $name;
+
+Besides making translation possible, interpolation via format strings
+is much cleaner than in the simpelest perl way.  For instance, these
+cases:
+
+  # Safety measures while interpolation
+  my $name = undef;
+  print "product: $name\n";   # uninitialized warning
+  print __x"product: {p}\n", p => $name;  # --> product: undef
+
+  # Interpolation of more complex data
+  my @names = qw/a b c/;
+  print "products: ", join(', ', @names), "\n";
+  print __x"products: {p}\n", p => \@names;
+
+  # Padded values hard to do without format strings
+  print "padded counter: ", ' ' x (6-length $c), "$c\n";
+  printf "padded counter: %6d\n", $counter;
+  print __x"padded counter: {c%6d}\n", c => $counter;
+
+So: using formats has many advantages.  Advice: use simple perl only in
+trace and assert messages, maybe also with panics.  For serious output
+of your program, use formatted output.
+
+=subsection Format with String::Print
+
+This Log::Report module uses String::Print to handle formatted strings.
+On object of that module is hidden in the logic of M<__x()> and friends.
+
+String::Print is a very capable format string processor, and you should
+really B<read its manual> page to see how it can help you.  It would be
+possible to support an other formatter (pretty simple even), but this is
+not (yet) supported.
+
+=examples using format features
+
+  # This tries to display the $param as useful and safe as possible,
+  # where you have totally no idea what its contents is.
+  error __x"illegal parameter {p UNKNOWN}.", p => $param;
+  # ---> "illegal parameter 'accidentally passed text'."
+  # ---> "illegal parameter Unexpected::Object::Type."
+
+  # fault() adds ": $!", with $! translated when configured.
+  open my($fh), "<:encoding(utf-8)", $filename
+  	 or fault __x"cannot read {file}", file => $filename;
+
+  # Auto-abbreviation
+  trace __x"first lines: '{text EL}'\n", text => $t;
+  # ---> "first lines: 'This text is long, we sho⋯'.\n"
+
+  trace __x"first lines: {text CHOP}\n", text => $t;
+  # ---> "This text is long, we [+3712 chars]\n"
+
+  info __x"file {file} size {size BYTES}\n", file => $fn, size => -s $fn;
+  # --> "/etc/passwd size 23kB\n"
+
+There are more nice standard interpolation modifiers, and you can add
+your own.  Besides, you can add serializers which determine how
+objects are inlined.
 
 =section Compared to other solutions in Perl
 

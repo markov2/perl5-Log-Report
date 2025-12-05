@@ -22,8 +22,7 @@ if($@)
 	*setlocale = sub { $_[1] }; *LC_ALL = sub { undef };
 }
 
-my %modes = (NORMAL => 0, VERBOSE => 1, ASSERT => 2, DEBUG => 3,
-	0 => 0, 1 => 1, 2 => 2, 3 => 3);
+my %modes = (NORMAL => 0, VERBOSE => 1, ASSERT => 2, DEBUG => 3, 0 => 0, 1 => 1, 2 => 2, 3 => 3);
 my @default_accept = ('NOTICE-', 'INFO-', 'ASSERT-', 'ALL');
 my %always_loc = map +($_ => 1), qw/ASSERT ALERT FAILURE PANIC/;
 

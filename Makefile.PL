@@ -50,9 +50,7 @@ my %oodist   = (
 	},
 
 	generate => [
-	  {
-		# Add real pod to the releases
-		format         => 'pod3',
+	  {	format         => 'pod3',
 		podtail        => undef,
 	  },
 	  {	format         => 'html',
@@ -66,7 +64,6 @@ my %oodist   = (
 		serializer   => 'json',
 		markup       => 'html',
 		publish      => "$publish/doctree",
-		include_manuals => undef,
 	  },
 	],
 );
@@ -77,7 +74,7 @@ my %requires  = (
 	'Scalar::Util'            => 0,
 	'Devel::GlobalDestruction'=> '0.09',
 	'Log::Report::Optional'   => '1.07',
-	'String::Print'           => '0.91',
+	'String::Print'           => '1.00',
 );
 
 WriteMakefile
