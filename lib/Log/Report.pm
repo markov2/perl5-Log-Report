@@ -1519,6 +1519,20 @@ There are more nice standard interpolation modifiers, and you can add
 your own.  Besides, you can add serializers which determine how
 objects are inlined.
 
+=subsection Translations
+
+Translating is optional.
+
+Distribution M<Log::Report::Lexicon> handles translations.  It will help
+you manage all M<__x()> (and friends) format strings in GNU's PO file
+format (F<https://www.gnu.org/software/gettext/manual/html_node/PO-Files.html>)
+
+With Log::Report::Template, you can use Log::Report with translations
+in various website template systems.
+
+Then, Dancer2::Plugin::LogReport brings Log::Report with exceptions
+and translations to the M<Dancer2> web framework.
+
 =section Compared to other solutions in Perl
 
 Some notes on differences between the Log::Report approach and other
