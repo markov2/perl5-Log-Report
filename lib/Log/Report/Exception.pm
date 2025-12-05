@@ -118,6 +118,8 @@ you have to re-assign the result of the modification.
   $e->message($e->message->concat('!!'));
 
   $e->message(__x"some message {xyz}", xyz => $xyz);
+
+=error message() of exception expects Log::Report::Message, got $what.
 =cut
 
 sub message(;$)
@@ -126,7 +128,8 @@ sub message(;$)
 
 	my $msg  = shift;
 	blessed $msg && $msg->isa('Log::Report::Message')
-		or panic "message() of exception expects Log::Report::Message";
+		or error __x"message() of exception expects Log::Report::Message, got {what UNKNOWN}.", what => $msg;
+
 	$self->{message} = $msg;
 }
 

@@ -979,12 +979,12 @@ Log::Report::Message
   use Log::Report 'my-domain',    # in one package, top of distr
     mode            => 'VERBOSE',
     syntax          => 'REPORT',  # report ERROR, not error()
-    translator      => Log::Report::Translator::POT->new
-      ( lexicon => '/home/mine/locale'  # translation tables
-      ),
-    native_language => 'nl_NL'; # untranslated msgs are Dutch
+    translator      => Log::Report::Translator::POT->new(
+       lexicon => '/home/mine/locale', # translation tables
+    ),
+    native_language => 'nl_NL';   # untranslated msgs are Dutch
 
-  use Log::Report import => 'try';      # or ARRAY of functions
+  use Log::Report import => 'try';     # or ARRAY of functions
 
 =error syntax flag must be either SHORT or REPORT, not `$flag' in $fn line $line
 =error message_class $class does not extend $base
@@ -1443,96 +1443,23 @@ untranslated, with all unprocessed parameters still at hand.
 
 See Log::Report::Dispatcher::Try and Log::Report::Exception.
 
-=section Formats for interpolation and translation
+=section Interpolation via formats
 
-In above examples, you see C<__x()> everywhere.  When you use this,
-you get two benefits:
+Interpolation via formats is optional.
 
-=over 4
-=item 1. interpolation
-=item 2. optional translation
+In shown examples, you see C<__x()> everywhere.  Using that function
+is required when you wish to use translations (later in your project),
+but also has many other benefits.  The functions C<__x> and friends
+create a Log::Report::Message object.
+
+See
+=item * L<Log::Report::Message/"Why use format strings?">
+=item * L<Log::Report::Message/"Messages with plural forms">
+=item * L<Log::Report::Message/"Interpolation with String::Print">
+=item * L<Log::Report::Message/"Automatic parameters">
 =back
 
-Simple perl scripts will use C<print()> with variables in the string.
-However, when the content of the variable gets more unpredictable or
-needs some pre-processing, then it gets tricky.  When you do want to
-introduce translations (in the far future of your successful project)
-it gets impossible.  Let me give you some examples:
-
-  print "product: $name\n";    # simple perl
-
-  # Will not work because "$name" is interpolated too early
-  print translate("product: $name"), "\n";
-
-  # This is the gettext solution, with formats
-  printf translate("product: %s\n"), $name;
-
-  # With named in stead of positional parameters
-  print translate("product: {p}\n", p => $name);
-
-  # With Log::Report, the translate() is hidden in __x()
-  print __x"product: {p}\n", p => $name;
-
-Besides making translation possible, interpolation via format strings
-is much cleaner than in the simpelest perl way.  For instance, these
-cases:
-
-  # Safety measures while interpolation
-  my $name = undef;
-  print "product: $name\n";   # uninitialized warning
-  print __x"product: {p}\n", p => $name;  # --> product: undef
-
-  # Interpolation of more complex data
-  my @names = qw/a b c/;
-  print "products: ", join(', ', @names), "\n";
-  print __x"products: {p}\n", p => \@names;
-
-  # Padded values hard to do without format strings
-  print "padded counter: ", ' ' x (6-length $c), "$c\n";
-  printf "padded counter: %6d\n", $counter;
-  print __x"padded counter: {c%6d}\n", c => $counter;
-
-So: using formats has many advantages.  Advice: use simple perl only in
-trace and assert messages, maybe also with panics.  For serious output
-of your program, use formatted output.
-
-=subsection Format with String::Print
-
-This Log::Report module uses String::Print to handle formatted strings.
-On object of that module is hidden in the logic of M<__x()> and friends.
-
-String::Print is a very capable format string processor, and you should
-really B<read its manual> page to see how it can help you.  It would be
-possible to support an other formatter (pretty simple even), but this is
-not (yet) supported.
-
-=examples using format features
-
-  # This tries to display the $param as useful and safe as possible,
-  # where you have totally no idea what its contents is.
-  error __x"illegal parameter {p UNKNOWN}.", p => $param;
-  # ---> "illegal parameter 'accidentally passed text'."
-  # ---> "illegal parameter Unexpected::Object::Type."
-
-  # fault() adds ": $!", with $! translated when configured.
-  open my($fh), "<:encoding(utf-8)", $filename
-  	 or fault __x"cannot read {file}", file => $filename;
-
-  # Auto-abbreviation
-  trace __x"first lines: '{text EL}'\n", text => $t;
-  # ---> "first lines: 'This text is long, we sho⋯'.\n"
-
-  trace __x"first lines: {text CHOP}\n", text => $t;
-  # ---> "This text is long, we [+3712 chars]\n"
-
-  info __x"file {file} size {size BYTES}\n", file => $fn, size => -s $fn;
-  # --> "/etc/passwd size 23kB\n"
-
-There are more nice standard interpolation modifiers, and you can add
-your own.  Besides, you can add serializers which determine how
-objects are inlined.
-
-=subsection Translations
+=subsection Translation
 
 Translating is optional.
 

@@ -99,12 +99,6 @@ the DOMAIN.  For one package, it will contain configuration information.
 These %options are used for all packages which use the same DOMAIN.
 See chapter L</Configuring> below.
 
-=option  formatter CODE|\%config|'PRINTI'
-=default formatter C<PRINTI>
-Selects the formatter used for the errors messages.  The default is the
-string C<PRINTI>, which will use M<String::Print::printi()>: interpolation
-with curly braces around the variable names.
-
 =option  translator Log::Report::Translator|\%config
 =default translator C<created internally>
 Set the object which will do the translations for this domain.
@@ -141,7 +135,6 @@ sub configure(%)
 		%args   = (%$set, %args);
 	}
 
-	# 'formatter' is mainly handled by the base-class, but documented here.
 	my $format = $args{formatter} || 'PRINTI';
 	$args{formatter} = $format = {} if $format eq 'PRINTI';
 
@@ -339,11 +332,11 @@ version of Log::Report.
 will use String::Print function C<printi()>, with the standard tricks.
 
   textdomain 'some-domain',
-    formatter =>
-      { class     => 'String::Print',    # default
-        method    => 'sprinti',          # default
-        %options    # constructor options for the class
-      );
+    formatter => {
+       class     => 'String::Print',    # default
+       method    => 'sprinti',          # default
+       %options,   # constructor options for String::Print
+    );
 
 When you want your own formatter, or configuration of C<String::Print>,
 you need to pass a CODE.  Be aware that you may loose magic added by

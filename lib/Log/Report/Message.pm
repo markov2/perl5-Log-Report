@@ -50,17 +50,17 @@ Log::Report::Message - a piece of text to be translated
   print "\t", __("Congratulations,"), "\n";  # same
 
 =chapter DESCRIPTION
-Any use of a translation function exported by Log::Report, like
+Any use of a constructor function exported by Log::Report, like
 C<__()> (the function is named underscore-underscore) or C<__x()>
-(underscore-underscore-x) will result in this object.  It will capture
-some environmental information, and delay the translation until it
-is needed.
+(underscore-underscore-x) will result in this Message object.  It will capture
+some environmental information as well.
 
-Creating an object first and translating it later, is slower than
-translating it immediately.  However, on the location where the message
-is produced, we do not yet know in what language to translate it to:
-that depends on the front-end, the log dispatcher.
-
+The optional translation is delayed until it is really needed.
+Creating an object first and translating it later, might be slower than
+translating it immediately.  However (by design decissions of Log::Report)
+on the location where the message is produced, we do not yet know in
+what language to translate it to: that depends on the actual log dispatcher
+configurations in the main program.
 
 =chapter OVERLOADED
 
@@ -68,7 +68,7 @@ that depends on the front-end, the log dispatcher.
 When the object is used in string context, it will get translated.
 Implemented as M<toString()>.
 
-=overload &() function
+=overload &() used as function
 When the object is called as function, a new object is created with
 the data from the original one but updated with the new parameters.
 Implemented in C<clone()>.
@@ -102,7 +102,7 @@ string.
 Indicates whether variables are to be filled-in; whether C<__x> or C<__> was
 used to define the message.
 
-=option  _domain STRING
+=option  _domain $name|$object
 =default _domain <from "use Log::Report">
 The text-domain (translation table) to which this P<_msgid> belongs.
 
@@ -146,15 +146,15 @@ white-space will be added before P<_append>.
 The category when the real gettext library is used, for instance
 LC_MESSAGES.
 
-=option  _prepend STRING|$message
+=option  _prepend $text|$message
 =default _prepend undef
-Text as STRING or $message object to be displayed before the display
-of this message.
+Some $text or other $message object which need to be glued before this
+message object.
 
-=option  _append  STRING|$message
+=option  _append  $text|$message
 =default _append  undef
-Text as STRING or $message object to be displayed after the display
-of this message.
+Some $text or other $message object which need to be pasted after this
+message object.
 
 =option  _class   $label|\@labels
 =default _class   []
@@ -320,14 +320,15 @@ have their own method which should be used with preference.
 When the message was produced with
 
   my @files = qw/one two three/;
-  my $msg = __xn"found one file: {file}",
-                "found {nrfiles} files: {files}",
-                scalar @files,
-                file    => $files[0],
-                files   => \@files,
-                nrfiles => @files+0,  # or scalar(@files)
-                _class  => 'IO, files',
-                _join   => ', ';
+  my $msg = __xn
+     "found one file: {file}",
+     "found {nrfiles} files: {files}",
+     scalar @files,
+     file    => $files[0],
+     files   => \@files,
+     nrfiles => @files+0,  # or scalar(@files)
+     _class  => 'IO, files',
+     _join   => ', ';
 
 then the values can be takes from the produced message as
 
@@ -340,11 +341,12 @@ then the values can be takes from the produced message as
 Simplified, the above example can also be written as:
 
   local $" = ', ';
-  my $msg  = __xn"found one file: {files}",
-                 "found {_count} files: {files}",
-                 @files,      # has scalar context
-                 files   => \@files,
-                 _class  => 'IO, files';
+  my $msg  = __xn
+     "found one file: {files}",
+     "found {_count} files: {files}",
+     @files,      # has scalar context
+     files   => \@files,
+     _class  => 'IO, files';
 
 =cut
 
@@ -392,10 +394,10 @@ sub toString(;$)
 	# translate the msgid
 	my $domain = $self->{_domain};
 	blessed $domain && $domain->isa('Log::Report::Minimal::Domain')
-		or $domain = textdomain $domain;
+		or $domain = $self->{_domain} = textdomain $domain;
 
-	my $format = $domain->translate($self, $locale || $oldloc);
-	defined $format or return ();
+	my $format = $domain->translate($self, $locale || $oldloc)
+		// return ();
 
 	# fill-in the fields
 	my $text = $self->{_expand} ? $domain->interpolate($format, $self) : "$prepend$format$append";
@@ -430,9 +432,7 @@ expansions within the msgid is not performed.
 
 sub untranslated()
 {	my $self = shift;
-	  (defined $self->{_prepend} ? $self->{_prepend} : '')
-	. (defined $self->{_msgid}   ? $self->{_msgid}   : '')
-	. (defined $self->{_append}  ? $self->{_append}  : '');
+	($self->{_prepend} // '') . ($self->{_msgid} // '') . ($self->{_append} // '');
 }
 
 =method concat STRING|$object, [$prepend]
@@ -451,17 +451,18 @@ sub concat($;$)
 {	my ($self, $what, $reversed) = @_;
 	if($reversed)
 	{	$what .= $self->{_prepend} if defined $self->{_prepend};
-		return ref($self)->new(%$self, _prepend => $what);
+		return (ref $self)->new(%$self, _prepend => $what);
 	}
 
 	$what = $self->{_append} . $what if defined $self->{_append};
-	ref($self)->new(%$self, _append => $what);
+	(ref $self)->new(%$self, _append => $what);
 }
 
 #--------------------
 =chapter DETAILS
 
 =section OPTIONS and VARIABLES
+
 The Log::Report functions which define translation request can all
 have OPTIONS.  Some can have VARIABLES to be interpolated in the string as
 well.  To distinguish between the OPTIONS and VARIABLES (both a list
@@ -470,13 +471,64 @@ As result of this, please avoid the use of keys which start with an
 underscore in variable names.  On the other hand, you are allowed to
 interpolate OPTION values in your strings.
 
-=subsection Interpolating
 With the C<__x()> or C<__nx()>, interpolation will take place on the
 translated MSGID string.  The translation can contain the VARIABLE
 and OPTION names between curly brackets.  Text between curly brackets
 which is not a known parameter will be left untouched.
 
-  fault __x"cannot open open {filename}", filename => $fn;
+=section Why use format strings?
+
+Simple perl scripts will use C<print()> with variables in the string.
+However, when the content of the variable gets more unpredictable or
+needs some pre-processing, then it gets tricky.  When you do want to
+introduce translations (in the far future of your successful project)
+it gets impossible.  Let me give you some examples:
+
+  print "product: $name\n";    # simple perl
+
+  # Will not work because "$name" is interpolated too early
+  print translate("product: $name"), "\n";
+
+  # This is the gettext solution, with formats
+  printf translate("product: %s\n"), $name;
+
+  # With named in stead of positional parameters
+  print translate("product: {p}\n", p => $name);
+
+  # With Log::Report, the translate() is hidden in __x()
+  print __x"product: {p}\n", p => $name;
+
+Besides making translation possible, interpolation via format strings
+is much cleaner than in the simpelest perl way.  For instance, these
+cases:
+
+  # Safety measures while interpolation
+  my $name = undef;
+  print "product: $name\n";   # uninitialized warning
+  print __x"product: {p}\n", p => $name;  # --> product: undef
+
+  # Interpolation of more complex data
+  my @names = qw/a b c/;
+  print "products: ", join(', ', @names), "\n";
+  print __x"products: {p}\n", p => \@names;
+
+  # Padded values hard to do without format strings
+  print "padded counter: ", ' ' x (6-length $c), "$c\n";
+  printf "padded counter: %6d\n", $counter;
+  print __x"padded counter: {c%6d}\n", c => $counter;
+
+So: using formats has many advantages.  Advice: use simple perl only in
+trace and assert messages, maybe also with panics.  For serious output
+of your program, use formatted output.
+
+=section Messages with plural forms
+
+The M<Log::Report::__xn()> message constructor is used when you need
+a different translation based on the count of one of the inserted
+fields.
+
+  fault __x"cannot read {file}", file => $fn;
+  # --> FAULT: cannot read /etc/shadow: Permission denied\n
 
   print __xn"directory {dir} contains one file",
             "directory {dir} contains {nr_files} files",
@@ -494,7 +546,7 @@ will be converted into their length.  A HASH will be converted into the
 number of keys in the HASH.
 
 (3) you could also simply pass a reference to the ARRAY: it will take
-the length as counter.
+the length as counter.  With a HASH, it will count the number of keys.
 
 (4) the C<scalar> keyword is required here, because it is LIST context:
 otherwise all filenames will be filled-in as parameters to C<__xn()>.
@@ -505,62 +557,81 @@ parameter can disappear.
             "directory {dir} contains {_count} files",
             \@files, dir => $dir;
 
-=subsection Interpolation of VARIABLES
+Some languages need more than two translations based on the counter.
+This is solved by the translation table definition.  The two msgids
+give here are simply the fallback, when there is not translation table
+active.
 
-C<Log::Report> uses L<String::Print> to interpolate values in(translated)
-messages.  This is a very powerful syntax, and you should certainly read
-that manual-page.  Here, we only described additional features, specific
-to the usage of C<String::Print> in C<Log::Report::Message> objects.
+=subsection Interpolation with String::Print
 
 There is no way of checking beforehand whether you have provided all
 required values, to be interpolated in the translated string.
 
-For interpolating, the following rules apply:
-=over 4
-=item *
-Simple scalar values are interpolated "as is"
+This Log::Report::Message uses String::Print to handle formatted strings.
+On object of that module is hidden in the logic of M<__x()> and friends.
 
-=item *
-References to SCALARs will collect the value on the moment that the
-output is made.  The C<Log::Report::Message> object which is created with
-the C<__xn> can be seen as a closure.  The translation can be reused.
-See example below.
+String::Print is a very capable format string processor, and you should
+really B<read its manual> page to see how it can help you.  It would be
+possible to support an other formatter (pretty simple even), but this is
+not (yet) supported.
 
-=item *
-Code references can be used to create the data "under fly".  The
-C<Log::Report::Message> object which is being handled is passed as
-only argument.  This is a hash in which all OPTIONS and VARIABLES
-can be found.
+=examples using format features
 
-=item *
-When the value is an ARRAY, all members will be interpolated with C<$">
-between the elements.  Alternatively (maybe nicer), you can pass an
-interpolation parameter via the C<_join> OPTION.
-=back
+  # This tries to display the $param as useful and safe as possible,
+  # where you have totally no idea what its contents is.
+  error __x"illegal parameter {p UNKNOWN}.", p => $param;
+  # ---> "illegal parameter 'accidentally passed text'."
+  # ---> "illegal parameter Unexpected::Object::Type."
 
-  local $" = ', ';
-  error __x"matching files: {files}", files => \@files;
+  # fault() adds ": $!", with $! translated when configured.
+  open my($fh), "<:encoding(utf-8)", $filename
+  	 or fault __x"cannot read {file}", file => $filename;
 
-  error __x"matching files: {files}", files => \@files, _join => ', ';
+  # Auto-abbreviation
+  trace __x"first lines: '{text EL}'\n", text => $t;
+  # ---> "first lines: 'This text is long, we sho⋯'.\n"
 
-=subsection Interpolation of OPTIONS
+  trace __x"first lines: {text CHOP}\n", text => $t;
+  # ---> "This text is long, we [+3712 chars]\n"
 
-You are permitted the interpolate OPTION values in your string.  This may
-simplify your coding.  The useful names are:
+  info __x"file {file} size {size BYTES}\n", file => $fn, size => -s $fn;
+  # --> "/etc/passwd size 23kB\n"
+
+  # HASH or object values
+  print __x"Name: {user.first} {user.surname}\n", user => $login;
+
+There are more nice standard interpolation modifiers, and you can add
+your own.  Besides, you can add serializers which determine how
+objects are inlined.
+
+=section Automatic parameters
+
+Besides the parameters which you specify yourself, Log::Report will add
+a few which can also be interpolated.  The all start with an underscore
+(C<_>).  These are collected when this Message object is instantiated,
+see the C<%options> of M<new()>.  These parameters have a purpose, but
+you are also permitted tp interpolate them in your message.  This may
+simplify your coding.
+
+The useful names are:
 
 =over 4
 =item _msgid
 The MSGID as provided with M<Log::Report::__()> and M<Log::Report::__x()>
 
 =item _plural, _count
-The PLURAL MSGIDs, respectively the COUNT as used with
+The plural (second) msgid, respectively the counter value as used with
 M<Log::Report::__n()> and M<Log::Report::__nx()>
 
 =item _textdomain
 The label of the textdomain in which the translation takes place.
 
+=item _join
+The string which is used between elements of an ARRAY, when it gets
+interpolated in a single field.
+
 =item _class or _classes
-Are to be used to group reports, and can be queried with M<inClass()>,
+Are to be used to group exceptions, and can be queried with M<inClass()>,
 M<Log::Report::Exception::inClass()>, or
 M<Log::Report::Dispatcher::Try::wasFatal()>.
 =back
@@ -569,19 +640,21 @@ M<Log::Report::Dispatcher::Try::wasFatal()>.
 With Locale::TextDomain, you have to do
 
   use Locale::TextDomain;
-  print __nx ( "One file has been deleted.\n",
-               "{num} files have been deleted.\n",
-               $num_files,
-               num => $num_files
-             );
+  print __nx(
+     "One file has been deleted.\n",
+     "{num} files have been deleted.\n",
+     $num_files,
+     num => $num_files,
+  );
 
 With C<Log::Report>, you can do
 
   use Log::Report;
-  print __nx ( "One file has been deleted.\n",
-               "{_count} files have been deleted.\n",
-               $num_files
-             );
+  print __nx(
+     "One file has been deleted.\n",
+     "{_count} files have been deleted.\n",
+     $num_files,
+  );
 
 Of course, you need to be aware that the name used to reference the
 counter is fixed to C<_count>.  The first example works as well, but
@@ -613,7 +686,7 @@ be used.
 =subsection Avoiding repetative translations
 
 This way of translating is somewhat expensive, because an object to
-handle the C<__x()> is created each time.
+handle the C<Log::Report::__x()> is created each time.
 
   for my $i (1..100_000)
   {   print __x "Hello World {i}\n", i => $i;
