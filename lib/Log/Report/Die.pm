@@ -65,7 +65,7 @@ sub die_decode($%)
 	chomp $text[-1];
 
 	# Try to catch the error directly, to remove it from the error text
-	my %opt    = (errno => $! + 0, _tags => 'die');
+	my %opt    = (errno => $! + 0);
 	my $err    = "$!";
 
 	if($text[0] =~ s/ at (.+) line (\d+)\.?$// )
@@ -97,7 +97,7 @@ sub die_decode($%)
 	  : @stack      ? 'PANIC'
 	  :               $args{on_die} || 'ERROR';
 
-	(\%opt, $reason, join("\n", @msg));
+	(\%opt, $reason, join("\n", @msg), 'die');
 }
 
 =function exception_decode $exception, %options
@@ -140,7 +140,7 @@ sub _exception_dbix($$)
 	  : @stack       ? 'PANIC'
 	  :                $on_die || 'ERROR';
 
-	(\%opts, $reason, $message);
+	(\%opts, $reason, $message, 'exception, dbix');
 }
 
 my %_libxml_errno2reason = (1 => 'WARNING', 2 => 'MISTAKE', 3 => 'ERROR');
@@ -158,7 +158,7 @@ sub _exception_libxml($$)
 			. ' (' . $exc->domain . ' error ' . $exc->code . ')';
 
 	my $reason = $_libxml_errno2reason{$exc->level} || 'PANIC';
-	(\%opts, $reason, $msg);
+	(\%opts, $reason, $msg, 'exception, libxml');
 }
 
 sub exception_decode($%)
@@ -180,7 +180,7 @@ sub exception_decode($%)
 	my $reason = $errno ? 'FAULT' : ($args{on_die} || 'ERROR');
 
 	# hopefully stringification is overloaded
-	(\%opt, $reason, "$exception");
+	(\%opt, $reason, "$exception", 'exception');
 }
 
 "to die or not to die, that's the question";

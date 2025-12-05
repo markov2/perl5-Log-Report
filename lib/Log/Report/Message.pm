@@ -167,7 +167,7 @@ The $tags is interpreted as comma- and/or blank separated list of class
 tokens (barewords), the ARRAY lists all tags separately. See M<tags()>.
 
 =option  _tags $tags|\@tags
-=default _tags undef
+=default _tags []
 Alternative name for P<_tag>
 
 =option  _classes $tags|\@tags
@@ -227,8 +227,8 @@ sub new($@)
 	{	s/\s+$//, s/^\s+// for $s{_plural};
 	}
 
-	my $tags  = delete $s{_tag} // delete $s{_tags} // delete $s{_class} // delete $s{_classes};
-	$s{_tags} = ! ref $tags && length $tags ? [ split /[,\s]+/, $tags ] : $tags;
+	my $tags  = delete $s{_tag} // delete $s{_tags} // delete $s{_class} // delete $s{_classes} // [];
+	$s{_tags} = ref $tags eq 'ARRAY' ? $tags : [ split /[,\s]+/, $tags ];
 
 	bless \%s, $class;
 }

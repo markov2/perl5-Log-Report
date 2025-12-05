@@ -69,7 +69,8 @@ Log::Report - report a problem, with exceptions and translation support
   print __"Hello World\n";      # no interpolation, optional translation
   print __x'Hello World';       # SYNTAX ERROR: quote is alternative for ::
 
-  # Functions replacing die/warn/carp, casting exceptions.
+  # Functions replacing die/warn/carp, casting exceptions but not message
+  # objects and no translation support.
   error "oops";                 # exception like die(), no translation
   -f $config or panic "Help!";  # alert/error/fault/info/...more
 
@@ -89,7 +90,7 @@ Log::Report - report a problem, with exceptions and translation support
 
   dispatcher SYSLOG => 'syslog' # also send to syslog,
     charset => 'iso-8859-1',    # explicit character conversions
-    locale => 'en_US';          # overrule user's locale
+    locale  => 'en_US';         # overrule user's locale
 
   dispatcher close => 'default' # stop default die/warn dispatcher
 
@@ -99,7 +100,7 @@ Log::Report - report a problem, with exceptions and translation support
   fault "cannot allocate $size bytes";     # no translation, ok
   fault __x"cannot allocate $size bytes";  # not translatable, wrong
 
-  # Translation depending on count
+  # Output (optionally with translation) depending on count
   # Leading and trailing whitespace stay magically outside translation
   # tables.  @files in scalar context.  Special parameter with _
   print __xn"found one file\n", "found {_count} files", @files;
@@ -600,11 +601,11 @@ sub try(&@)
 	if(!$is_exception && $err && !$disp->wasFatal)
 	{	# Decode errors which do not origin from Log::Report reports
 		# Native exceptions are already logged.
-		my ($opts, $reason, $text) = blessed $err
+		my ($opts, $reason, $text, $tags) = blessed $err
 		  ? Log::Report::Die::exception_decode($err)
 		  : Log::Report::Die::die_decode($err, on_die => $disp->die2reason);
 
-		$disp->log($opts, $reason, __$text);
+		$disp->log($opts, $reason, __x($text, _tags => $tags));
 	}
 
 	$disp->died($err)
