@@ -1163,6 +1163,18 @@ the graphical interface of the user may show the text in the language
 of the user --say Chinese in utf8--, but at the same time syslog may
 write the latin1 English version of the same message.
 
+=subsection Lightweight Log::Report::Optional
+
+When you want to use Log::Report features as cheap as possible, you
+may use Log::Report::Optional in your module.  In this case, your
+module can use C<error()> and C<__x()> with very little cost: they
+will not build internal objects and support translations.  It's fast
+and few dependencies.
+
+The beauty is, then when the main program which uses module does
+initiate the full Log::Report functionality, then your module will
+also switch to full support mode.
+
 =subsection Background ideas
 
 The following ideas are the base of this implementation:
@@ -1363,8 +1375,8 @@ on the command-line when a C<+> is after the option name.
 
   my $mode;    # defaults to NORMAL
   GetOptions 'v+'        => \$mode,
-            'verbose=i' => \$mode,
-            'mode=s'    => \$mode
+             'verbose=i' => \$mode,
+             'mode=s'    => \$mode
       or exit 1;
 
   dispatcher 'PERL', 'default', mode => $mode;
