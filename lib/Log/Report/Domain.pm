@@ -50,21 +50,26 @@ Log::Report::Domain - administer one text-domain
 
 =chapter DESCRIPTION
 
-L<Log::Report> can handle multiple sets of packages at the same
-time: in the usual case a program consists of more than one software
-distribution, each containing a number of packages.  Each module
-in an application belongs to one of these sets, by default the domain set
-'default'.
+L<Log::Report> can handle multiple sets of packages used by your program at the same
+time.  In the common case, your program consists of more than one imported software
+distribution, each containing a number of packages.  So separate the Log::Report
+configuration for each distribution, you should explicitly assign each package
+to a set, to a namespace.  This is (in translation lingo) a I<domain> or I<text domain>.
+The default domain has name C<default>.
 
-For C<Log::Report>, those packags sets are differentiated via the
-text-domain value in the C<use> statement:
+For C<Log::Report>, those package sets are selected with the text-domain
+value in the C<use> statement:
 
   use Log::Report 'my-domain';
 
-There are many things you can configure per (text)domain.  This is not
-only related to translations, but also -for instance- for text formatting
-configuration.  The administration for the configuration is managed in
-this package.
+There are many things you can configure per (text)domain.  This is
+not only related to translations, but also -for instance- for text
+formatting configuration (String::Print options).  The administration
+for the configuration is managed in this package.
+
+This class extends Log::Report::Minimal::Domain, which can be used when your
+program does not want any overhead from the powerful Log::Report features.
+In that case, your program invokes Log::Report::Optional.
 
 =chapter METHODS
 

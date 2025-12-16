@@ -453,11 +453,11 @@ sub untranslated()
 	($self->{_prepend} // '') . ($self->{_msgid} // '') . ($self->{_append} // '');
 }
 
-=method concat STRING|$object, [$prepend]
-This method implements the overloading of concatenation, which is needed
-to delay translations even longer.  When $prepend is true, the STRING
-or $object (other C<Log::Report::Message>) needs to prepended, otherwise
-it is appended.
+=method concat $text|$message, [$prepend]
+This method implements the overloading of concatenation, which is used
+to delay translations even longer.  When $prepend is true, the $text
+or $message (another C<Log::Report::Message>) will be prepended, otherwise
+it is appended in the final display.
 
 =examples of concatenation
   print __"Hello" . ' ' . __"World!\n";
@@ -479,20 +479,50 @@ sub concat($;$)
 #--------------------
 =chapter DETAILS
 
-=section OPTIONS and VARIABLES
+The message cast by the Log::Report exception framework can be
+plain strings.  This is sufficient for some cases, for instance:
+which would you bother much about the content of C<trace> messages?
+Message which are destined for end-users or log-files however, need
+more care; require a higher quality.  In this case, you can better
+use cast message objects which support interpolation.
 
-The Log::Report functions which define translation request can all
-have OPTIONS.  Some can have VARIABLES to be interpolated in the string as
-well.  To distinguish between the OPTIONS and VARIABLES (both a list
-of key-value pairs), the keys of the OPTIONS start with an underscore C<_>.
-As result of this, please avoid the use of keys which start with an
-underscore in variable names.  On the other hand, you are allowed to
-interpolate OPTION values in your strings.
+=section Message-IDs
+An exception message as a string is pretty inflexible.  It cannot
+be translated anymore, and it cannot contain related information
+like an error code.  An exception message as an object (as this
+module implements) is able to contain additional information.
+
+The easiest way to create Log::Report::Message objects, is via the
+C<__x()> (and friends) functions which are exported by Log::Report.
+These are nearly equivalent:
+
+  my $msg = Log::Report::Message->new(_msgid => "Hello, World!");
+  my $msg = __"Hello, World!";
+
+The name C<msgid> is used, because this object can do translations.
+In the GNU gettext library for translations, the term C<msgid> is
+used to describe the string which has to be looked-up in translation
+tables.  When there are no tables, or the C<msgid> is not found,
+then the output string is equivalent to the C<msgid>.
+
+So, without any translation configuration, this happens:
+
+  my $msg = __"Hello, World!";
+  print "$msg\n";      # Hello, World!⏎
+
+The C<__()> function can be used with a static string, although you
+could do this:
+
+  my $msg = __"Hello $name!";      #XXX Don't do this!
+  print "$msg\n";      # Hello Mark!⏎
 
 With the C<__x()> or C<__nx()>, interpolation will take place on the
-translated MSGID string.  The translation can contain the VARIABLE
-and OPTION names between curly brackets.  Text between curly brackets
-which is not a known parameter will be left untouched.
+(optionally) translated C<msgid> string.  This is how to write above:
+
+  my $msg = __x"Hello {name}!", name => $name;
+
+So: the C<msgid> is usually a I<format string>.  Only when you use
+formats correctly, you will be able to introduce translation later.
 
 =section Why use format strings?
 
@@ -536,7 +566,7 @@ cases:
   print __x"padded counter: {c%6d}\n", c => $counter;
 
 So: using formats has many advantages.  Advice: use simple perl only in
-trace and assert messages, maybe also with panics.  For serious output
+C<trace> and C<assert> messages, maybe also with panics.  For serious output
 of your program, use formatted output.
 
 =section Messages with plural forms
@@ -586,7 +616,7 @@ There is no way of checking beforehand whether you have provided all
 required values, to be interpolated in the translated string.
 
 This Log::Report::Message uses String::Print to handle formatted strings.
-On object of that module is hidden in the logic of M<__x()> and friends.
+On object of that module is hidden in the logic of C<__x()> and friends.
 
 String::Print is a very capable format string processor, and you should
 really B<read its manual> page to see how it can help you.  It would be

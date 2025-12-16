@@ -129,9 +129,9 @@ Get messages to users and logs.  C<Log::Report> combines three tasks
 which are closely related in one:
 
 =over 4
-=item 1. logging (like L<Log::Log4Perl> and syslog), and
+=item 1. logging (like Log::Log4Perl and syslog), and
 =item 2. exceptions (like 'error' and 'info'), with
-=item 3. translations (like C<gettext> and L<Locale::TextDomain>)
+=item 3. translations (like C<gettext> and Locale::TextDomain)
 =back
 
 You B<do not need> to use this module for all three reasons: pick what
@@ -551,9 +551,9 @@ that you shall not use a comma after the block when there are %options
 specified.  On the other hand, you shall use a semi-colon after the
 block if there are no arguments.
 
-B<Be warned> that the {} are interpreted as subroutine, which means that,
-for instance, it has its own C<@_>.  The manual-page of Try::Tiny
-lists a few more side-effects of this.
+B<Be warned> that the C<{}> are interpreted as subroutine, which
+means that --for instance-- it has its own C<@_> parameter list.
+The manual-page of Try::Tiny lists a few more side-effects of this.
 
 =examples
   my $x = try { 3/$x };  # mind the ';' !!
@@ -960,11 +960,11 @@ This sets the default mode for all created dispatchers.  You can
 also selectively change the output mode, like
   dispatcher PERL => 'default', mode => 3
 
-=option  import FUNCTION|ARRAY
+=option  import $function|\@functions
 =default import undef
 [0.998] When not specified, the P<syntax> option determines the list
-of functions which are being exported.  With this option, the P<syntax>
-option is ignored and only the specified FUNCTION(s) are imported.
+of @functions which are being exported.  With this option, the P<syntax>
+option is ignored and only the specified @functions are imported.
 
 =option  message_class CLASS
 =default message_class C<Log::Report::Message>
@@ -1182,14 +1182,14 @@ The following ideas are the base of this implementation:
 
 =over 4
 
-=item . simplification
+=item * simplification
 Handling errors and warnings is probably the most labor-intensive
 task for a programmer: when programs are written correctly, up-to
 three-quarters of the code is related to testing, reporting, and
 handling (problem) conditions.  Simplifying the way to create reports,
 simplifies programming and maintenance.
 
-=item . multiple dispatchers
+=item * multiple dispatchers
 It is not the location where the (for instance) error occurs which
 determines what will happen with the text, but the main application which
 uses the the complaining module has control.  Messages have a reason.
@@ -1197,14 +1197,14 @@ Based on the `reason' classification, they can get ignored, send to one
 or multiple dispatchers, like Log::Dispatch, Log::Log4perl,
 or UNIX syslog.
 
-=item . delayed translations
+=item * delayed translations
 The background ideas are that of Locale::TextDomain, based
 on C<gettext()>.  However, in the C<Log::Report> infrastructure,
 translations are postponed until the text is dispatched to a screen
 or log-file; the same report can be sent to syslog in (for instance)
 English and to the user interface in Dutch.
 
-=item . context sensitive
+=item * context sensitive
 Using contexts, you can set-up how to translate or rewrite messages,
 to improve messages.  A typical problem is whether to use gender in
 text (use 'his' or 'her'): you can set a gender in a context, and the
@@ -1249,32 +1249,32 @@ loggers, which interpret the cause into (syslog) levels.
 Defined by C<Log::Report> are
 
 =over 4
-=item . trace (debug, program)
+=item * trace (debug, program)
 The message will be used when some logger has debugging enabled.  The
 messages show steps taken by the program, which are of interest by the
 developers and maintainers of the code, but not for end-users.
 
-=item . assert (program)
+=item * assert (program)
 Shows an unexpected condition, but continues to run.  When you want the
 program to abort in such situation, that use C<panic>.
 
-=item . info (verbose, program)
+=item * info (verbose, program)
 These messages show larger steps in the execution of the program.
 Experienced users of the program usually do not want to see all these
 intermediate steps.  Most programs will display info messages (and
 higher) when some C<verbose> flag is given on the command-line.
 
-=item . notice (program)
+=item * notice (program)
 An user may need to be aware of the program's accidental smart behavior,
 for instance, that it initializes a lasting C<Desktop> directory in your
 home directory.  Notices should be sparse.
 
-=item . warning (program)
+=item * warning (program)
 The program encountered some problems, but was able to work around it
 by smart behavior.  For instance, the program does not understand a
 line from a log-file, but simply skips the line.
 
-=item . mistake (user)
+=item * mistake (user)
 When a user does something wrong, but what is correctable by smart
 behavior of the program.  For instance, in some configuration file,
 you can fill-in "yes" or "no", but the user wrote "yeah".  The program
@@ -1283,21 +1283,21 @@ interprets this as "yes", producing a mistake message as warning.
 It is much nicer to tell someone that he/she made a mistake, than
 to call that an error.
 
-=item . error (user)
+=item * error (user)
 The user did something wrong, which is not automatically correctable
 or the program is not willing to correct it automatically for reasons
 of code quality.  For instance, an unknown option flag is given on the
 command-line.  These are configuration issues, and have no useful
 value in C<$!>.  The program will be stopped, usually before taken off.
 
-=item . fault (system)
+=item * fault (system)
 The program encountered a situation where it has no work-around.  For
 instance, a file cannot be opened to be written.  The cause of that
 problem can be some user error (i.e. wrong filename), or external
 (you accidentally removed a directory yesterday).  In any case, the
 C<$!> (C<$ERRNO>) variable is set here.
 
-=item . alert (system)
+=item * alert (system)
 Some external cause disturbs the execution of the program, but the
 program stays alive and will try to continue operation.  For instance,
 the connection to the database is lost.  After a few attempts, the
@@ -1305,7 +1305,7 @@ database can be reached and the program continues as if nothing happened.
 The cause is external, so C<$!> is set.  Usually, a system administrator
 needs to be informed about the problem.
 
-=item . failure (system)
+=item * failure (system)
 Some external cause makes it impossible for this program to continue.
 C<$!> is set, and usually the system administrator wants to be
 informed.  The program will die.
@@ -1314,7 +1314,7 @@ The difference with C<fault> is subtile and not always clear.  A fault
 reports an error returned by an operating system call, where the failure
 would report an operational problem, like a failing mount.
 
-=item . panic (program)
+=item * panic (program)
 All above report classes are expected: some predictable situation
 is encountered, and therefore a message is produced.  However, programs
 often do some internal checking.  Of course, these conditions should
@@ -1453,7 +1453,8 @@ is required when you wish to use translations (later in your project),
 but also has many other benefits.  The functions C<__x> and friends
 create a Log::Report::Message object.
 
-See
+Continue reading:
+=over 4
 =item * L<Log::Report::Message/"Why use format strings?">
 =item * L<Log::Report::Message/"Messages with plural forms">
 =item * L<Log::Report::Message/"Interpolation with String::Print">
