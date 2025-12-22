@@ -4,7 +4,7 @@
 #oodist: testing, however the code of this development version may be broken!
 
 package Log::Report::Domain;
-use base 'Log::Report::Minimal::Domain';
+use parent 'Log::Report::Minimal::Domain';
 
 use warnings;
 use strict;

@@ -65,16 +65,16 @@ configurations in the main program.
 
 =chapter OVERLOADED
 
-=overload "" stringification
+=overload '""' stringification
 When the object is used in string context, it will get translated.
 Implemented as M<toString()>.
 
-=overload &() used as function
+=overload '&{}' used as function
 When the object is called as function, a new object is created with
 the data from the original one but updated with the new parameters.
 Implemented in C<clone()>.
 
-=overload . concatenation
+=overload '.' concatenation
 An (accidental) use of concatenation (a dot where a comma should be
 used) would immediately stringify the object.  This is avoided by
 overloading that operation.

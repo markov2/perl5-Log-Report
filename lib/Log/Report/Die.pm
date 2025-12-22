@@ -4,7 +4,7 @@
 #oodist: testing, however the code of this development version may be broken!
 
 package Log::Report::Die;
-use base 'Exporter';
+use parent 'Exporter';
 
 use warnings;
 use strict;
