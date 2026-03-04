@@ -229,7 +229,7 @@ sub new($@)
 	}
 
 	my $tags  = delete $s{_tag} // delete $s{_tags} // delete $s{_class} // delete $s{_classes} // [];
-	$s{_tags} = ref $tags eq 'ARRAY' ? $tags : [ split /[,\s]+/, $tags ];
+	$s{_tags} = ref $tags eq 'ARRAY' ? $tags : [ split /[,\s]+/, $tags ] if defined $tags;
 
 	bless \%s, $class;
 }
@@ -291,7 +291,7 @@ sub context() { $_[0]->{_context}}
 sub msgctxt() { $_[0]->{_msgctxt}}
 
 =method tags
-Returns the LIST of tags which are defined for this message; message
+[1.44] Returns the LIST of tags which are defined for this message; message
 group indicators, as often found in exception-based programming.
 
 =method classes
@@ -300,6 +300,12 @@ Deprecated alternative for M<tags()>.
 
 sub tags() { @{$_[0]->{_tags}} }
 *classes = \&tags;
+
+=method addTags @tags
+[1.45] Add zero or more tags to this message.
+=cut
+
+sub addTags() { push @{$shift->{_tags}}, @_ }
 
 =method to [$name]
 Returns the $name of a dispatcher if explicitly specified with

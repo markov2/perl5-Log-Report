@@ -49,21 +49,24 @@ my %oodist   = (
 		publish        => "$publish/raw",
 	},
 
-	generate => [
-	  {	format         => 'pod3',
-		podtail        => undef,
-	  },
-	  {	format         => 'html',
-		webpages       => "$webpages/logreport/html",
-		publish        => "$publish/htmlpkg",
-		docroot        => "/logreport/html",
-		templates      => "html",
-		stylesheet     => "/logreport/html/oodoc.css",
-	  },
-	  {	export       => 'website',
+	generate => [ {
+		format       => 'pod3',
+		podtail      => undef,
+	  }, {
+		format       => 'html',
+		webpages     => "$webpages/logreport/html",
+		publish      => "$publish/htmlpkg",
+		docroot      => "/logreport/html",
+		templates    => "html",
+		stylesheet   => "/logreport/html/oodoc.css",
+	  }, {
+		export       => 'website',
 		serializer   => 'json',
 		markup       => 'html',
 		publish      => "$publish/doctree",
+		meta         => {
+			main_manual => 'Log::Report',
+		},
 	  },
 	],
 );
