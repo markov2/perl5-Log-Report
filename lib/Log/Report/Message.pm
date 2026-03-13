@@ -228,7 +228,7 @@ sub new($@)
 	{	s/\s+$//, s/^\s+// for $s{_plural};
 	}
 
-	my $tags  = delete $s{_tag} // delete $s{_tags} // delete $s{_class} // delete $s{_classes} // [];
+	my $tags  = delete $s{_tag} // delete $s{_tags} // delete $s{_class} // delete $s{_classes};
 	$s{_tags} = ref $tags eq 'ARRAY' ? $tags : [ split /[,\s]+/, $tags ] if defined $tags;
 
 	bless \%s, $class;
@@ -298,14 +298,14 @@ group indicators, as often found in exception-based programming.
 Deprecated alternative for M<tags()>.
 =cut
 
-sub tags() { @{$_[0]->{_tags}} }
+sub tags() { @{$_[0]->{_tags} || []} }
 *classes = \&tags;
 
 =method addTags @tags
 [1.45] Add zero or more tags to this message.
 =cut
 
-sub addTags() { push @{$shift->{_tags}}, @_ }
+sub addTags() { push @{shift->{_tags}}, @_ }
 
 =method to [$name]
 Returns the $name of a dispatcher if explicitly specified with
