@@ -409,10 +409,10 @@ context with only one name, the one object is returned.
      if $debug;
 
 =error only one dispatcher name accepted in SCALAR context.
-In SCALAR context, only one dispatcher name accepted
-The M<dispatcher()> method returns the Log::Report::Dispatcher
-objects which it has accessed.  When multiple names where given, it
-wishes to return a LIST of objects, not the count of them.
+In SCALAR context, only one dispatcher name accepted The M<dispatcher()>
+method returns the Log::Report::Dispatcher objects which it has accessed.
+When multiple names where given, it wishes to return a LIST of objects,
+not the count of them.
 
 =error the 'needs' sub-command parameter '$need' is not a reason.
 =error the 'filter' sub-command needs a CODE reference.
@@ -492,11 +492,12 @@ sub dispatcher($@)
 	}
 
 	wantarray || @disps < 2
-		or  error __"only one dispatcher name accepted in SCALAR context.";
+		or error __"only one dispatcher name accepted in SCALAR context.";
 
 	if($command eq 'close')
 	{	my %kill = map +($_->name => 1), @disps;
 		@$disps  = grep !$kill{$_->name}, @$disps;
+
 		$_->close for @disps;
 	}
 	elsif($command eq 'enable')  { $_->_disabled(0) for @disps }

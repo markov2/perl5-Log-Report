@@ -161,7 +161,7 @@ sub init($)
 }
 
 #--------------------
-=section Accessors
+=section Attributes
 
 =method logger [$domain]
 Returns the Log::Log4perl::Logger object which is used for logging.

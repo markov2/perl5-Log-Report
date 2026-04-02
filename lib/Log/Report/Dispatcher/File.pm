@@ -164,7 +164,7 @@ sub init($)
 }
 
 #--------------------
-=section Accessors
+=section Attributes
 
 =method filename
 Returns the name of the opened file, or undef in case this dispatcher

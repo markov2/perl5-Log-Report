@@ -48,7 +48,7 @@ sub new(@) { my $class = shift; (bless {}, $class)->init({@_}) }
 sub init($) { $_[0] }
 
 #--------------------
-=section Accessors
+=section Attributes
 
 =cut
 

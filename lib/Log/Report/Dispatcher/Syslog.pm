@@ -182,7 +182,7 @@ sub close()
 }
 
 #--------------------
-=section Accessors
+=section Attributes
 
 =method format [CODE]
 Returns the CODE ref which formats the syslog line.

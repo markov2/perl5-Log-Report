@@ -168,7 +168,7 @@ sub init($)
 sub DESTROY { in_global_destruction or shift->close }
 
 #--------------------
-=section Accessors
+=section Attributes
 
 =method name
 Returns the unique name of this dispatcher.

@@ -76,7 +76,7 @@ sub new($@)
 }
 
 #--------------------
-=section Accessors
+=section Attributes
 
 =method report_opts
 =cut

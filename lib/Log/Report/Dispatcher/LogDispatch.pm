@@ -127,7 +127,7 @@ sub close()
 }
 
 #--------------------
-=section Accessors
+=section Attributes
 
 =method backend
 Returns the Log::Dispatch::Output object which is used for logging.

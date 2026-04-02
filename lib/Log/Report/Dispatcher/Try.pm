@@ -130,7 +130,7 @@ sub init($)
 }
 
 #--------------------
-=section Accessors
+=section Attributes
 
 =method died [$text]
 The exit $text or object (C<$@>) of the eval'ed block, in its unprocessed state.

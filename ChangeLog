@@ -15,6 +15,7 @@ version 1.45:
 
 	Improvements:
 	- ::Message::addTags()
+	- section Accessors -> Attributes
 
 version 1.44: Mon 22 Dec 16:56:48 CET 2025
 

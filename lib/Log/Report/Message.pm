@@ -256,7 +256,7 @@ sub clone(@)
 }
 
 #--------------------
-=section Accessors
+=section Attributes
 
 =method prepend
 Returns the string which is prepended to this one.  Usually undef.
@@ -374,7 +374,7 @@ sub valueOf($) { $_[0]->{$_[1]} }
 =section Processing
 
 =method taggedWith $tag|Regexp
-Returns true if the message carries the specified $tag (string) or
+[1.44] Returns true if the message carries the specified $tag (string) or
 matches the Regexp.  The trueth value is the (first matching) tag.
 =cut
 

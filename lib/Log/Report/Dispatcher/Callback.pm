@@ -72,7 +72,7 @@ sub init($)
 }
 
 #--------------------
-=section Accessors
+=section Attributes
 
 =method callback
 Returns the code reference which will handle each logged message.

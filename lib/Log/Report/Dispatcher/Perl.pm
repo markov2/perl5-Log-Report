@@ -38,7 +38,7 @@ of warn and die using STDERR and exit; however: that is not possible.
 
 =section Constructors
 
-=section Accessors
+=section Attributes
 
 =section Logging
 =cut
