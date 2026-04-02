@@ -12,11 +12,14 @@ version 1.45:
 	Fixes:
 	- fix clone() with _class
 	  [Sam Kington] github issue #18
+	- import with multiple dispatchers
+	  [Andy Berverley] github issue #19
 
 	Improvements:
 	- ::Message::addTags() and ::Message::hasTag()
 	- section Accessors -> Attributes
 	- ::Message::freeze() and ::thaw()
+	  [Andy Beverley] github issue #20
 
 version 1.44: Mon 22 Dec 16:56:48 CET 2025
 

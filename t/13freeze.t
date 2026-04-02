@@ -61,7 +61,7 @@ is $msg1t->valueOf('var'), 42, '... var';
 ### Nested
 ###
 
-my $msg2 = (__x"before") . $msg1 . (__x"after");
+my $msg2 = (__x"before") . $msg1 . (__x"after", _domain => textdomain 'default');
 
 ok defined $msg2, 'created message with append and prepend';
 isa_ok $msg2, 'Log::Report::Message', '...';

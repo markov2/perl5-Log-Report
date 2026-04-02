@@ -491,7 +491,7 @@ sub dispatcher($@)
 		for my $n (@_) { push @disps, grep $_->name eq $n, @$disps }
 	}
 
-	wantarray || @disps < 2
+	wantarray || !defined wantarray || @disps < 2
 		or error __"only one dispatcher name accepted in SCALAR context.";
 
 	if($command eq 'close')
