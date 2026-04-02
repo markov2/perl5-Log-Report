@@ -309,15 +309,6 @@ sub tags() { @{$_[0]->{_tags} || []} }
 
 sub addTags() { push @{shift->{_tags}}, @_ }
 
-=method hasTag $tag
-[1.45] Returns whether the $tag is on this message.
-=cut
-
-sub hasTag($)
-{	my ($self, $tag) = @_;
-	grep $_ eq $tag, $self->tags;
-}
-
 =method to [$name]
 Returns the $name of a dispatcher if explicitly specified with
 the '_to' key. Can also be used to set it.  Usually, this will

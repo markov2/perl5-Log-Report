@@ -53,8 +53,8 @@ ok defined $msg1t, 'Thaw';
 isa_ok $msg1t, 'Log::Report::Message', '...';
 is $msg1t->msgid, 'the answer is {var}!', '... msgid';
 is $msg1t->domain, 'test', '... domain';
-ok $msg1t->hasTag('monkey'), '... tag1';
-ok $msg1t->hasTag('donkey'), '... tag2';
+ok $msg1t->taggedWith('monkey'), '... tag1';
+ok $msg1t->taggedWith('donkey'), '... tag2';
 is $msg1t->valueOf('var'), 42, '... var';
 
 ###
