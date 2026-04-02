@@ -50,6 +50,9 @@ Log::Report::Message - a piece of text to be translated
   print __"\tCongratulations,\n";
   print "\t", __("Congratulations,"), "\n";  # same
 
+  # Object serialization support
+  my $clone = Log::Report::Message->thaw($msg->freeze);
+
 =chapter DESCRIPTION
 Any use of a constructor function exported by Log::Report, like
 C<__()> (the function is named underscore-underscore) or C<__x()>
@@ -214,8 +217,7 @@ sub new($@)
 		$s{_count}   = ref $c eq 'ARRAY' ? @$c : keys %$c;
 	}
 
-	defined $s{_join}
-		or $s{_join} = $";
+	$s{_join} //= $";
 
 	if($s{_msgid})
 	{	$s{_append}  = defined $s{_append} ? $1.$s{_append} : $1
@@ -306,6 +308,15 @@ sub tags() { @{$_[0]->{_tags} || []} }
 =cut
 
 sub addTags() { push @{shift->{_tags}}, @_ }
+
+=method hasTag $tag
+[1.45] Returns whether the $tag is on this message.
+=cut
+
+sub hasTag($)
+{	my ($self, $tag) = @_;
+	grep $_ eq $tag, $self->tags;
+}
 
 =method to [$name]
 Returns the $name of a dispatcher if explicitly specified with
@@ -481,6 +492,51 @@ sub concat($;$)
 	$what = $self->{_append} . $what if defined $self->{_append};
 	(ref $self)->new(%$self, _append => $what);
 }
+
+=method freeze %options
+Convert the data of this message into a (nested) HASH which optimally
+preserves its content.  Pass this to M<thaw()> to get the object back.
+
+The returned HASH can be serialized safely with (for instance) YAML
+or JSON.  Then, it can be reconstructed from the de-serialized data.
+At the moment, all facts can be preserved.
+
+=example to thaw a frozen
+  my $clone = Log::Report::Message->thaw($msg->freeze);
+=cut
+
+sub freeze()
+{	my ($self, %args) = @_;
+	my %data = %$self;
+	if(my $p = $data{_prepend})
+	{	$data{_prepend} = blessed $p && $p->isa(__PACKAGE__) ? $p->freeze(%args) : "$p";
+	}
+	if(my $a = $data{_append})
+	{	$data{_append} = blessed $a && $a->isa(__PACKAGE__) ? $a->freeze(%args) : "$a";
+	}
+	if(my $d = $data{_domain})
+	{	$data{_domain} = $d->name if blessed $d && $d->isa('Log::Report::Minimal::Domain');
+	}
+	$data{_lr_version} = $Log::Report::VERSION // '3.14';
+	\%data;
+}
+
+=c_method thaw \%data, %options
+=cut
+
+sub thaw($%)
+{	my ($class, $data, %args) = @_;
+	my %data = %$data;
+	if(my $p = $data{_prepend})
+	{	$data{_prepend} = $class->thaw($p, %args);
+	}
+	if(my $a = $data{_append})
+	{	$data{_append}  = $class->thaw($a, %args);
+	}
+	delete $data{_lr_version};
+	$class->new(%data);
+}
+
 
 #--------------------
 =chapter DETAILS
