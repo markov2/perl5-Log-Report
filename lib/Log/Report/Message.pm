@@ -519,10 +519,10 @@ sub thaw($%)
 {	my ($class, $data, %args) = @_;
 	my %data = %$data;
 	if(my $p = $data{_prepend})
-	{	$data{_prepend} = $class->thaw($p, %args);
+	{	$data{_prepend} = ref $p eq 'HASH' ? $class->thaw($p, %args) : $p;
 	}
 	if(my $a = $data{_append})
-	{	$data{_append}  = $class->thaw($a, %args);
+	{	$data{_append}  = ref $a eq 'HASH' ? $class->thaw($a, %args) : $a;
 	}
 	delete $data{_lr_version};
 	$class->new(%data);

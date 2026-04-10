@@ -7,7 +7,7 @@ Mark Overmeer.
 TODO:
 	. connect to Message::Passing framework
 
-version 1.45:
+version 1.45: Fri 10 Apr 11:17:51 CEST 2026
 
 	Fixes:
 	- fix clone() with _class

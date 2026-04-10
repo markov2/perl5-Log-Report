@@ -96,7 +96,7 @@ is_deeply $msg2f, +{
       },
       _domain => 'test',
       _join   => ' ',
-      _lr_version => '3.14',
+      _lr_version => $LR_VERSION,
    },
    _join   => ' ',
    _expand => 1,
