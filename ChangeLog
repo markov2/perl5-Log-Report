@@ -8,6 +8,7 @@ TODO:
 	. connect to Message::Passing framework
 
 version 1.46:
+	- add Log::Report::default_mode()
 
 version 1.45: Fri 10 Apr 11:17:51 CEST 2026
 

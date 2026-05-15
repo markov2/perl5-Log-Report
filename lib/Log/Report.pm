@@ -17,7 +17,7 @@ my $lrm = 'Log::Report::Message';
 
 ### if you change anything here, you also have to change Log::Report::Minimal
 my @make_msg   = qw/__ __x __n __nx __xn N__ N__n N__w __p __px __np __npx/;
-my @functions  = qw/report dispatcher try textdomain/;
+my @functions  = qw/report dispatcher try textdomain default_mode/;
 my @reason_functions = qw/trace assert info notice warning mistake error fault alert failure panic/;
 
 our @EXPORT_OK = (@make_msg, @functions, @reason_functions);
@@ -1015,6 +1015,12 @@ sub import(@)
 
 	### Log::Report options
 
+	if(my $msg_class = delete $opts{message_class})
+	{	$msg_class->isa($lrm)
+			or error __x"message_class {class} does not extend {base}", base => $lrm, class => $msg_class;
+		$lrm = $msg_class;
+	}
+
 	if(exists $opts{mode})
 	{	$default_mode = delete $opts{mode} || 0;
 		Log::Report::Dispatcher->defaultMode($default_mode);
@@ -1037,12 +1043,6 @@ sub import(@)
 		}
 	}
 
-	if(my $msg_class = delete $opts{message_class})
-	{	$msg_class->isa($lrm)
-			or error __x"message_class {class} does not extend {base}", base => $lrm, class => $msg_class;
-		$lrm = $msg_class;
-	}
-
 	$class->export_to_level(1+$to_level, undef, @export);
 
 	### Log::Report::Domain configuration
@@ -1056,6 +1056,12 @@ sub import(@)
 	{	error __x"no domain for configuration options in {fn} line {line}", fn => $fn, line => $linenr;
 	}
 }
+
+=function default_mode
+[1.46] Returns the default run mode.
+=cut
+
+sub default_mode() { $default_mode }
 
 # deprecated, since we have a ::Domain object in 1.00
 sub translator($;$$$$)

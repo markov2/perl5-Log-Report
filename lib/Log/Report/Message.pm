@@ -237,7 +237,7 @@ sub new($@)
 }
 
 # internal use only: to simplify __*p* functions
-sub _msgctxt($) {$_[0]->{_msgctxt} = $_[1]; $_[0]}
+sub _msgctxt($) { $_[0]->{_msgctxt} = $_[1]; $_[0] }
 
 =method clone %options, $variables
 Returns a new object which copies info from original, and updates it
@@ -398,7 +398,7 @@ Translate a message.  If not specified, the default locale is used.
 sub toString(;$)
 {	my ($self, $locale) = @_;
 
-	my $count   = $self->{_count} || 0;
+	my $count   = $self->{_count}   || 0;
 	$locale     = $self->{_lang} if $self->{_lang};
 	my $prepend = $self->{_prepend} // '';
 	my $append  = $self->{_append}  // '';
@@ -433,7 +433,6 @@ sub toString(;$)
 
 	$text;
 }
-
 
 =method toHTML [$locale]
 [1.11] Translate the message, and then entity encode HTML volatile characters.
@@ -492,6 +491,10 @@ The returned HASH can be serialized safely with (for instance) YAML
 or JSON.  Then, it can be reconstructed from the de-serialized data.
 At the moment, all facts can be preserved.
 
+=option  serializer 'JSON'|'Serial'|...
+=default serializer undef
+In the future, the specific serializer may influence the frozen output.
+
 =example to thaw a frozen
   my $clone = Log::Report::Message->thaw($msg->freeze);
 =cut
@@ -527,7 +530,6 @@ sub thaw($%)
 	delete $data{_lr_version};
 	$class->new(%data);
 }
-
 
 #--------------------
 =chapter DETAILS
