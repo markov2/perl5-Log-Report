@@ -17,7 +17,7 @@ my $lrm = 'Log::Report::Message';
 
 ### if you change anything here, you also have to change Log::Report::Minimal
 my @make_msg   = qw/__ __x __n __nx __xn N__ N__n N__w __p __px __np __npx/;
-my @functions  = qw/report dispatcher try textdomain default_mode/;
+my @functions  = qw/report dispatcher try textdomain default_dispatcher_mode/;
 my @reason_functions = qw/trace assert info notice warning mistake error fault alert failure panic/;
 
 our @EXPORT_OK = (@make_msg, @functions, @reason_functions);
@@ -1057,11 +1057,11 @@ sub import(@)
 	}
 }
 
-=function default_mode
+=function default_dispatcher_mode
 [1.46] Returns the default run mode.
 =cut
 
-sub default_mode() { $default_mode }
+sub default_dispatcher_mode() { $default_mode }
 
 # deprecated, since we have a ::Domain object in 1.00
 sub translator($;$$$$)

@@ -191,7 +191,7 @@ and L<Log::Report/Run modes>.
 sub mode() { $_[0]->{mode} }
 
 #Please use C<dispatcher mode => $MODE;>
-sub defaultMode($) {$default_mode = $_[1]}
+sub defaultMode($) { $default_mode = $_[1] }
 
 # only to be used via Log::Report::dispatcher(mode => ...)
 # because requires re-investigating collective dispatcher needs
