@@ -303,7 +303,7 @@ sub report($@)
 	if(my $disp_names = $message->to)
 	{	my %select = map +($_ => 1), ref $disp_names eq 'ARRAY' ? @$disp_names : $disp_names;
 		@disp = grep $select{$_->name}, @disp;
-		push @disp, $try if defined $try && $select{try};
+		push @disp, $try if defined $try && !$select{try};
 		@disp or return;
 	}
 
